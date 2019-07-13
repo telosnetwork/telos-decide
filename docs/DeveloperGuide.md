@@ -8,6 +8,10 @@ Trail was designed to allow maximum flexibility for smart contract developers, w
 
 This paradigm basically means contract writers can leave the "vote counting" up to Trail and instead focus on how they want to interpret the results of their ballot. Through cross-contract table lookup, any contract can view the results of a ballot and then have their contracts act based on those results.
 
+## Contract API
+
+
+
 ## Ballot Lifecycle
 
 Building a ballot on Trail is simple and gives great flexibility to the developer to build their ballots in a variety of ways. An example ballot and voting contract will be used throughout this guide, and is recommended as an established model for current Trail interface best practices.
