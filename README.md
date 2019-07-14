@@ -6,7 +6,7 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 * `Custom Token Registries`
 
-    Any user on the Telos Blockchain Network may create a custom token registry that automatically inherits Trail's entire suite of voting services and fraud prevention tools. These registries can also be customized to allow or disallow specific behaviors like transferring, burning, reclaiming, etc.
+    Any user on the Telos Blockchain Network may create a custom token registry that automatically inherits Trail's entire suite of voting services and fraud prevention tools. These registries can also be customized to allow or disallow specific behaviors like transferring, burning, or reclaiming of tokens.
 
     During ballot creation, the ballot publisher selects a specfic token to use for counting votes. The default is the standard `VOTE` token - usable in all Telos Governance ballots, but Trail offers additional services for creating privately managed tokens that ballots can use for counting votes instead.
 
@@ -30,41 +30,21 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 Trail has a platform specific token that is only obtainable by performing various jobs and tasks that help optimize the platform by cleaning expired votes and rebalancing active vote receipts.
 
-The speed in which these jobs are completed after they become active determine the relative reward received for completing them. The following breakdown is the current payment model:
-
-### Completion Time
-
-#### `FAST`: Completed in < 1 day (172,800 blocks) 
-    
-Reward: `.01 TLOS` and `3 TRAIL`
-
-#### `MEDIUM`: Completed in < 1 week (1,209,600 blocks)
-
-Reward: `0.001 TLOS` and `2 TRAIL`
-
-#### `SLOW`: Job completed in <= 1 month (5,184,000 blocks)
-
-Reward: `1 TRAIL`
-
-#### `DEAD`: Job completed in > 1 month (5,184,000+ blocks)
-
-Reward: Satisfaction
-
 **Disclaimer:** *The TRAIL token is not an ICO nor should it be considered for investment or speculative purposes. It is a reward for user assistance in maintaining an efficiently run voting platform and will have evolving purposes as the platform grows.*
 
 ## Roadmap
 
-### Coming Soon
+### Q4 2019
 
-- One token, one vote
+- ...
+
+### Q1 2020
+
+- ...
 
 ### Down Yonder
 
-- Delegates and Delegating
-
-- External Token Voting
-
-
+- ...
 
 ## Contributing to Trail
 
