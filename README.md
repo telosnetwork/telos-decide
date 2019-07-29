@@ -36,11 +36,17 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 ## Join the Firewatch
 
-The Firewatch is a league of voters, developers, and stakeholders dedicated to running an optimized voting platform.
+The Firewatch is a league of voters, developers, and stakeholders dedicated to running a secure and optimized voting platform. Firewatch workers may claim a portion of Trail profits porportional to their recent contributions, and may also be eligible for platform-wide leaderboard rewards.
 
 ## The TRAIL Token
 
 Trail has a platform specific token that is only obtainable by performing various jobs and tasks that help optimize the platform by cleaning expired votes, rebalancing active vote receipts, and completing and interacting with valid ballots.
+
+Proposed Use Cases:
+
+- Burn in exchange for free Registry Creation, Ballot Listing, or Committee Registration.
+- Burn in exchange for extension on Payment Claim deadlines.
+- Burn in exchange for listing on Featured table.
 
 **Disclaimer:** *The TRAIL token is not an ICO nor should it be considered for investment or speculative purposes. It is a reward for user assistance in maintaining an efficiently run voting platform and will have evolving purposes as the platform grows.*
 
@@ -53,13 +59,13 @@ Trail has a platform specific token that is only obtainable by performing variou
 
 ### Q4 2019
 
-- Additional Worker Services
-- Additional Voting Methods
+- Staking, Stake Voting
 - External Contract Examples
 
 ### Q1 2020
 
-- Staking, Stake Voting
+- Additional Worker Services
+- Additional Voting Methods
 
 ### Down Yonder
 
