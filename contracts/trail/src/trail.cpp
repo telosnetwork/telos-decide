@@ -280,7 +280,7 @@ ACTION trail::unlockreg(symbol registry_symbol) {
     auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
 
     //authenticate
-    //TODO: require_auth2(reg.unlock_acct.value, reg.unlock_auth.value);
+    require_auth(permission_level{reg.unlock_acct, reg.unlock_auth});
 
     //validate
     check(reg.locked, "registry is already unlocked");
@@ -552,7 +552,7 @@ ACTION trail::postresults(name ballot_name, map<name, asset> final_results,
     name voting_method, asset total_votes, uint32_t total_voters) {
 
     //authenticate
-    //TODO: require_auth2(get_self().value, name("postresults").value);
+    require_auth(permission_level{get_self(), name("postresults")});
 
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -631,7 +631,7 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
             }
         case (name("membership").value):
             //inline sent from trailservice@membership
-            //TODO: require_auth2(get_self().value, name("membership").value);
+            require_auth(permission_level{get_self(), name("membership")});
             ram_payer = get_self();
         default:
             check(false, "invalid access method. contact registry manager.");
