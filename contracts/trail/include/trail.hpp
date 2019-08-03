@@ -11,8 +11,9 @@
 #include <eosio/eosio.hpp>
 #include <eosio/asset.hpp>
 #include <eosio/singleton.hpp>
-#include <string>
-#include <algorithm>
+
+// #include <string>
+// #include <algorithm>
 
 using namespace eosio;
 using namespace std;
@@ -21,30 +22,30 @@ CONTRACT trail : public contract {
 
 public:
 
+    trail(name self, name code, datastream<const char*> ds);
+
+    ~trail();
+
     //reserved symbols
     const symbol TLOS_SYM = symbol("TLOS", 4);
     const symbol VOTE_SYM = symbol("VOTE", 4);
     const symbol TRAIL_SYM = symbol("TRAIL", 0);
 
-    //units
-    const uint32_t MIN_BALLOT_LENGTH = 86400; //1 day
-    const uint16_t MAX_VOTE_RECEIPTS = 51;
-    const uint32_t BALLOT_COOLDOWN = 432000;  //5 days in seconds
+    //registry settings: transferable, burnable, reclaimable, stakeable, maxmutable
 
-    //fees
-    const asset BALLOT_LISTING_FEE = asset(150000, TLOS_SYM);
-    const asset REGISTRY_LISTING_FEE = asset(250000, TLOS_SYM);
-    const asset ARCHIVAL_BASE_FEE = asset(50000, TLOS_SYM);
-
-    //registry settings: transferable, burnable, reclaimable, stakeable, maxmutable, kickable
-
-    //registry access: public, private, invite, membership
+    //registry access: public, private, invite, membership?
 
     //ballot settings: lightballot, revotable, usestake
 
-    //ballot statuses: setup, voting, completed, cancelled, archived
+    //ballot statuses: setup, voting, closed, cancelled, archived
 
     //voting methods: 1acct1vote, 1tokennvote, 1token1vote, 1tsquare1v, quadratic, ranked
+
+    //======================== admin actions ========================
+
+    //sets new config singleton
+    ACTION setconfig(string trail_version, asset ballot_fee, asset registry_fee, asset archival_fee,
+        uint32_t min_ballot_length, uint32_t ballot_cooldown, uint16_t max_vote_receipts);
 
     //======================== registry actions ========================
 
@@ -113,10 +114,13 @@ public:
 
     //posts ballot results and complete
     ACTION postresults(name ballot_name, map<name, asset> final_results, 
-        asset total_votes, uint32_t total_voters, bool notify);
+        name voting_method, asset total_votes, uint32_t total_voters);
 
     //archives a ballot for a fee
     ACTION archive(name ballot_name, time_point_sec archived_until);
+
+    //unarchives a ballot after archival time has expired
+    ACTION unarchive(name ballot_name);
 
     //======================== voter actions ========================
 
@@ -127,7 +131,7 @@ public:
     ACTION unregvoter(name voter, symbol registry_symbol);
 
     //casts a vote on a ballot
-    ACTION castvote(name voter, name ballot_name, vector<name> votes);
+    ACTION castvote(name voter, name ballot_name, vector<name> options);
 
     //retracts a vote from a ballot
     ACTION unvote(name voter, name ballot_name);
@@ -141,19 +145,21 @@ public:
     //======================== worker actions ========================
 
     //registers a new worker
-    ACTION regworker(name worker);
+    ACTION regworker(name worker_name);
 
     //unregisters an existing worker
-    ACTION unregworker(name worker);
+    ACTION unregworker(name worker_name);
 
     //pays a worker
-    ACTION claimpayment(name worker, symbol registry_symbol);
+    ACTION claimpayment(name worker_name, symbol registry_symbol);
 
     //rebalance an unbalanced vote
+    //TODO: add optional ballot_name so rebalance specific vote receipts?
     ACTION rebalance(name voter, symbol registry_symbol, optional<uint16_t> count);
 
     //cleans up an expired vote
-    ACTION cleanupvote(name voter, symbol registry_symbol, optional<uint16_t> count);
+    //TODO: add optional ballot_name so rebalance specific vote receipts?
+    ACTION cleanupvote(name voter, optional<uint16_t> count);
 
     //======================== committee actions ========================
 
@@ -171,12 +177,12 @@ public:
     ACTION assignseat(name committee_name, symbol registry_symbol, name seat_name, name seat_holder, string memo);
 
     //sets updater account and auth
-    ACTION setupdater(name updater_account, name updater_auth);
+    ACTION setupdater(name committee_name, symbol registry_symbol, name updater_account, name updater_auth);
 
     //deletes a committee
     ACTION delcommittee(name committee_name, symbol registry_symbol, string memo);
 
-    //========== notification functions ==========
+    //========== notification methods ==========
 
     //catches delegatebw from eosio
     [[eosio::on_notify("eosio::delegatebw")]]
@@ -190,7 +196,7 @@ public:
     [[eosio::on_notify("eosio.token::transfer")]]
     void catch_transfer(name from, name to, asset quantity, string memo);
 
-    //========== utility functions ==========
+    //========== utility methods ==========
 
     //add quantity to balance
     void add_balance(name voter, asset quantity);
@@ -210,7 +216,23 @@ public:
     //validates voting method
     bool valid_voting_method(name voting_method);
 
+    //validates access method
+    bool valid_access_method(name access_method);
+
     //======================== tables ========================
+
+    //scope: singleton
+    //ram: 
+    TABLE config {
+        string trail_version;
+        asset ballot_listing_fee;
+        asset registry_creation_fee;
+        asset archival_base_fee;
+        uint32_t min_ballot_length;
+        uint32_t ballot_cooldown;
+        uint16_t max_vote_receipts;
+    };
+    typedef singleton<name("config"), config> config_singleton;
 
     //scope: get_self().value
     //ram: 
@@ -221,14 +243,14 @@ public:
         uint32_t voters; //open token accounts with this registry
         name access; //public, private, invite, membership
 
-        bool locked = false; //locks all settings
+        bool locked; //locks all settings
         name unlock_acct; //account name to unlock
         name unlock_auth; //authorization name to unlock
 
         name manager; //registry manager
-        uint16_t open_ballots; //number of open ballots
         map<name, bool> settings; //setting_name -> on/off
 
+        uint16_t open_ballots; //number of open ballots
         asset rebalanced_volume; //total volume of rebalanced votes
         uint32_t rebalanced_count; //total count of rebalanced votes
 
@@ -237,8 +259,8 @@ public:
             (supply)(max_supply)
             (voters)(access)
             (locked)(unlock_acct)(unlock_auth)
-            (manager)(open_ballots)(settings)
-            (rebalanced_volume)(rebalanced_count))
+            (manager)(settings)
+            (open_ballots)(rebalanced_volume)(rebalanced_count))
     };
     typedef multi_index<name("registries"), registry> registries_table;
 
@@ -256,7 +278,7 @@ public:
 
         name voting_method; //1acct1vote, 1tokennvote, 1token1vote, 1tsquare1v, quadratic, ranked, graded
         uint8_t max_options; //max options per voter
-        map<name, asset> options; //option name -> total votes
+        map<name, asset> options; //option name -> total weighted votes
 
         symbol registry_symbol; //token registry used for counting votes
         asset total_votes; //total amount of raw votes (pre-weighted)
@@ -284,14 +306,17 @@ public:
     //ram: 
     TABLE vote {
         name ballot_name;
+        symbol registry_symbol;
         map<name, asset> options;
         time_point_sec expiration;
 
         uint64_t primary_key() const { return ballot_name.value; }
+        uint64_t by_symbol() const { return registry_symbol.code().raw(); }
         uint64_t by_exp() const { return static_cast<uint64_t>(expiration.utc_seconds); }
-        EOSLIB_SERIALIZE(vote, (ballot_name)(options)(expiration))
+        EOSLIB_SERIALIZE(vote, (ballot_name)(registry_symbol)(options)(expiration))
     };
     typedef multi_index<name("votes"), vote,
+        indexed_by<name("bysymbol"), const_mem_fun<vote, uint64_t, &vote::by_symbol>>,
         indexed_by<name("byexp"), const_mem_fun<vote, uint64_t, &vote::by_exp>>
     > votes_table;
 
@@ -349,17 +374,16 @@ public:
     };
     typedef multi_index<name("workers"), worker> workers_table;
 
-    //scope: singleton
-    //ram: 
-    TABLE config {
-        string trail_version;
-        uint32_t min_ballot_length;
-        uint16_t max_vote_receipts;
-        uint32_t ballot_cooldown;
-        asset ballot_listing_fee;
-        asset registry_creation_fee;
-        asset archival_base_fee;
+    //scope: get_self().value
+    //ram:
+    TABLE archival {
+        name ballot_name;
+        time_point_sec archived_until;
+
+        uint64_t primary_key() const { return ballot_name.value; }
+        EOSLIB_SERIALIZE(archival,
+            (ballot_name)(archived_until))
     };
-    typedef singleton<name("config"), config> config_singleton;
+    typedef multi_index<name("archivals"), archival> archivals_table;
 
 };
