@@ -953,11 +953,39 @@ ACTION trail::cleanupvote(name voter, optional<uint16_t> count) {
 //======================== committee actions ========================
 
 ACTION trail::regcommittee(name committee_name, string committee_title,
-    symbol registry_symbol, map<name, name> initial_seats, name registree) {
+    symbol registry_symbol, vector<name> initial_seats, name registree) {
     //authenticate
     require_auth(registree);
 
-    //TODO: create committee
+    //open committees table, search for committee
+    committees_table committees(get_self(), registry_symbol.code().raw());
+    auto cmt = committees.find(committee_name.value);
+
+    //open accounts table, get account
+    accounts_table accounts(get_self(), registree.value);
+    auto& acct = accounts.get(registry_symbol.code().raw(), "account not found");
+
+    //initialize
+    map<name, name> new_seats;
+
+    //validate
+    check(cmt == committees.end(), "committtee already exists");
+    check(committee_title.size() <= 256, "committee title has more than 256 bytes");
+
+    for (name n : initial_seats) {
+        check(new_seats.find(n) == new_seats.end(), "seat names must be unique");
+        new_seats[n] = name(0);
+    }
+
+    //create committee
+    committees.emplace(registree, [&](auto& col) {
+        col.committee_title = committee_title;
+        col.committee_name = committee_name;
+        col.registry_symbol = registry_symbol;
+        col.seats = new_seats;
+        col.updater_acct = registree;
+        col.updater_auth = name("active");
+    });
 }
 
 ACTION trail::addseat(name committee_name, symbol registry_symbol, name new_seat_name) {
@@ -966,8 +994,15 @@ ACTION trail::addseat(name committee_name, symbol registry_symbol, name new_seat
     auto& cmt = committees.get(committee_name.value, "committee not found");
     
     //authenticate
+    require_auth(permission_level{cmt.updater_acct, cmt.updater_auth});
 
-    //TODO: add seat to committee
+    //validate
+    check(cmt.seats.find(new_seat_name) == cmt.seats.end(), "seat already exists");
+
+    //add seat to committee
+    committees.modify(cmt, same_payer, [&](auto& col) {
+        col.seats[new_seat_name] = name(0);
+    });
 }
 
 ACTION trail::removeseat(name committee_name, symbol registry_symbol, name seat_name) {
@@ -976,8 +1011,15 @@ ACTION trail::removeseat(name committee_name, symbol registry_symbol, name seat_
     auto& cmt = committees.get(committee_name.value, "committee not found");
     
     //authenticate
+    require_auth(permission_level{cmt.updater_acct, cmt.updater_auth});
 
-    //TODO: remove seat from committee
+    //validate
+    check(cmt.seats.find(seat_name) != cmt.seats.end(), "seat name not found");
+
+    //remove seat from committee
+    committees.modify(cmt, same_payer, [&](auto& col) {
+        col.seats.erase(seat_name);
+    });
 }
 
 ACTION trail::assignseat(name committee_name, symbol registry_symbol, name seat_name, name seat_holder, string memo) {
@@ -986,8 +1028,15 @@ ACTION trail::assignseat(name committee_name, symbol registry_symbol, name seat_
     auto& cmt = committees.get(committee_name.value, "committee not found");
     
     //authenticate
+    require_auth(permission_level{cmt.updater_acct, cmt.updater_auth});
 
-    //TODO: assign seat holder to seat on committee
+    //validate
+    check(cmt.seats.find(seat_name) != cmt.seats.end(), "seat name not found");
+
+    //assign seat holder to seat on committee
+    committees.modify(cmt, same_payer, [&](auto& col) {
+        col.seats[seat_name] = seat_holder;
+    });
 }
 
 ACTION trail::setupdater(name committee_name, symbol registry_symbol, name updater_account, name updater_auth) {
@@ -996,8 +1045,13 @@ ACTION trail::setupdater(name committee_name, symbol registry_symbol, name updat
     auto& cmt = committees.get(committee_name.value, "committee not found");
     
     //authenticate
+    require_auth(permission_level{cmt.updater_acct, cmt.updater_auth});
 
-    //TODO: set new committee updater
+    //set new committee updater account and updater auth
+    committees.modify(cmt, same_payer, [&](auto& col) {
+        col.updater_acct = updater_account;
+        col.updater_auth = updater_auth;
+    });
 }
 
 ACTION trail::delcommittee(name committee_name, symbol registry_symbol, string memo) {
@@ -1006,8 +1060,10 @@ ACTION trail::delcommittee(name committee_name, symbol registry_symbol, string m
     auto& cmt = committees.get(committee_name.value, "committee not found");
     
     //authenticate
+    require_auth(permission_level{cmt.updater_acct, cmt.updater_auth});
 
-    //TODO: delete committee
+    //erase committee
+    committees.erase(cmt);
 }
 
 //========== notification methods ==========

@@ -12,9 +12,6 @@
 #include <eosio/asset.hpp>
 #include <eosio/singleton.hpp>
 
-// #include <string>
-// #include <algorithm>
-
 using namespace eosio;
 using namespace std;
 
@@ -165,7 +162,7 @@ public:
 
     //registers a new committee for a token registry
     ACTION regcommittee(name committee_name, string committee_title,
-        symbol registry_symbol, map<name, name> initial_seats, name registree);
+        symbol registry_symbol, vector<name> initial_seats, name registree);
 
     //adds a committee seat
     ACTION addseat(name committee_name, symbol registry_symbol, name new_seat_name);
@@ -219,6 +216,8 @@ public:
     //validates access method
     bool valid_access_method(name access_method);
 
+    //
+
     //======================== tables ========================
 
     //scope: singleton
@@ -231,6 +230,7 @@ public:
         uint32_t min_ballot_length;
         uint32_t ballot_cooldown;
         uint16_t max_vote_receipts;
+        //TODO: map<name, asset> fees; //ballot, registry, archival
     };
     typedef singleton<name("config"), config> config_singleton;
 
