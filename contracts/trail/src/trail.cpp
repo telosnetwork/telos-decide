@@ -6,6 +6,9 @@ trail::~trail() {}
 
 //======================== admin actions ========================
 
+// IMPLMENTATION: IN PROGRESS
+// TESTING: WAITING
+
 ACTION trail::setconfig(string trail_version, asset ballot_fee, asset registry_fee, asset archival_fee,
     uint32_t min_ballot_length, uint32_t ballot_cooldown, uint16_t max_vote_receipts) {
     //authenticate
@@ -41,6 +44,9 @@ ACTION trail::setconfig(string trail_version, asset ballot_fee, asset registry_f
 
 //======================== registry actions ========================
 
+// IMPLMENTATION: IN PROGRESS
+// TESTING: WAITING
+
 ACTION trail::newregistry(name manager, asset max_supply, name access) {
     //authenticate
     require_auth(manager);
@@ -69,6 +75,7 @@ ACTION trail::newregistry(name manager, asset max_supply, name access) {
     initial_settings[name("burnable")] = false;
     initial_settings[name("reclaimable")] = false;
     initial_settings[name("stakeable")] = false;
+    initial_settings[name("unstakeable")] = false;
     initial_settings[name("maxmutable")] = false;
 
     //emplace new token registry, RAM paid by manager
@@ -292,6 +299,9 @@ ACTION trail::unlockreg(symbol registry_symbol) {
 }
 
 //======================== ballot actions ========================
+
+// IMPLMENTATION: IN PROGRESS
+// TESTING: WAITING
 
 ACTION trail::newballot(name ballot_name, name category, name publisher,  
     symbol registry_symbol, name voting_method, vector<name> initial_options) {
@@ -602,6 +612,9 @@ ACTION trail::unarchive(name ballot_name) {
 
 //======================== voter actions ========================
 
+// IMPLMENTATION: IN PROGRESS
+// TESTING: WAITING
+
 ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referrer) {
     //open registries table, get registry
     registries_table registries(get_self(), get_self().value);
@@ -807,7 +820,7 @@ ACTION trail::unstake(name voter, asset quantity) {
     auto& reg = registries.get(quantity.symbol.code().raw(), "registry not found");
 
     //validate
-    // check(reg.settings[name("stakeable")], "token is not stakeable"); //TODO: always allow unstake?
+    check(reg.settings.at(name("unstakeable")), "token is not unstakeable");
     check(is_account(voter), "voter account doesn't exist");
     check(quantity.is_valid(), "invalid amount");
     check(quantity.amount > 0, "must unstake positive amount");
@@ -820,6 +833,9 @@ ACTION trail::unstake(name voter, asset quantity) {
 }
 
 //======================== worker actions ========================
+
+// IMPLMENTATION: IN PROGRESS
+// TESTING: WAITING
 
 ACTION trail::regworker(name worker_name) {
     //authenticate
@@ -876,10 +892,23 @@ ACTION trail::claimpayment(name worker_name, symbol registry_symbol) {
     //authenticate
     require_auth(wrk.worker_name);
 
-    //TODO: calculate worker rewards, diminish shares if funds go unclaimed for too long
-    // diminish rate: 1% of payout, per day past 1 week of no claims
+    //initialize
+    asset total_tlos_payout = asset(0, TLOS_SYM);
+    auto now = time_point_sec(current_time_point()).sec_since_epoch();
 
-    //TODO: reset worker data
+    //validate
+    check(wrk.last_payment.sec_since_epoch() + 86400 > now, "can only claim payment once every 24 hours");
+    check(wrk.standing == name("good"), "must be in good standing to claim payment");
+
+    //diminish rate: 1% of payout, per day past 1 week of no claims
+    double reduced_by = ((now - (wrk.last_payment.sec_since_epoch() + 604800)) / 86400) / 100;
+
+    //reset worker data
+    workers.modify(wrk, same_payer, [&](auto& col) {
+        col.last_payment = time_point_sec(current_time_point());
+        col.rebalance_volume[registry_symbol] = asset(0, registry_symbol);
+        col.rebalance_count[registry_symbol] = uint16_t(0);
+    });
 
     //TODO: update leaderboard
 }
@@ -891,8 +920,8 @@ ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> c
 
     //open votes table, get bysymbol sec index
     votes_table votes(get_self(), voter.value);
-    auto bysymbol_idx = votes.get_index<name("bysymbol")>();
-    auto vote_sym_itr = bysymbol_idx.lower_bound(registry_symbol.code().raw());
+    auto votes_bysymbol = votes.get_index<name("bysymbol")>();
+    auto vote_sym_itr = votes_bysymbol.lower_bound(registry_symbol.code().raw());
 
     //validate
     
@@ -911,7 +940,7 @@ ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> c
 
     (count) ? remaining = *count : remaining = 1;
 
-    while (remaining > 0 && vote_sym_itr != bysymbol_idx.end()) {
+    while (remaining > 0 && vote_sym_itr != votes_bysymbol.end()) {
         //intitialize
         auto curr_vote = *vote_sym_itr;
 
@@ -949,7 +978,7 @@ ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> c
         }
 
         //update voted options
-        bysymbol_idx.modify(vote_sym_itr, same_payer, [&](auto& col) {
+        votes_bysymbol.modify(vote_sym_itr, same_payer, [&](auto& col) {
             col.options_voted = new_options_voted;
         });
 
@@ -976,35 +1005,41 @@ ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> c
 ACTION trail::cleanupvote(name voter, optional<uint16_t> count) {
     //sort votes by expiration, lowest first
     votes_table votes(get_self(), voter.value);
-    auto sorted_votes = votes.get_index<name("byexp")>(); 
-    auto sv_itr = sorted_votes.begin();
+    auto votes_byexp = votes.get_index<name("byexp")>(); 
+    auto byexp_itr = votes_byexp.begin();
 
+    //initialize
+    uint16_t cleaned = 0;
+    auto now = time_point_sec(current_time_point());
     uint16_t to_clean = 1;
 
     if (count) {
         to_clean = *count;
     }
 
-    uint16_t votes_cleaned = 0;
-    auto now = time_point_sec(current_time_point());
-
     //cleans expired votes until count reaches 0 or end of table, skips active votes
-    // while (to_clean > 0 && sv_itr->options.begin()->second.symbol == registry_symbol && sv_itr != sorted_votes.end()) {
-    //     //check if vote has expired
-    //     if (sv_itr->expiration < now) { //expired
-    //         sv_itr = sorted_votes.erase(sv_itr); //returns next iterator
-    //         to_clean--;
-    //         votes_cleaned++;
-    //     } else { //active
-    //         sv_itr++;
-    //     }
-    // }
+    while (to_clean > 0 && byexp_itr != votes_byexp.end()) {
+        //check if vote has expired
+        if (byexp_itr->expiration < now) { //expired
+            byexp_itr = votes_byexp.erase(byexp_itr); //returns next iterator
+            to_clean--;
+            cleaned++;
+
+            //TODO: update cleaned count and volume on ballot
+
+        } else { //active
+            byexp_itr++;
+        }
+    }
 
     //TODO: update worker data
     
 }
 
 //======================== committee actions ========================
+
+// IMPLMENTATION: DONE
+// TESTING: IN PROGRESS
 
 ACTION trail::regcommittee(name committee_name, string committee_title,
     symbol registry_symbol, vector<name> initial_seats, name registree) {
@@ -1122,16 +1157,43 @@ ACTION trail::delcommittee(name committee_name, symbol registry_symbol, string m
 
 //========== notification methods ==========
 
+// IMPLMENTATION: IN PROGRESS
+// TESTING: WAITING
+
 void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {
     //authenticate
+    // require_auth(eosio);
 
-    //TODO: add to VOTE balance
+    //validate
+
+    //open accounts table, search for account
+    accounts_table accounts(get_self(), from.value);
+    auto acct = accounts.find(VOTE_SYM.code().raw());
+
+    //initialize
+    asset total_staked = stake_net_quantity + stake_cpu_quantity;
+
+    //add to vote stake
+    if (acct != accounts.end()) { //account exists
+        add_stake(from, total_staked);
+    }
 }
 
 void trail::catch_undelegatebw(name from, name receiver, asset unstake_net_quantity, asset unstake_cpu_quantity) {
     //authenticate
 
-    //TODO: subtract from VOTE balance, overflow into stake if necessary
+    //open accounts table, search for account
+    accounts_table accounts(get_self(), from.value);
+    auto acct = accounts.find(VOTE_SYM.code().raw());
+
+    //initialize
+    asset total_unstaked = unstake_net_quantity + unstake_cpu_quantity;
+
+    //subtract from VOTE stake
+    //TODO: overflow into stake if necessary
+    if (acct != accounts.end()) { //account exists
+        sub_stake(from, total_unstaked);
+    }
 }
 
 void trail::catch_transfer(name from, name to, asset quantity, string memo) {
@@ -1145,11 +1207,27 @@ void trail::catch_transfer(name from, name to, asset quantity, string memo) {
             return;
         } else if (memo == "deposit") {
             //deposit into account
+            accounts_table accounts(get_self(), from.value);
+            auto acct = accounts.find(TLOS_SYM.code().raw());
+
+            if (acct == accounts.end()) { //no account
+                accounts.emplace(get_self(), [&](auto& col) {
+                    col.balance = quantity;
+                    col.staked = asset(0, TLOS_SYM);
+                });
+            } else {
+                accounts.modify(acct, same_payer, [&](auto& col) {
+                    col.balance += quantity;
+                });
+            }
         }
     }
 }
 
 //========== utility methods ==========
+
+// IMPLMENTATION: IN PROGRESS
+// TESTING: WAITING
 
 void trail::add_balance(name voter, asset quantity) {
     //open accounts table, get account
@@ -1286,35 +1364,20 @@ map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_me
         case (name("1acct1vote").value):
             //TODO: refactor so vote is always 1 whole token
             effective_amount = 1;
-            for (name n : selections) {
-                vote_mapping[n] = asset(effective_amount, registry_symbol);
-            }
             break;
         case (name("1tokennvote").value):
             effective_amount = raw_vote_weight.amount;
-            for (name n : selections) {
-                vote_mapping[n] = asset(effective_amount, registry_symbol);
-            }
             break;
         case (name("1token1vote").value):
             effective_amount = raw_vote_weight.amount / selections.size();
-            for (name n : selections) {
-                vote_mapping[n] = asset(effective_amount, registry_symbol);
-            }
             break;
         case (name("1tsquare1v").value):
             vote_amount_per = raw_vote_weight.amount / selections.size();
             effective_amount = vote_amount_per * vote_amount_per;
-            for (name n : selections) {
-                vote_mapping[n] = asset(effective_amount, registry_symbol);
-            }
             //TODO: final squaring of each option required at end of ballot
             break;
         case (name("quadratic").value):
             effective_amount = sqrtl(raw_vote_weight.amount);
-            for (name n : selections) {
-                vote_mapping[n] = asset(effective_amount, registry_symbol);
-            }
             break;
         case (name("ranked").value):
             for (name n : selections) {
@@ -1322,34 +1385,14 @@ map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_me
                 vote_mapping[n] = asset(effective_amount, registry_symbol);
                 pos++;
             }
-            break;
+            return vote_mapping;
         default:
             check(false, "calc_vote_mapping: invalid voting method");
     }
 
+    for (name n : selections) {
+        vote_mapping[n] = asset(effective_amount, registry_symbol);
+    }
+
     return vote_mapping;
 }
-
-
-
-// bool apply_rebalance(name ballot_name, asset delta, vector<name> options_to_rebalance) {
-//     ballots ballots(get_self(), get_self().value);
-//     auto& bal = ballots.get(ballot_name.value, "ballot name doesn't exist");
-//     //if expired or not VOTE, skip (rebalance doesn't erase, only recalcs votes)
-//     if (bal.voting_symbol != VOTE_SYM || now() > bal.end_time) {
-//         return false;
-//     }
-//     auto bal_ops = bal.options;
-//     //loop over options_to_rebalance, rebalance each
-//     for (auto i = options_to_rebalance.begin(); i < options_to_rebalance.end(); i++) {
-//         //get option index on ballot
-//         auto bal_opt_idx = get_option_index(*i, bal.options);
-//         //update option with vote delta
-//         bal_ops[bal_opt_idx].votes += delta;
-//     }
-//     //apply rebalance to ballot
-//     ballots.modify(bal, same_payer, [&](auto& row) {
-//         row.options = bal_ops;
-//     });
-//     return true;
-// }
