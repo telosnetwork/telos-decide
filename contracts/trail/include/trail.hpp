@@ -12,6 +12,8 @@
 #include <eosio/asset.hpp>
 #include <eosio/singleton.hpp>
 
+#include <cmath>
+
 using namespace eosio;
 using namespace std;
 
@@ -216,7 +218,15 @@ public:
     //validates access method
     bool valid_access_method(name access_method);
 
-    //
+    //updates worker rebalance data
+    void add_rebalance_work(name worker_name, symbol registry_symbol, asset volume, uint16_t count);
+
+    //updates worker clean data
+    void add_clean_work(name worker_name, name ballot_name, asset volume, uint16_t count);
+
+    //calculates vote mapping
+    map<name, asset> calc_vote_mapping(symbol registry_symbol, name voting_method, 
+    vector<name> selections,  asset raw_vote_weight);
 
     //======================== tables ========================
 
@@ -307,13 +317,13 @@ public:
     TABLE vote {
         name ballot_name;
         symbol registry_symbol;
-        map<name, asset> options;
+        map<name, asset> options_voted;
         time_point_sec expiration;
 
         uint64_t primary_key() const { return ballot_name.value; }
         uint64_t by_symbol() const { return registry_symbol.code().raw(); }
         uint64_t by_exp() const { return static_cast<uint64_t>(expiration.utc_seconds); }
-        EOSLIB_SERIALIZE(vote, (ballot_name)(registry_symbol)(options)(expiration))
+        EOSLIB_SERIALIZE(vote, (ballot_name)(registry_symbol)(options_voted)(expiration))
     };
     typedef multi_index<name("votes"), vote,
         indexed_by<name("bysymbol"), const_mem_fun<vote, uint64_t, &vote::by_symbol>>,

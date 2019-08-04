@@ -860,7 +860,9 @@ ACTION trail::unregworker(name worker_name) {
     require_auth(wrk.worker_name);
 
     //validate
-    // no validations
+    // no validations necessary
+
+    //NOTE: worker forfeits all current claim to rewards upon unregistration
 
     //erase worker
     workers.erase(wrk);
@@ -892,25 +894,77 @@ ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> c
     auto bysymbol_idx = votes.get_index<name("bysymbol")>();
     auto vote_sym_itr = bysymbol_idx.lower_bound(registry_symbol.code().raw());
 
-    //TODO: start at receipt first to expire?
+    //validate
+    
 
+    //TODO: start at receipt first to expire?
     //TODO: if ballot_name supplied, start at ballot_name instead of lower bound
 
     //initialize
+    auto now = time_point_sec(current_time_point());
     uint16_t remaining;
     uint16_t rebalanced = 0;
+    asset rebalanced_volume = asset(0, registry_symbol);
+    asset vote_weight = acct.balance;
+
+    //TODO: change vote weight source if usestake
 
     (count) ? remaining = *count : remaining = 1;
 
-    while (remaining > 0) {
+    while (remaining > 0 && vote_sym_itr != bysymbol_idx.end()) {
+        //intitialize
+        auto curr_vote = *vote_sym_itr;
 
-        //TODO: calculate vote delta (current balance - vote balance)
+        //skip if expired or not correct symbol
+        if (now > curr_vote.expiration || registry_symbol != curr_vote.registry_symbol) {
+            vote_sym_itr++; 
+            continue;
+        }
 
-        //TODO: apply delta to ballot options from vote receipt
+        //open ballots table, get ballot
+        ballots_table ballots(get_self(), get_self().value);
+        auto& bal = ballots.get(curr_vote.ballot_name.value, "ballot not found");
 
-        //TODO: apply delta to vote receipt
+        //intialize
+        map<name, asset> new_bal_options = bal.options;
+        vector<name> selected_options;
+        asset vol = asset(0, registry_symbol);
 
+        //rollback current voted options
+        //TODO: rollback in order of weight so ranked ballots aren't corrupted when rebalanced
+        for (auto i = curr_vote.options_voted.begin(); i == curr_vote.options_voted.end(); i++) {
+            new_bal_options[i->first] -= i->second;
+            selected_options.push_back(i->first);
+        }
+
+        //recalculate voted options
+        map<name, asset> new_options_voted = calc_vote_mapping(registry_symbol, bal.voting_method, 
+            selected_options, vote_weight);
+
+        //apply new voted options to ballot
+        //TODO: reapply votes in order of weight to preserve ranked votes
+        for (auto i = new_options_voted.begin(); i == new_options_voted.end(); i++) {
+            vol += curr_vote.options_voted[i->first];
+            new_bal_options[i->first] += i->second;
+        }
+
+        //update voted options
+        bysymbol_idx.modify(vote_sym_itr, same_payer, [&](auto& col) {
+            col.options_voted = new_options_voted;
+        });
+
+        //update ballot
+        ballots.modify(bal, same_payer, [&](auto& col) {
+            col.options = new_bal_options;
+        });
+
+        //update counters
+        remaining--;
         rebalanced++;
+        rebalanced_volume += vol;
+
+        //iterate vote_sym_itr
+        vote_sym_itr++;
     }
 
     //TODO: update rebalanced volume on worker data (if not a worker then skip)
@@ -1068,9 +1122,17 @@ ACTION trail::delcommittee(name committee_name, symbol registry_symbol, string m
 
 //========== notification methods ==========
 
-void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {}
+void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {
+    //authenticate
 
-void trail::catch_undelegatebw(name from, name receiver, asset unstake_net_quantity, asset unstake_cpu_quantity) {}
+    //TODO: add to VOTE balance
+}
+
+void trail::catch_undelegatebw(name from, name receiver, asset unstake_net_quantity, asset unstake_cpu_quantity) {
+    //authenticate
+
+    //TODO: subtract from VOTE balance, overflow into stake if necessary
+}
 
 void trail::catch_transfer(name from, name to, asset quantity, string memo) {
     //get initial receiver contract
@@ -1180,6 +1242,92 @@ bool trail::valid_access_method(name access_method) {
         default:
             return false;
     }
+}
+
+void trail::add_rebalance_work(name worker_name, symbol registry_symbol, asset volume, uint16_t count) {
+    //open workers table, search for worker
+    workers_table workers(get_self(), get_self().value);
+    auto wrk = workers.find(worker_name.value);
+
+    if (wrk != workers.end()) { //worker exists
+        workers.modify(wrk, same_payer, [&](auto& col) {
+            col.rebalance_volume[registry_symbol] += volume;
+            col.rebalance_count[registry_symbol] += count;
+        });
+    } else { //worker not found
+        return;
+    }
+}
+
+void trail::add_clean_work(name worker_name, name ballot_name, asset volume, uint16_t count) {
+    //open workers table, search for worker
+    workers_table workers(get_self(), get_self().value);
+    auto wrk = workers.find(worker_name.value);
+
+    if (wrk != workers.end()) { //worker exists
+        workers.modify(wrk, same_payer, [&](auto& col) {
+            col.clean_volume[ballot_name] += volume;
+            col.clean_count[ballot_name] += count;
+        });
+    } else { //worker not found
+        return;
+    }
+}
+
+map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_method, 
+    vector<name> selections,  asset raw_vote_weight) {
+    //initialize
+    map<name, asset> vote_mapping;
+    int64_t effective_amount;
+    int64_t vote_amount_per;
+    int8_t pos = 1;
+
+    switch (voting_method.value) {
+        case (name("1acct1vote").value):
+            //TODO: refactor so vote is always 1 whole token
+            effective_amount = 1;
+            for (name n : selections) {
+                vote_mapping[n] = asset(effective_amount, registry_symbol);
+            }
+            break;
+        case (name("1tokennvote").value):
+            effective_amount = raw_vote_weight.amount;
+            for (name n : selections) {
+                vote_mapping[n] = asset(effective_amount, registry_symbol);
+            }
+            break;
+        case (name("1token1vote").value):
+            effective_amount = raw_vote_weight.amount / selections.size();
+            for (name n : selections) {
+                vote_mapping[n] = asset(effective_amount, registry_symbol);
+            }
+            break;
+        case (name("1tsquare1v").value):
+            vote_amount_per = raw_vote_weight.amount / selections.size();
+            effective_amount = vote_amount_per * vote_amount_per;
+            for (name n : selections) {
+                vote_mapping[n] = asset(effective_amount, registry_symbol);
+            }
+            //TODO: final squaring of each option required at end of ballot
+            break;
+        case (name("quadratic").value):
+            effective_amount = sqrtl(raw_vote_weight.amount);
+            for (name n : selections) {
+                vote_mapping[n] = asset(effective_amount, registry_symbol);
+            }
+            break;
+        case (name("ranked").value):
+            for (name n : selections) {
+                effective_amount = raw_vote_weight.amount / pos;
+                vote_mapping[n] = asset(effective_amount, registry_symbol);
+                pos++;
+            }
+            break;
+        default:
+            check(false, "calc_vote_mapping: invalid voting method");
+    }
+
+    return vote_mapping;
 }
 
 
