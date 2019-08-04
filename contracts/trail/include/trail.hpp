@@ -34,7 +34,7 @@ public:
 
     //registry access: public, private, invite, membership?
 
-    //ballot settings: lightballot, revotable, usestake
+    //ballot settings: lightballot, revotable, votestake
 
     //ballot statuses: setup, voting, closed, cancelled, archived
 
@@ -132,8 +132,11 @@ public:
     //casts a vote on a ballot
     ACTION castvote(name voter, name ballot_name, vector<name> options);
 
-    //retracts a vote from a ballot
-    ACTION unvote(name voter, name ballot_name);
+    //TODDO: unvotes a single option
+    // ACTION unvote(name voter, name ballot_name, name option_to_unvote);
+
+    //rollback all votes on a ballot
+    ACTION unvoteall(name voter, name ballot_name);
 
     //stake tokens from balance to staked balance
     ACTION stake(name voter, asset quantity);
@@ -291,7 +294,7 @@ public:
         map<name, asset> options; //option name -> total weighted votes
 
         symbol registry_symbol; //token registry used for counting votes
-        asset total_votes; //total amount of raw votes (pre-weighted)
+        asset total_votes; //total amount of raw votes (pre-weighted) //TODO: remove
         uint32_t total_voters; //unique voters who have voted on ballot
         map<name, bool> settings; //setting name -> on/off
 

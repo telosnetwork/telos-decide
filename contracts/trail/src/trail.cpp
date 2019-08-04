@@ -339,7 +339,7 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
     //intitial settings
     new_settings[name("lightballot")] = false;
     new_settings[name("revotable")] = true;
-    new_settings[name("usestake")] = false;
+    new_settings[name("votestake")] = true;
 
     //emplace new ballot
     ballots.emplace(publisher, [&](auto& col){
@@ -681,7 +681,7 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     //authenticate
     require_auth(voter);
 
-    //TODO: first attempt to clean up 1 old vote?
+    //TODO: first attempt to clean up 1 old vote
 
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -695,35 +695,61 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     votes_table votes(get_self(), voter.value);
     auto v_itr = votes.find(ballot_name.value);
 
-    //TODO: get vote source: balance, stake, or both
+    //initialize
+    auto now = time_point_sec(current_time_point());
+    asset raw_vote_weight = asset(0, bal.registry_symbol);
+    uint32_t new_voter = 0;
+    map<name, asset> temp_bal_options = bal.options;
+
+    if (bal.settings.at(name("votestake"))) { //use stake
+        raw_vote_weight = acct.staked;
+    } else { //use balance
+        raw_vote_weight = acct.balance;
+    }
 
     //validate
-    auto now = time_point_sec(current_time_point());
     check(bal.status == name("voting"), "ballot status is must be in voting mode to cast vote");
     check(now >= bal.begin_time && now <= bal.end_time, "vote must occur between ballot begin and end times");
-    check(acct.balance.amount > int64_t(0), "cannot vote with a balance of 0");
     check(options.size() <= bal.max_options, "cannot vote for more than ballot's max options");
-    //TODO: check option(s) exists
+    check(raw_vote_weight.amount > 0, "must vote with a positive amount");
 
-    if (v_itr != votes.end()) { //vote already exists
+    //check if vote already exists
+    if (v_itr != votes.end()) {
+        //initialize
+        auto v = *v_itr;
 
         //validate
         check(bal.settings.at(name("revotable")), "ballot is not revotable");
+        
+        //rollback old vote
+        for (auto i = v.options_voted.begin(); i == v.options_voted.end(); i++) {
+            //TODO: check option exists to rollback
 
-        //TODO: undo old vote
+            temp_bal_options[i->first] -= i->second;
+        }
 
-        //TODO: apply new vote
-
-    } else { //new vote
-
-        //validate
-
-        //TODO: apply new vote
-
+        //update
+        new_voter = 1;
     }
+
+    //calc new vote mapping
+    auto new_options_voted = calc_vote_mapping(bal.registry_symbol, bal.voting_method, 
+    options, raw_vote_weight);
+
+    //apply new votes to 
+    for (auto i = new_options_voted.begin(); i == new_options_voted.end(); i++) {
+        temp_bal_options[i->first] += i->second;
+    }
+
+    //update ballot options
+    ballots.modify(bal, same_payer, [&](auto& col) {
+        col.options = temp_bal_options;
+        col.total_voters += new_voter;
+    });
+
 }
 
-ACTION trail::unvote(name voter, name ballot_name) {
+ACTION trail::unvoteall(name voter, name ballot_name) {
     //authenticate
     require_auth(voter);
 
@@ -739,55 +765,21 @@ ACTION trail::unvote(name voter, name ballot_name) {
     accounts_table accounts(get_self(), voter.value);
     auto& acct = accounts.get(bal.registry_symbol.code().raw(), "account not found");
 
-    // auto bal_opt_idx = get_option_index(option, bal.options);
-    // auto new_voted_options = v.option_names;
-    // bool found = false;
+    //initialize
+    map<name, asset> temp_bal_options = bal.options;
+    auto now = time_point_sec(current_time_point());
 
-    // for (auto opt_itr = new_voted_options.begin(); opt_itr < new_voted_options.end(); opt_itr++) {
-    //     if (*opt_itr == option) {
-    //         new_voted_options.erase(opt_itr);
-    //         found = true;
-    //         break;
-    //     }
-    // }
+    //validate
+    check(bal.status == name("voting"), "ballot must be in voting mode to unvote");
+    check(now >= bal.begin_time && now <= bal.end_time, "must unvote between begin and end time");
 
-    // //validate
-    // check(bal.status == OPEN, "ballot status is not open for voting");
-    // check(now() >= bal.begin_time && now() <= bal.end_time, "must unvote between ballot's begin and end time");
-    // check(found, "option not found on vote");
-    // check(bal_opt_idx != -1, "option not found on ballot");
+    //rollback current options voted
+    for (auto i = v.options_voted.begin(); i != v.options_voted.end(); i++) {
+        //TODO: check voted option still exists on ballot
 
-    // if (new_voted_options.size() > 0) { //votes for ballot still remain
-
-    //     auto new_bal_options = bal.options;
-    //     new_bal_options[bal_opt_idx].votes -= v.amount;
-        
-    //     //remove option from vote
-    //     votes.modify(v, same_payer, [&](auto& row) {
-    //         row.option_names = new_voted_options;
-    //     });
-
-    //     //lower option votes by amount
-    //     ballots.modify(bal, same_payer, [&](auto& row) {
-    //         row.options = new_bal_options;
-    //     });
-
-    // } else { //unvoted last option
-
-    //     //erase vote
-    //     votes.erase(v);
-
-    //     //decrement bal.unique_voters;
-    //     ballots.modify(bal, same_payer, [&](auto& row) {
-    //         row.unique_voters -= 1;
-    //     });
-
-    //     //decrement num_votes on account
-    //     accounts.modify(acc, same_payer, [&](auto& row) {
-    //         row.num_votes -= 1;
-    //     });
-
-    // }
+        temp_bal_options[i->first] -= i->second;
+    }
+    
 }
 
 ACTION trail::stake(name voter, asset quantity) {
@@ -1157,8 +1149,8 @@ ACTION trail::delcommittee(name committee_name, symbol registry_symbol, string m
 
 //========== notification methods ==========
 
-// IMPLMENTATION: IN PROGRESS
-// TESTING: WAITING
+// IMPLMENTATION: DONE
+// TESTING: IN PROGRESS
 
 void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {
     //authenticate
@@ -1396,3 +1388,5 @@ map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_me
 
     return vote_mapping;
 }
+
+
