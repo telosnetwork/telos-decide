@@ -6,9 +6,6 @@ trail::~trail() {}
 
 //======================== admin actions ========================
 
-// IMPLMENTATION: IN PROGRESS
-// TESTING: WAITING
-
 ACTION trail::setconfig(string trail_version, asset ballot_fee, asset registry_fee, asset archival_fee,
     uint32_t min_ballot_length, uint32_t ballot_cooldown, uint16_t max_vote_receipts) {
     //authenticate
@@ -43,9 +40,6 @@ ACTION trail::setconfig(string trail_version, asset ballot_fee, asset registry_f
 }
 
 //======================== registry actions ========================
-
-// IMPLMENTATION: IN PROGRESS
-// TESTING: WAITING
 
 ACTION trail::newregistry(name manager, asset max_supply, name access) {
     //authenticate
@@ -301,13 +295,13 @@ ACTION trail::unlockreg(symbol registry_symbol) {
 
 //======================== ballot actions ========================
 
-// IMPLMENTATION: IN PROGRESS
-// TESTING: WAITING
-
 ACTION trail::newballot(name ballot_name, name category, name publisher,  
     symbol registry_symbol, name voting_method, vector<name> initial_options) {
     //authenticate
     require_auth(publisher);
+
+    config_singleton configs(get_self(), get_self().value);
+    auto conf = configs.get();
 
     //open registries table, get registry
     registries_table registries(get_self(), get_self().value);
@@ -321,7 +315,10 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
     ballots_table ballots(get_self(), get_self().value);
     auto bal = ballots.find(ballot_name.value);
 
-    //TODO: charge ballot listing fee to account balance
+    //charge ballot listing fee to publisher
+    require_fee(publisher, conf.ballot_listing_fee);
+
+    //TODO: update open_ballots on registry
 
     //validate
     check(bal == ballots.end(), "ballot name already exists");
@@ -613,9 +610,6 @@ ACTION trail::unarchive(name ballot_name) {
 
 //======================== voter actions ========================
 
-// IMPLMENTATION: IN PROGRESS
-// TESTING: WAITING
-
 ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referrer) {
     //open registries table, get registry
     registries_table registries(get_self(), get_self().value);
@@ -833,9 +827,6 @@ ACTION trail::unstake(name voter, asset quantity) {
 
 //======================== worker actions ========================
 
-// IMPLMENTATION: IN PROGRESS
-// TESTING: WAITING
-
 ACTION trail::regworker(name worker_name) {
     //authenticate
     require_auth(worker_name);
@@ -1037,9 +1028,6 @@ ACTION trail::cleanupvote(name voter, optional<uint16_t> count) {
 
 //======================== committee actions ========================
 
-// IMPLMENTATION: DONE
-// TESTING: IN PROGRESS
-
 ACTION trail::regcommittee(name committee_name, string committee_title,
     symbol registry_symbol, vector<name> initial_seats, name registree) {
     //authenticate
@@ -1156,9 +1144,6 @@ ACTION trail::delcommittee(name committee_name, symbol registry_symbol, string m
 
 //========== notification methods ==========
 
-// IMPLMENTATION: DONE
-// TESTING: IN PROGRESS
-
 void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {
     //authenticate
     // require_auth(eosio);
@@ -1175,6 +1160,7 @@ void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity,
     //add to vote stake
     if (acct != accounts.end()) { //account exists
         add_stake(from, total_staked);
+        //TODO: update VOTE supply
     }
 }
 
@@ -1192,6 +1178,7 @@ void trail::catch_undelegatebw(name from, name receiver, asset unstake_net_quant
     //TODO: overflow into stake if necessary
     if (acct != accounts.end()) { //account exists
         sub_stake(from, total_unstaked);
+        //TODO: update VOTE supply
     }
 }
 
@@ -1224,9 +1211,6 @@ void trail::catch_transfer(name from, name to, asset quantity, string memo) {
 }
 
 //========== utility methods ==========
-
-// IMPLMENTATION: IN PROGRESS
-// TESTING: WAITING
 
 void trail::add_balance(name voter, asset quantity) {
     //open accounts table, get account
@@ -1351,6 +1335,20 @@ void trail::add_clean_work(name worker_name, name ballot_name, asset volume, uin
     }
 }
 
+void trail::require_fee(name account_name, asset fee) {
+    //open accounts table, get TLOS balance
+    accounts_table tlos_accounts(get_self(), account_name.value);
+    auto& tlos_acct = tlos_accounts.get(TLOS_SYM.code().raw(), "TLOS balance not found");
+
+    //validate
+    check(tlos_acct.balance >= fee, "insufficient funds to cover fee");
+
+    //charge fee
+    tlos_accounts.modify(tlos_acct, same_payer, [&](auto& col) {
+        col.balance -= fee;
+    });
+}
+
 map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_method, 
     vector<name> selections,  asset raw_vote_weight) {
     //initialize
@@ -1395,5 +1393,3 @@ map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_me
 
     return vote_mapping;
 }
-
-

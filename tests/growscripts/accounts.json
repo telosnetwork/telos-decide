@@ -25,6 +25,37 @@
                         }
                     },
                     {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccounta",
+                            "quantity": "1250.0000 TLOS",
+                            "memo": "issue testaccounta"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "transfer",
+                        "authorization": [
+                            {
+                                "actor": "testaccounta",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccounta",
+                            "to": "trailservice",
+                            "quantity": "450.0000 TLOS",
+                            "memo": "deposit"
+                        }
+                    },
+                    {
                         "account": "trailservice",
                         "name": "newregistry",
                         "authorization": [
@@ -44,13 +75,43 @@
                         "name": "regvoter",
                         "authorization": [
                             {
+                                "actor": "trailservice",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "trailservice",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "togglereg",
+                        "authorization": [
+                            {
+                                "actor": "trailservice",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "registry_symbol": "4,VOTE",
+                            "setting_name": "stakeable"
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
                                 "actor": "testaccounta",
                                 "permission": "active"
                             }
                         ],
                         "data": {
                             "voter": "testaccounta",
-                            "registry_symbol": "4,VOTE"
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
                         }
                     },
                     {
@@ -64,7 +125,8 @@
                         ],
                         "data": {
                             "voter": "testaccountb",
-                            "registry_symbol": "4,VOTE"
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
                         }
                     },
                     {
@@ -78,7 +140,8 @@
                         ],
                         "data": {
                             "voter": "testaccountc",
-                            "registry_symbol": "4,VOTE"
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
                         }
                     }
                 ]
@@ -86,15 +149,53 @@
             "actions": [
                 {
                     "account": "trailservice",
-                    "name": "",
+                    "name": "newballot",
                     "authorization": [
                         {
-                            "actor": "",
+                            "actor": "testaccounta",
                             "permission": "active"
                         }
                     ],
                     "data": {
-                        "": ""
+                        "ballot_name": "trailballot1",
+                        "category": "poll",
+                        "publisher": "testaccounta",
+                        "registry_symbol": "4,VOTE",
+                        "voting_method": "1acct1vote",
+                        "initial_options": [
+                            "yes",
+                            "no"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "editdetails",
+                    "authorization": [
+                        {
+                            "actor": "testaccounta",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "ballot_name": "trailballot1",
+                        "title": "Make a Trail App?",
+                        "description": "Vote yes, no, or maybe to whether you think Telos should make a Trail App.",
+                        "ballot_info": "https://trail.telosfoundation.io"
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "addoption",
+                    "authorization": [
+                        {
+                            "actor": "testaccounta",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "ballot_name": "trailballot1",
+                        "new_option_name": "maybe"
                     }
                 }
             ],
@@ -122,13 +223,6 @@
             }
         },
         {
-            "name": "eosio.trail",
-            "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
-            }
-        },
-        {
             "name": "eosio.amend",
             "keypair": {
                 "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
@@ -137,7 +231,6 @@
         },
         {
             "name": "eosio.saving",
-            "contract": "eosio.saving",
             "keypair": {
                 "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
                 "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
@@ -166,6 +259,13 @@
         },
         {
             "name": "eosio.ram",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.rex",
             "keypair": {
                 "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
                 "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
@@ -369,13 +469,6 @@
         },
         {
             "name": "testaccountz",
-            "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
-            }
-        },
-        {
-            "name": "sandbox",
             "keypair": {
                 "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
                 "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"

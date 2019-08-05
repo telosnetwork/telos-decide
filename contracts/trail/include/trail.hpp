@@ -40,6 +40,8 @@ public:
 
     //voting methods: 1acct1vote, 1tokennvote, 1token1vote, 1tsquare1v, quadratic, ranked
 
+    //ballot categories: proposal, referendum, election, poll, leaderboard
+
     //======================== admin actions ========================
 
     //sets new config singleton
@@ -226,6 +228,9 @@ public:
 
     //updates worker clean data
     void add_clean_work(name worker_name, name ballot_name, asset volume, uint16_t count);
+
+    //charges a fee to a TLOS balance
+    void require_fee(name account_name, asset fee);
 
     //calculates vote mapping
     map<name, asset> calc_vote_mapping(symbol registry_symbol, name voting_method, 
