@@ -41,6 +41,36 @@
                     },
                     {
                         "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountb",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountb"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountc",
+                            "quantity": "25000.0000 TLOS",
+                            "memo": "issue testaccountc"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
                         "name": "transfer",
                         "authorization": [
                             {
@@ -142,6 +172,102 @@
                             "voter": "testaccountc",
                             "registry_symbol": "4,VOTE",
                             "referrer": null
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccounta",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccounta",
+                            "receiver": "testaccounta",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccounta",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccounta",
+                            "receiver": "testaccounta",
+                            "stake_net_quantity": "5.0000 TLOS",
+                            "stake_cpu_quantity": "495.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountb",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountb",
+                            "receiver": "testaccountb",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountb",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountb",
+                            "receiver": "testaccountb",
+                            "stake_net_quantity": "100.0000 TLOS",
+                            "stake_cpu_quantity": "2900.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountc",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountc",
+                            "receiver": "testaccountc",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountc",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountc",
+                            "receiver": "testaccountc",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "19500.0000 TLOS",
+                            "transfer": false
                         }
                     }
                 ]

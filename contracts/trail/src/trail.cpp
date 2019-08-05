@@ -1145,10 +1145,7 @@ ACTION trail::delcommittee(name committee_name, symbol registry_symbol, string m
 //========== notification methods ==========
 
 void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {
-    //authenticate
-    // require_auth(eosio);
-
-    //validate
+    //validate (softfail)
 
     //open accounts table, search for account
     accounts_table accounts(get_self(), from.value);
@@ -1159,7 +1156,7 @@ void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity,
 
     //add to vote stake
     if (acct != accounts.end()) { //account exists
-        add_stake(from, total_staked);
+        add_stake(from, asset(total_staked.amount, VOTE_SYM));
         //TODO: update VOTE supply
     }
 }
@@ -1177,7 +1174,7 @@ void trail::catch_undelegatebw(name from, name receiver, asset unstake_net_quant
     //subtract from VOTE stake
     //TODO: overflow into stake if necessary
     if (acct != accounts.end()) { //account exists
-        sub_stake(from, total_unstaked);
+        // sub_stake(from, total_unstaked);
         //TODO: update VOTE supply
     }
 }
