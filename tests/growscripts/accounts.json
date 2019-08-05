@@ -326,8 +326,8 @@
                 }
             ],
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         }
     ],
@@ -336,268 +336,268 @@
             "name": "eosio.token",
             "contract": "eosio.token",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "eosio.msig",
             "contract": "eosio.msig",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "eosio.amend",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "eosio.saving",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "eosio.arb",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "eosio.bpay",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "eosio.names",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "eosio.ram",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "eosio.rex",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "eosio.ramfee",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "eosio.stake",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "eosio.vpay",
             "keypair": {
-                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
-                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
             }
         },
         {
             "name": "testaccounta",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountb",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountc",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountd",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccounte",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountf",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountg",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccounth",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccounti",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountk",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountj",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountl",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountm",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountn",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccounto",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountp",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountq",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountr",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccounts",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountt",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountu",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountv",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountw",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountx",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccounty",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         },
         {
             "name": "testaccountz",
             "keypair": {
-                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
-                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
             }
         }
     ]
