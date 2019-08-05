@@ -1,0 +1,385 @@
+{
+    "post-accounts": [
+        {
+            "name": "trailservice",
+            "contract": {
+                "path": "/Users/stephen/Desktop/trail-service/contracts/build/trail",
+                "init": [
+                    {
+                        "account": "trailservice",
+                        "name": "setconfig",
+                        "authorization": [
+                            {
+                                "actor": "trailservice",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "trail_version": "v2.0.0-RFC1",
+                            "ballot_fee": "15.0000 TLOS",
+                            "registry_fee": "250.0000 TLOS",
+                            "archival_fee": "25.0000 TLOS",
+                            "min_ballot_length": 86400,
+                            "ballot_cooldown": 432000,
+                            "max_vote_receipts": 51
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "newregistry",
+                        "authorization": [
+                            {
+                                "actor": "trailservice",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "manager": "trailservice",
+                            "max_supply": "10000000000.0000 VOTE",
+                            "access": "public"
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccounta",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccounta",
+                            "registry_symbol": "4,VOTE"
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountb",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountb",
+                            "registry_symbol": "4,VOTE"
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountc",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountc",
+                            "registry_symbol": "4,VOTE"
+                        }
+                    }
+                ]
+            },
+            "actions": [
+                {
+                    "account": "trailservice",
+                    "name": "",
+                    "authorization": [
+                        {
+                            "actor": "",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "": ""
+                    }
+                }
+            ],
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        }
+    ],
+    "pre-accounts": [
+        {
+            "name": "eosio.token",
+            "contract": "eosio.token",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.msig",
+            "contract": "eosio.msig",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.trail",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.amend",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.saving",
+            "contract": "eosio.saving",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.arb",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.bpay",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.names",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.ram",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.ramfee",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.stake",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "eosio.vpay",
+            "keypair": {
+                "private": "5JQdVG7Juyn5F9NBJVz5MRC7njEb4Cmz63NhqTyozFr5tEHBSUp",
+                "public": "EOS6fMCSqeKsP6YQmAvfRXAuGvC8thU7bR7DxhiDC7sEvC2uxPTCE"
+            }
+        },
+        {
+            "name": "testaccounta",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountb",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountc",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountd",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccounte",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountf",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountg",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccounth",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccounti",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountk",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountj",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountl",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountm",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountn",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccounto",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountp",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountq",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountr",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccounts",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountt",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountu",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountv",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountw",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountx",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccounty",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "testaccountz",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        },
+        {
+            "name": "sandbox",
+            "keypair": {
+                "public": "EOS5mUKpkzRFQjDvVg76KkTpdq1f7rHwAWMKxxijA1SSw8bSXJrfK",
+                "private": "5Hyn6qkKYmU7HUEKhFwtQXwgw88TioE78wDq4D3kk9Fjej6pxoo"
+            }
+        }
+    ]
+}

@@ -93,6 +93,7 @@ ACTION trail::newregistry(name manager, asset max_supply, name access) {
         col.rebalanced_volume = asset(0, max_supply.symbol);
         col.rebalanced_count = uint32_t(0);
     });
+
 }
 
 ACTION trail::togglereg(symbol registry_symbol, name setting_name) {
@@ -626,26 +627,32 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
 
     //validate
     check(acct == accounts.end(), "voter already exists");
-    check(registry_symbol != symbol("TLOS", 4), "cannot open a TLOS balance");
+    check(registry_symbol != symbol("TLOS", 4), "cannot register as TLOS voter, use VOTE instead");
 
+    //initialize
     name ram_payer = voter;
 
     //authenticate
     switch (reg.access.value) {
         case (name("public").value):
             require_auth(voter);
+            break;
         case (name("private").value):
             require_auth(reg.manager);
+            break;
         case (name("invite").value):
             if (referrer) {
                 name ref = *referrer;
                 require_auth(ref);
+                //TODO: check referrer has a balance
                 ram_payer = ref;
             }
+            break;
         case (name("membership").value):
             //inline sent from trailservice@membership
             require_auth(permission_level{get_self(), name("membership")});
             ram_payer = get_self();
+            break;
         default:
             check(false, "invalid access method. contact registry manager.");
     }
@@ -698,7 +705,7 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     //initialize
     auto now = time_point_sec(current_time_point());
     asset raw_vote_weight = asset(0, bal.registry_symbol);
-    uint32_t new_voter = 0;
+    uint32_t new_voter = 1;
     map<name, asset> temp_bal_options = bal.options;
 
     if (bal.settings.at(name("votestake"))) { //use stake
@@ -713,7 +720,7 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     check(options.size() <= bal.max_options, "cannot vote for more than ballot's max options");
     check(raw_vote_weight.amount > 0, "must vote with a positive amount");
 
-    //check if vote already exists
+    //rollback if vote already exists
     if (v_itr != votes.end()) {
         //initialize
         auto v = *v_itr;
@@ -724,12 +731,12 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
         //rollback old vote
         for (auto i = v.options_voted.begin(); i == v.options_voted.end(); i++) {
             //TODO: check option exists to rollback
-
+            //TODO: rollback in order of weight so ranked votes aren't corrupted
             temp_bal_options[i->first] -= i->second;
         }
 
         //update
-        new_voter = 1;
+        new_voter = 0;
     }
 
     //calc new vote mapping

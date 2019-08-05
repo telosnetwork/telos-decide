@@ -18,7 +18,7 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 * `Optional Light Ballots`
 
-    Light ballots disable the on-chain vote tracking portion of the voting process - this allows for developers to track votes in an off-chain database that is built by an Iris or Demux style service instead. 
+    Light ballots disable the on-chain vote tracking portion of the voting process - this allows for developers to track votes in an off-chain database that is built by an [Iris](https://github.com/CALEOS/iris-client) or [Demux](https://github.com/EOSIO/demux-js) style service instead. 
     
     This option enables Trail to power vastly more voting services by saving RAM costs for both the platform and voters, while at the same time retaining the complete traceability and auditability benefits offered by the blockchain.
 
