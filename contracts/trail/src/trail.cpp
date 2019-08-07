@@ -545,6 +545,8 @@ ACTION trail::closeballot(name ballot_name, bool post_results) {
         col.status = name("closed");
     });
 
+    //TODO: perform 1tokensquare1v final sqrt() here
+
     //if post_results true, send postresults inline to self
     if (post_results) {
         action(permission_level{get_self(), name("active")}, name("trailservice"), name("postresults"), make_tuple(
