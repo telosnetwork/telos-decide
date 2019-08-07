@@ -545,7 +545,20 @@ ACTION trail::closeballot(name ballot_name, bool post_results) {
         col.status = name("closed");
     });
 
-    //TODO: perform 1tokensquare1v final sqrt() here
+    //perform 1tokensquare1v final sqrt() here
+    if (bal.voting_method == name("1tsquare1v")) {
+        map<name, asset> squared_options = bal.options;
+
+        //square root total votes on each option
+        for (auto i = squared_options.begin(); i != squared_options.end(); i++) {
+            squared_options[i->first] = asset(sqrtl(i->second.amount), bal.registry_symbol);
+        }
+
+        //update vote counts
+        ballots.modify(bal, same_payer, [&](auto& col) {
+            col.options = squared_options;
+        });
+    }
 
     //if post_results true, send postresults inline to self
     if (post_results) {
@@ -1425,7 +1438,6 @@ map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_me
         case (name("1tsquare1v").value):
             vote_amount_per = raw_vote_weight.amount / selections.size();
             effective_amount = vote_amount_per * vote_amount_per;
-            //TODO: final squaring of each option required at end of ballot
             break;
         case (name("quadratic").value):
             effective_amount = sqrtl(raw_vote_weight.amount);
