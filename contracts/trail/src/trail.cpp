@@ -477,6 +477,7 @@ ACTION trail::readyballot(name ballot_name, time_point_sec end_time) {
     check(bal.options.size() >= 2, "ballot must have at least 2 options");
     check(bal.status == name("setup"), "ballot must be in setup mode to ready");
     check(end_time.sec_since_epoch() - now.sec_since_epoch() >= conf.min_ballot_length, "ballot must be open for at least 1 day");
+    check(end_time.sec_since_epoch() > now.sec_since_epoch(), "end time must be in the future");
 
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.status = name("voting");
@@ -713,6 +714,7 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     check(now >= bal.begin_time && now <= bal.end_time, "vote must occur between ballot begin and end times");
     check(options.size() <= bal.max_options, "cannot vote for more than ballot's max options");
     check(raw_vote_weight.amount > 0, "must vote with a positive amount");
+    //TODO: check all voter's options exist in ballot
 
     //rollback if vote already exists
     if (v_itr != votes.end()) {
@@ -723,9 +725,10 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
         check(bal.settings.at(name("revotable")), "ballot is not revotable");
         
         //rollback old vote
-        for (auto i = v.options_voted.begin(); i == v.options_voted.end(); i++) {
+        for (auto i = v.options_voted.begin(); i != v.options_voted.end(); i++) {
             //TODO: check option exists to rollback
             //TODO: rollback in order of weight so ranked votes aren't corrupted
+
             temp_bal_options[i->first] -= i->second;
         }
 
@@ -734,19 +737,34 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     }
 
     //calc new vote mapping
-    auto new_options_voted = calc_vote_mapping(bal.registry_symbol, bal.voting_method, 
+    auto new_votes = calc_vote_mapping(bal.registry_symbol, bal.voting_method, 
     options, raw_vote_weight);
 
-    //apply new votes to 
-    for (auto i = new_options_voted.begin(); i == new_options_voted.end(); i++) {
+    //apply new votes to ballot options
+    for (auto i = new_votes.begin(); i != new_votes.end(); i++) {
         temp_bal_options[i->first] += i->second;
     }
 
-    //update ballot options
+    //update ballot
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.options = temp_bal_options;
         col.total_voters += new_voter;
     });
+
+    //update existing votes, or emplace votes if new
+    if (new_voter == 1) {
+        votes.emplace(voter, [&](auto& col) {
+            col.ballot_name = ballot_name;
+            col.registry_symbol = bal.registry_symbol;
+            col.options_voted = new_votes;
+            col.expiration = bal.end_time;
+        });
+    } else {
+        //update votes
+        votes.modify(v_itr, same_payer, [&](auto& col) {
+            col.options_voted = new_votes;
+        });
+    }
 
 }
 
@@ -780,6 +798,15 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
 
         temp_bal_options[i->first] -= i->second;
     }
+
+    //update ballot
+    ballots.modify(bal, same_payer, [&](auto& col) {
+        col.options = temp_bal_options;
+        col.total_voters -= 1;
+    });
+
+    //erase old votes
+    votes.erase(v);
     
 }
 
@@ -1357,7 +1384,7 @@ map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_me
     switch (voting_method.value) {
         case (name("1acct1vote").value):
             //TODO: refactor so vote is always 1 whole token
-            effective_amount = 1;
+            effective_amount = 10000;
             break;
         case (name("1tokennvote").value):
             effective_amount = raw_vote_weight.amount;

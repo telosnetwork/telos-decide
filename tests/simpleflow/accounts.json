@@ -19,8 +19,8 @@
                             "ballot_fee": "15.0000 TLOS",
                             "registry_fee": "250.0000 TLOS",
                             "archival_fee": "25.0000 TLOS",
-                            "min_ballot_length": 86400,
-                            "ballot_cooldown": 432000,
+                            "min_ballot_length": 60,
+                            "ballot_cooldown": 60,
                             "max_vote_receipts": 51
                         }
                     },
@@ -322,6 +322,102 @@
                     "data": {
                         "ballot_name": "trailballot1",
                         "new_option_name": "maybe"
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "readyballot",
+                    "authorization": [
+                        {
+                            "actor": "testaccounta",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "ballot_name": "trailballot1",
+                        "end_time": "2019-08-07T18:58:00"
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountb",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountb",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "yes"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountc",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountc",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "no"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountc",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountc",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "yes"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccounta",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccounta",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "maybe"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "unvoteall",
+                    "authorization": [
+                        {
+                            "actor": "testaccounta",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccounta",
+                        "ballot_name": "trailballot1"
                     }
                 }
             ],
