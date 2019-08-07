@@ -498,20 +498,6 @@
                             "referrer": null
                         }
                     },
-                    {
-                        "account": "trailservice",
-                        "name": "togglereg",
-                        "authorization": [
-                            {
-                                "actor": "trailservice",
-                                "permission": "active"
-                            }
-                        ],
-                        "data": {
-                            "registry_symbol": "4,VOTE",
-                            "setting_name": "stakeable"
-                        }
-                    },
 
 
 
@@ -1846,7 +1832,7 @@
                     ],
                     "data": {
                         "ballot_name": "trailballot1",
-                        "end_time": "2019-08-07T21:00:00"
+                        "end_time": "2019-08-07T21:15:00"
                     }
                 },
 

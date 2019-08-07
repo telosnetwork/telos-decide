@@ -547,7 +547,7 @@ ACTION trail::closeballot(name ballot_name, bool post_results) {
 
     //if post_results true, send postresults inline to self
     if (post_results) {
-        action(permission_level{get_self(), name("postresults")}, name("trailservice"), name("postresults"), make_tuple(
+        action(permission_level{get_self(), name("active")}, name("trailservice"), name("postresults"), make_tuple(
             ballot_name, //ballot_name
             bal.options, //results
             bal.voting_method, //voting_method
@@ -561,7 +561,8 @@ ACTION trail::postresults(name ballot_name, map<name, asset> final_results,
     name voting_method, asset total_votes, uint32_t total_voters) {
 
     //authenticate
-    require_auth(permission_level{get_self(), name("postresults")});
+    //TODO: require_auth(permission_level{get_self(), name("postresults")});
+    require_auth(get_self());
 
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -656,6 +657,11 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
     accounts.emplace(ram_payer, [&](auto& col) {
         col.balance = asset(0, registry_symbol);
         col.staked = asset(0, registry_symbol);
+    });
+
+    //update registry
+    registries.modify(reg, same_payer, [&](auto& col) {
+        col.voters += 1;
     });
 }
 
@@ -1184,7 +1190,19 @@ void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity,
     //add to vote stake
     if (acct != accounts.end()) { //account exists
         add_stake(from, asset(total_staked.amount, VOTE_SYM));
-        //TODO: update VOTE supply
+        
+        //open registries table, search for registry
+        registries_table registries(get_self(), get_self().value);
+        auto reg = registries.find(VOTE_SYM.code().raw());
+
+        //check if registry exists (should always be true)
+        if (reg != registries.end()) {
+            registries.modify(*reg, same_payer, [&](auto& col) {
+                col.supply += asset(total_staked.amount, VOTE_SYM);
+            });
+        }
+
+        //TODO: check that staked VOTE == staked TLOS
     }
 }
 
@@ -1199,10 +1217,20 @@ void trail::catch_undelegatebw(name from, name receiver, asset unstake_net_quant
     asset total_unstaked = unstake_net_quantity + unstake_cpu_quantity;
 
     //subtract from VOTE stake
-    //TODO: overflow into stake if necessary
+    //TODO: overflow into balance if necessary (not applicable for VOTE)
     if (acct != accounts.end()) { //account exists
-        // sub_stake(from, total_unstaked);
-        //TODO: update VOTE supply
+        sub_stake(from, total_unstaked);
+
+        //open registries table, search for registry
+        registries_table registries(get_self(), get_self().value);
+        auto reg = registries.find(VOTE_SYM.code().raw());
+
+        //check if registry exists (should always be true)
+        if (reg != registries.end()) {
+            registries.modify(*reg, same_payer, [&](auto& col) {
+                col.supply -= asset(total_unstaked.amount, VOTE_SYM);
+            });
+        }
     }
 }
 
