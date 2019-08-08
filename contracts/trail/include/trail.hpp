@@ -118,7 +118,7 @@ public:
 
     //posts ballot results and complete
     ACTION postresults(name ballot_name, map<name, asset> final_results, 
-        name voting_method, asset total_votes, uint32_t total_voters);
+        name voting_method, uint32_t total_voters);
 
     //archives a ballot for a fee
     ACTION archive(name ballot_name, time_point_sec archived_until);
@@ -300,11 +300,9 @@ public:
         map<name, asset> options; //option name -> total weighted votes
 
         symbol registry_symbol; //token registry used for counting votes
-        asset total_votes; //total amount of raw votes (pre-weighted) //TODO: remove
         uint32_t total_voters; //unique voters who have voted on ballot
         map<name, bool> settings; //setting name -> on/off
 
-        asset cleaned_volume; //volume of expired vote receipts cleaned //TODO: remove
         uint32_t cleaned_count; //number of expired vote receipts cleaned
         
         time_point_sec begin_time; //time that voting begins
@@ -315,8 +313,8 @@ public:
             (ballot_name)(category)(publisher)(status)
             (title)(description)(ballot_info)
             (voting_method)(max_options)(options)
-            (registry_symbol)(total_votes)(total_voters)(settings)
-            (cleaned_volume)(cleaned_count)
+            (registry_symbol)(total_voters)(settings)
+            (cleaned_count)
             (begin_time)(end_time))
     };
     typedef multi_index<name("ballots"), ballot> ballots_table;

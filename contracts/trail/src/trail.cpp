@@ -367,10 +367,8 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
         col.max_options = 1;
         col.options = new_initial_options;
         col.registry_symbol = registry_symbol;
-        col.total_votes = asset(0, registry_symbol);
         col.total_voters = 0;
         col.settings = new_settings;
-        col.cleaned_volume = asset(0, registry_symbol);
         col.cleaned_count = 0;
         col.begin_time = time_point_sec(0);
         col.end_time = time_point_sec(0);
@@ -581,14 +579,13 @@ ACTION trail::closeballot(name ballot_name, bool post_results) {
             ballot_name, //ballot_name
             bal.options, //results
             bal.voting_method, //voting_method
-            bal.total_votes, //total_votes
             bal.total_voters //total_voters
         )).send();
     }
 }
 
 ACTION trail::postresults(name ballot_name, map<name, asset> final_results, 
-    name voting_method, asset total_votes, uint32_t total_voters) {
+    name voting_method, uint32_t total_voters) {
 
     //authenticate
     //TODO: require_auth(permission_level{get_self(), name("postresults")});

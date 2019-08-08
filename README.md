@@ -61,6 +61,7 @@ Proposed Use Cases:
 
 - Example Guides
 - External Contract Examples
+- Staking, Stake Voting
 
 ### Q1 2020
 
@@ -70,7 +71,6 @@ Proposed Use Cases:
 ### Down Yonder
 
 - Delegates, Delegate Voting
-- Staking, Stake Voting
 - Optional Identity Services
 
 ## References
