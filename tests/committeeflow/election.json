@@ -1788,6 +1788,7 @@
                         "initial_options": [
                             "craig",
                             "ed",
+                            "zane",
                             "peter"
                         ]
                     }
@@ -1803,37 +1804,9 @@
                     ],
                     "data": {
                         "ballot_name": "trailballot1",
-                        "title": "BigFlow 1tsquare1v",
-                        "description": "description here",
-                        "ballot_info": "blah blah blah"
-                    }
-                },
-                {
-                    "account": "trailservice",
-                    "name": "addoption",
-                    "authorization": [
-                        {
-                            "actor": "testaccounta",
-                            "permission": "active"
-                        }
-                    ],
-                    "data": {
-                        "ballot_name": "trailballot1",
-                        "new_option_name": "zane"
-                    }
-                },
-                {
-                    "account": "trailservice",
-                    "name": "editmaxopts",
-                    "authorization": [
-                        {
-                            "actor": "testaccounta",
-                            "permission": "active"
-                        }
-                    ],
-                    "data": {
-                        "ballot_name": "trailballot1",
-                        "new_max_options": 4
+                        "title": "2019 Election",
+                        "description": "Who should be President?",
+                        "ballot_info": "some website"
                     }
                 },
                 {
@@ -1847,9 +1820,38 @@
                     ],
                     "data": {
                         "ballot_name": "trailballot1",
-                        "end_time": "2019-08-08T17:35:00"
+                        "end_time": "2019-08-08T01:00:00"
                     }
                 },
+
+
+
+
+
+
+
+
+
+                {
+                    "account": "trailservice",
+                    "name": "regcommittee",
+                    "authorization": [
+                        {
+                            "actor": "testaccountz",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "committee_name": "cooldevs",
+                        "committee_title": "Cool Devs",
+                        "registry_symbol": "4,VOTE",
+                        "initial_seats": [
+                            "prez",
+                            "vp"
+                        ],
+                        "registree": "testaccountz"
+                    }
+                }
 
 
 
