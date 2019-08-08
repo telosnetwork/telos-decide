@@ -17,6 +17,8 @@
 using namespace eosio;
 using namespace std;
 
+//TODO: add light ballot logic
+
 CONTRACT trail : public contract {
 
 public:
@@ -124,7 +126,7 @@ public:
     ACTION archive(name ballot_name, time_point_sec archived_until);
 
     //unarchives a ballot after archival time has expired
-    ACTION unarchive(name ballot_name);
+    ACTION unarchive(name ballot_name, bool force_unarchive);
 
     //======================== voter actions ========================
 

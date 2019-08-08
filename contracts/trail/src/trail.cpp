@@ -342,7 +342,8 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
     map<name, asset> new_initial_options;
     map<name, bool> new_settings;
 
-    //TODO: check initial options doesn't have duplicates
+    //loop and assign initial options
+    //NOTE: duplicates are OK, they will be consolidated into 1 key
     for (name n : initial_options) {
         new_initial_options[n] = asset(0, registry_symbol);
     }
@@ -551,8 +552,7 @@ ACTION trail::deleteballot(name ballot_name) {
     check(bal.status != name("voting"), "cannot delete while voting is in progress");
     check(bal.status != name("archived"), "cannot delete archived ballot");
     check(now > bal.end_time + conf.ballot_cooldown, "cannot delete until 5 days past ballot's end time");
-
-    //TODO: check all votes are cleaned?
+    check(bal.cleaned_count == bal.total_voters, "must clean all ballot votes before deleting");
 
     //erase ballot
     ballots.erase(bal);
@@ -655,7 +655,6 @@ ACTION trail::archive(name ballot_name, time_point_sec archived_until) {
     check(arch == archivals.end(), "ballot is already archived");
     check(bal.status == name("closed"), "ballot must be closed to archive");
     check(archived_until.sec_since_epoch() > now, "archived until must be in the future");
-    //TODO: time point validations
     
     //calculate archive fee
     asset archival_fee = asset(conf.archival_base_fee.amount * days_to_archive, TLOS_SYM);
@@ -675,7 +674,7 @@ ACTION trail::archive(name ballot_name, time_point_sec archived_until) {
     });
 }
 
-ACTION trail::unarchive(name ballot_name) {
+ACTION trail::unarchive(name ballot_name, bool force_unarchive) {
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -687,10 +686,14 @@ ACTION trail::unarchive(name ballot_name) {
     //initialize
     auto now = time_point_sec(current_time_point());
 
-    //TODO: add optional to allow force unarchive
-
-    //validate
-    check(arch.archived_until < now, "ballot hasn't reached end of archival time");
+    //authenticate if force unarchive is true
+    if (force_unarchive) {
+        //authenticate
+        require_auth(bal.publisher);
+    } else {
+        //validate
+        check(arch.archived_until < now, "ballot hasn't reached end of archival time");
+    }
 
     //change ballot status to closed
     ballots.modify(bal, same_payer, [&](auto& col) {
@@ -727,10 +730,12 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
         case (name("private").value):
             if (referrer) {
                 name ref = *referrer;
-                require_auth(reg.manager);
-
-                //TODO: check referrer is registry manager
                 
+                //authenticate
+                require_auth(ref);
+
+                //check referrer is registry manager
+                check(ref == reg.manager, "referrer must be registry manager");
                 ram_payer = ref;
             } else {
                 require_auth(reg.manager);
@@ -739,10 +744,13 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
         case (name("invite").value):
             if (referrer) {
                 name ref = *referrer;
+
+                //authenticate
                 require_auth(ref);
 
-                //TODO: check referrer has a balance of token
-
+                //check referrer has a balance of token
+                accounts_table accounts(get_self(), ref.value);
+                auto& acct = accounts.get(registry_symbol.code().raw(), "referrer account not found");
                 ram_payer = ref;
             } else {
                 require_auth(reg.manager);
@@ -752,6 +760,7 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
             //inline sent from trailservice@membership
             require_auth(permission_level{get_self(), name("membership")});
             ram_payer = get_self();
+            //TODO: write membership payment features
             break;
         default:
             check(false, "invalid access method. contact registry manager.");
@@ -793,8 +802,6 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     //authenticate
     require_auth(voter);
 
-    //TODO: first attempt to clean up 1 old vote
-
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -824,7 +831,6 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     check(now >= bal.begin_time && now <= bal.end_time, "vote must occur between ballot begin and end times");
     check(options.size() <= bal.max_options, "cannot vote for more than ballot's max options");
     check(raw_vote_weight.amount > 0, "must vote with a positive amount");
-    //TODO: check all voter's options exist in ballot
 
     //rollback if vote already exists
     if (v_itr != votes.end()) {
@@ -836,9 +842,12 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
         
         //rollback old vote
         for (auto i = v.options_voted.begin(); i != v.options_voted.end(); i++) {
-            //TODO: check option exists to rollback
+            //check voted option exists on ballot to rollback
+            check(temp_bal_options.find(i->first) != temp_bal_options.end(), "previously voted option no longer exists on ballot");
+            
             //TODO: rollback in order of weight so ranked votes aren't corrupted
 
+            //rollback old vote
             temp_bal_options[i->first] -= i->second;
         }
 
@@ -852,6 +861,10 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
 
     //apply new votes to ballot options
     for (auto i = new_votes.begin(); i != new_votes.end(); i++) {
+        //validate
+        check(temp_bal_options.find(i->first) != temp_bal_options.end(), "option doesn't exist on ballot");
+
+        //apply effective vote to ballot options
         temp_bal_options[i->first] += i->second;
     }
 
@@ -904,8 +917,10 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
 
     //rollback current options voted
     for (auto i = v.options_voted.begin(); i != v.options_voted.end(); i++) {
-        //TODO: check voted option still exists on ballot
+        //check voted option still exists on ballot
+        check(temp_bal_options.find(i->first) != temp_bal_options.end(), "previously voted option doesn't exist on ballot");
 
+        //rollback old vote
         temp_bal_options[i->first] -= i->second;
     }
 
@@ -1026,7 +1041,7 @@ ACTION trail::claimpayment(name worker_name, symbol registry_symbol) {
     //diminish rate: 1% of payout per day without claiming
     double reduced_by = (now - (wrk.last_payment.sec_since_epoch()) / 86400) / 100;
 
-
+    //TODO: calculate worker payment
 
     //reset worker data
     workers.modify(wrk, same_payer, [&](auto& col) {
@@ -1034,8 +1049,6 @@ ACTION trail::claimpayment(name worker_name, symbol registry_symbol) {
         col.rebalance_volume[registry_symbol] = asset(0, registry_symbol);
         col.rebalance_count[registry_symbol] = uint16_t(0);
     });
-
-    //TODO: update leaderboard?
 }
 
 ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> count) {
@@ -1150,7 +1163,7 @@ ACTION trail::cleanupvote(name voter, optional<uint16_t> count) {
             to_clean--;
             cleaned++;
 
-            //TODO: update cleaned count and volume on ballot
+            //TODO: update cleaned count on ballot
 
         } else { //active
             byexp_itr++;
@@ -1507,12 +1520,12 @@ map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_me
     map<name, asset> vote_mapping;
     int64_t effective_amount;
     int64_t vote_amount_per;
+    uint8_t sym_prec = registry_symbol.precision();
     int8_t pos = 1;
 
     switch (voting_method.value) {
         case (name("1acct1vote").value):
-            //TODO: refactor so vote is always 1 whole token
-            effective_amount = 10000;
+            effective_amount = int64_t(pow(10, sym_prec));
             break;
         case (name("1tokennvote").value):
             effective_amount = raw_vote_weight.amount;
