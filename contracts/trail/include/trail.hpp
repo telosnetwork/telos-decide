@@ -80,6 +80,9 @@ public:
     //unlock a token registry
     ACTION unlockreg(symbol registry_symbol);
 
+    //adds to registry worker fund
+    ACTION addtofund(symbol registry_symbol, name voter, asset quantity);
+
     //======================== ballot actions ========================
 
     //creates a new ballot
@@ -226,9 +229,6 @@ public:
     //updates worker rebalance data
     void add_rebalance_work(name worker_name, symbol registry_symbol, asset volume, uint16_t count);
 
-    //updates worker clean data
-    void add_clean_work(name worker_name, name ballot_name, asset volume, uint16_t count);
-
     //charges a fee to a TLOS balance
     void require_fee(name account_name, asset fee);
 
@@ -268,9 +268,10 @@ public:
         name manager; //registry manager
         map<name, bool> settings; //setting_name -> on/off
 
-        uint16_t open_ballots; //number of open ballots
+        asset worker_funds; //bucket to pay workers for rebalances
         asset rebalanced_volume; //total volume of rebalanced votes
         uint32_t rebalanced_count; //total count of rebalanced votes
+        uint16_t open_ballots; //number of open ballots
 
         uint64_t primary_key() const { return supply.symbol.code().raw(); }
         EOSLIB_SERIALIZE(registry, 
@@ -278,7 +279,7 @@ public:
             (voters)(access)
             (locked)(unlock_acct)(unlock_auth)
             (manager)(settings)
-            (open_ballots)(rebalanced_volume)(rebalanced_count))
+            (worker_funds)(rebalanced_volume)(rebalanced_count)(open_ballots))
     };
     typedef multi_index<name("registries"), registry> registries_table;
 
@@ -303,7 +304,7 @@ public:
         uint32_t total_voters; //unique voters who have voted on ballot
         map<name, bool> settings; //setting name -> on/off
 
-        asset cleaned_volume; //volume of expired vote receipts cleaned
+        asset cleaned_volume; //volume of expired vote receipts cleaned //TODO: remove
         uint32_t cleaned_count; //number of expired vote receipts cleaned
         
         time_point_sec begin_time; //time that voting begins
@@ -380,15 +381,10 @@ public:
         map<symbol, asset> rebalance_volume;
         map<symbol, uint16_t> rebalance_count;
 
-        //by ballot name
-        map<name, asset> clean_volume;
-        map<name, uint16_t> clean_count;
-
         uint64_t primary_key() const { return worker_name.value; }
         EOSLIB_SERIALIZE(worker, 
             (worker_name)(standing)(last_payment)
-            (rebalance_volume)(rebalance_count)
-            (clean_volume)(clean_count))
+            (rebalance_volume)(rebalance_count))
     };
     typedef multi_index<name("workers"), worker> workers_table;
 

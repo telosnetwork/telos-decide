@@ -83,9 +83,10 @@ ACTION trail::newregistry(name manager, asset max_supply, name access) {
         col.unlock_auth = name("active");
         col.manager = manager;
         col.settings = initial_settings;
-        col.open_ballots = uint16_t(0);
+        col.worker_funds = asset(0, TLOS_SYM);
         col.rebalanced_volume = asset(0, max_supply.symbol);
         col.rebalanced_count = uint32_t(0);
+        col.open_ballots = uint16_t(0);
     });
 
 }
@@ -290,6 +291,20 @@ ACTION trail::unlockreg(symbol registry_symbol) {
     //update lock
     registries.modify(reg, same_payer, [&](auto& col) {
         col.locked = false;
+    });
+}
+
+ACTION trail::addtofund(symbol registry_symbol, name voter, asset quantity) {
+    //open registries table, get registry
+    registries_table registries(get_self(), get_self().value);
+    auto& reg = registries.get(quantity.symbol.code().raw(), "registry not found");
+
+    //charge quantity to account
+    require_fee(voter, quantity);
+
+    //debit quantity to registry worker fund
+    registries.modify(reg, same_payer, [&](auto& col) {
+        col.worker_funds += quantity;
     });
 }
 
@@ -941,8 +956,6 @@ ACTION trail::regworker(name worker_name) {
     auto now = time_point_sec(current_time_point());
     map<symbol, asset> new_rebalance_volume;
     map<symbol, uint16_t> new_rebalance_count;
-    map<name, asset> new_clean_volume;
-    map<name, uint16_t> new_clean_count;
 
     //register new worker
     workers.emplace(worker_name, [&](auto& col) {
@@ -951,8 +964,6 @@ ACTION trail::regworker(name worker_name) {
         col.last_payment = now;
         col.rebalance_volume = new_rebalance_volume;
         col.rebalance_count = new_rebalance_count;
-        col.clean_volume = new_clean_volume;
-        col.clean_count = new_clean_count;
     });
 }
 
@@ -986,11 +997,13 @@ ACTION trail::claimpayment(name worker_name, symbol registry_symbol) {
     auto now = time_point_sec(current_time_point()).sec_since_epoch();
 
     //validate
-    check(wrk.last_payment.sec_since_epoch() + 86400 > now, "can only claim payment once every 24 hours");
+    check(wrk.last_payment.sec_since_epoch() + 86400 > now, "can only claim payment once per day");
     check(wrk.standing == name("good"), "must be in good standing to claim payment");
 
-    //diminish rate: 1% of payout, per day past 1 week of no claims
-    double reduced_by = ((now - (wrk.last_payment.sec_since_epoch() + 604800)) / 86400) / 100;
+    //diminish rate: 1% of payout per day without claiming
+    double reduced_by = (now - (wrk.last_payment.sec_since_epoch()) / 86400) / 100;
+
+
 
     //reset worker data
     workers.modify(wrk, same_payer, [&](auto& col) {
@@ -999,7 +1012,7 @@ ACTION trail::claimpayment(name worker_name, symbol registry_symbol) {
         col.rebalance_count[registry_symbol] = uint16_t(0);
     });
 
-    //TODO: update leaderboard
+    //TODO: update leaderboard?
 }
 
 ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> count) {
@@ -1246,6 +1259,8 @@ ACTION trail::delcommittee(name committee_name, symbol registry_symbol, string m
 void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {
     //validate (softfail)
 
+    //TODO: get current stake, compare to get difference
+
     //open accounts table, search for account
     accounts_table accounts(get_self(), from.value);
     auto acct = accounts.find(VOTE_SYM.code().raw());
@@ -1274,6 +1289,8 @@ void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity,
 
 void trail::catch_undelegatebw(name from, name receiver, asset unstake_net_quantity, asset unstake_cpu_quantity) {
     //authenticate
+
+    //TODO: get current stake, compare to get difference
 
     //open accounts table, search for account
     accounts_table accounts(get_self(), from.value);
@@ -1310,6 +1327,9 @@ void trail::catch_transfer(name from, name to, asset quantity, string memo) {
         if (memo == std::string("skip")) {
             return;
         } else if (memo == "deposit") {
+
+            //TODO: check quantity.symbol == TLOS_SYM
+
             //deposit into account
             accounts_table accounts(get_self(), from.value);
             auto acct = accounts.find(TLOS_SYM.code().raw());
@@ -1438,21 +1458,6 @@ void trail::add_rebalance_work(name worker_name, symbol registry_symbol, asset v
         workers.modify(wrk, same_payer, [&](auto& col) {
             col.rebalance_volume[registry_symbol] += volume;
             col.rebalance_count[registry_symbol] += count;
-        });
-    } else { //worker not found
-        return;
-    }
-}
-
-void trail::add_clean_work(name worker_name, name ballot_name, asset volume, uint16_t count) {
-    //open workers table, search for worker
-    workers_table workers(get_self(), get_self().value);
-    auto wrk = workers.find(worker_name.value);
-
-    if (wrk != workers.end()) { //worker exists
-        workers.modify(wrk, same_payer, [&](auto& col) {
-            col.clean_volume[ballot_name] += volume;
-            col.clean_count[ballot_name] += count;
         });
     } else { //worker not found
         return;
