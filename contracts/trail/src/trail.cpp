@@ -545,7 +545,7 @@ ACTION trail::closeballot(name ballot_name, bool post_results) {
         col.status = name("closed");
     });
 
-    //perform 1tokensquare1v final sqrt() here
+    //perform 1tokensquare1v final sqrt()
     if (bal.voting_method == name("1tsquare1v")) {
         map<name, asset> squared_options = bal.options;
 
@@ -598,15 +598,38 @@ ACTION trail::archive(name ballot_name, time_point_sec archived_until) {
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
 
+    //open configs singleton, get config
+    config_singleton configs(get_self(), get_self().value);
+    auto conf = configs.get();
+
+    //open archivals table, search for archival
+    archivals_table archivals(get_self(), get_self().value);
+    auto arch = archivals.find(ballot_name.value);
+
     //authenticate
     require_auth(bal.publisher);
 
+    //initialize
+    auto now = time_point_sec(current_time_point()).sec_since_epoch();
+    uint32_t days_to_archive = (archived_until.sec_since_epoch() - now) / uint32_t(86400) + 1;
+
     //validate
+    check(arch == archivals.end(), "ballot is already archived");
     check(bal.status == name("closed"), "ballot must be closed to archive");
+    check(archived_until.sec_since_epoch() > now, "archived until must be in the future");
+    //TODO: time point validations
+    
+    //calculate archive fee
+    asset archival_fee = asset(conf.archival_base_fee.amount * days_to_archive, TLOS_SYM);
 
-    //TODO: charge user
+    //charge ballot publisher total fee
+    sub_balance(bal.publisher, archival_fee);
 
-    //TODO: place in archived table
+    //emplace in archived table
+    archivals.emplace(bal.publisher, [&](auto& col) {
+        col.ballot_name = ballot_name;
+        col.archived_until = archived_until;
+    });
 
     //change ballot status to archived
     ballots.modify(bal, same_payer, [&](auto& col) {
@@ -619,10 +642,25 @@ ACTION trail::unarchive(name ballot_name) {
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
 
+    //open archivals table, get archival
+    archivals_table archivals(get_self(), get_self().value);
+    auto& arch = archivals.get(ballot_name.value, "archival not found");
+
+    //initialize
+    auto now = time_point_sec(current_time_point());
+
+    //TODO: add optional to allow force unarchive
+
+    //validate
+    check(arch.archived_until < now, "ballot hasn't reached end of archival time");
+
     //change ballot status to closed
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.status = name("closed");
     });
+
+    //erase archival
+    archivals.erase(arch);
 }
 
 //======================== voter actions ========================
@@ -655,7 +693,7 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
             if (referrer) {
                 name ref = *referrer;
                 require_auth(ref);
-                //TODO: check referrer has a balance
+                //TODO: check referrer has a balance?
                 ram_payer = ref;
             }
             break;
@@ -974,7 +1012,7 @@ ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> c
     asset rebalanced_volume = asset(0, registry_symbol);
     asset vote_weight = acct.balance;
 
-    //TODO: change vote weight source if usestake
+    //TODO: set vote weight source to staked if votestake
 
     (count) ? remaining = *count : remaining = 1;
 
@@ -1295,6 +1333,9 @@ void trail::sub_balance(name voter, asset quantity) {
     accounts_table from_accts(get_self(), voter.value);
     auto& from_acct = from_accts.get(quantity.symbol.code().raw(), "sub_balance: account not found");
 
+    //validate
+    check(from_acct.balance >= quantity, "insufficient balance");
+
     //subtract quantity from balance
     from_accts.modify(from_acct, same_payer, [&](auto& col) {
         col.balance -= quantity;
@@ -1316,6 +1357,9 @@ void trail::sub_stake(name voter, asset quantity) {
     //open accounts table, get account
     accounts_table from_accts(get_self(), voter.value);
     auto& from_acct = from_accts.get(quantity.symbol.code().raw(), "sub_stake: account not found");
+
+    //validate
+    check(from_acct.staked >= quantity, "insufficient staked");
 
     //subtract quantity from stake
     from_accts.modify(from_acct, same_payer, [&](auto& col) {
