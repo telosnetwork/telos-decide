@@ -476,7 +476,7 @@ ACTION trail::readyballot(name ballot_name, time_point_sec end_time) {
     //validate
     check(bal.options.size() >= 2, "ballot must have at least 2 options");
     check(bal.status == name("setup"), "ballot must be in setup mode to ready");
-    check(end_time.sec_since_epoch() - now.sec_since_epoch() >= conf.min_ballot_length, "ballot must be open for at least 1 day");
+    check(end_time.sec_since_epoch() - now.sec_since_epoch() >= conf.min_ballot_length, "ballot must be open for minimum ballot length");
     check(end_time.sec_since_epoch() > now.sec_since_epoch(), "end time must be in the future");
 
     ballots.modify(bal, same_payer, [&](auto& col) {
@@ -687,14 +687,27 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
             require_auth(voter);
             break;
         case (name("private").value):
-            require_auth(reg.manager);
+            if (referrer) {
+                name ref = *referrer;
+                require_auth(reg.manager);
+
+                //TODO: check referrer is registry manager
+                
+                ram_payer = ref;
+            } else {
+                require_auth(reg.manager);
+            }
             break;
         case (name("invite").value):
             if (referrer) {
                 name ref = *referrer;
                 require_auth(ref);
-                //TODO: check referrer has a balance?
+
+                //TODO: check referrer has a balance of token
+
                 ram_payer = ref;
+            } else {
+                require_auth(reg.manager);
             }
             break;
         case (name("membership").value):
