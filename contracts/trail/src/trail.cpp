@@ -333,8 +333,6 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
     //charge ballot listing fee to publisher
     require_fee(publisher, conf.ballot_listing_fee);
 
-    //TODO: update open_ballots on registry
-
     //validate
     check(bal == ballots.end(), "ballot name already exists");
     check(valid_category(category), "invalid category");
@@ -486,6 +484,15 @@ ACTION trail::readyballot(name ballot_name, time_point_sec end_time) {
     config_singleton configs(get_self(), get_self().value);
     auto conf = configs.get();
 
+    //open registries table, get registry
+    registries_table registries(get_self(), get_self().value);
+    auto& reg = registries.get(bal.registry_symbol.code().raw(), "registry not found");
+
+    //update open ballots on registry
+    registries.modify(reg, same_payer, [&](auto& col) {
+        col.open_ballots += 1;
+    });
+
     //validate
     check(bal.options.size() >= 2, "ballot must have at least 2 options");
     check(bal.status == name("setup"), "ballot must be in setup mode to ready");
@@ -510,6 +517,16 @@ ACTION trail::cancelballot(name ballot_name, string memo) {
     //validate
     check(bal.status == name("voting"), "ballot must be in voting mode to cancel");
 
+    //open registries table, get registry
+    registries_table registries(get_self(), get_self().value);
+    auto& reg = registries.get(bal.registry_symbol.code().raw(), "registry not found");
+
+    //update open ballots on registry
+    registries.modify(reg, same_payer, [&](auto& col) {
+        col.open_ballots -= 1;
+    });
+
+    //update ballot status
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.status = name("cancelled");
     });
@@ -556,6 +573,15 @@ ACTION trail::closeballot(name ballot_name, bool post_results) {
     //change ballot status
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.status = name("closed");
+    });
+
+    //open registries table, get registry
+    registries_table registries(get_self(), get_self().value);
+    auto& reg = registries.get(bal.registry_symbol.code().raw(), "registry not found");
+
+    //update open ballots on registry
+    registries.modify(reg, same_payer, [&](auto& col) {
+        col.open_ballots -= 1;
     });
 
     //perform 1tokensquare1v final sqrt()
@@ -635,7 +661,7 @@ ACTION trail::archive(name ballot_name, time_point_sec archived_until) {
     asset archival_fee = asset(conf.archival_base_fee.amount * days_to_archive, TLOS_SYM);
 
     //charge ballot publisher total fee
-    sub_balance(bal.publisher, archival_fee);
+    require_fee(bal.publisher, (archival_fee));
 
     //emplace in archived table
     archivals.emplace(bal.publisher, [&](auto& col) {
