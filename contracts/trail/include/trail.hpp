@@ -17,7 +17,9 @@
 using namespace eosio;
 using namespace std;
 
-//TODO: add light ballot logic
+//TODO: light ballot logic
+//TODO: rebalance logic
+//TODO: worker payment logic
 
 CONTRACT trail : public contract {
 
@@ -249,8 +251,11 @@ public:
         asset archival_base_fee;
         uint32_t min_ballot_length;
         uint32_t ballot_cooldown;
-        uint16_t max_vote_receipts;
+        uint16_t max_vote_receipts; //TODO: remove
+
         //TODO: map<name, asset> fees; //ballot, registry, archival
+        //TODO: map<name, uint32_t> times; //balcooldown, minballength
+
     };
     typedef singleton<name("config"), config> config_singleton;
 
