@@ -6,20 +6,24 @@ trail::~trail() {}
 
 //======================== admin actions ========================
 
-ACTION trail::setconfig(string trail_version, asset ballot_fee, asset registry_fee, asset archival_fee,
-    uint32_t min_ballot_length, uint32_t ballot_cooldown, uint16_t max_vote_receipts) {
+ACTION trail::setconfig(string trail_version, bool set_defaults) {
     //authenticate
     require_auth(get_self());
 
-    //recommended units
-    // uint32_t MIN_BALLOT_LENGTH = 86400; //1 day
-    // uint16_t MAX_VOTE_RECEIPTS = 51;
-    // uint32_t BALLOT_COOLDOWN = 432000;  //5 days in seconds
+    //initialize
+    map<name, asset> new_fees;
+    map<name, uint32_t> new_times;
 
-    //recommended fees
-    // asset BALLOT_LISTING_FEE = asset(150000, TLOS_SYM);
-    // asset REGISTRY_LISTING_FEE = asset(250000, TLOS_SYM);
-    // asset ARCHIVAL_BASE_FEE = asset(50000, TLOS_SYM);
+    if (set_defaults) {
+        //set default fees
+        new_fees[name("ballot")] = asset(300000, TLOS_SYM); //30 TLOS
+        new_fees[name("registry")] = asset(2500000, TLOS_SYM); //250 TLOS
+        new_fees[name("archival")] = asset(50000, TLOS_SYM); //5 TLOS (per day)
+
+        //set default times
+        new_times[name("minballength")] = uint32_t(86400); //1 day in seconds
+        new_times[name("balcooldown")] = uint32_t(432000); //5 days in seconds
+    }
 
     //open config singleton
     config_singleton configs(get_self(), get_self().value);
@@ -27,16 +31,34 @@ ACTION trail::setconfig(string trail_version, asset ballot_fee, asset registry_f
     //build new configs
     config new_config = {
         trail_version, //trail_version
-        ballot_fee, //ballot_listing_fee
-        registry_fee, //registry_creation_fee
-        archival_fee, //archival_base_fee
-        min_ballot_length, //min_ballot_length
-        ballot_cooldown, //ballot_cooldown
-        max_vote_receipts //max_vote_receipts
+        new_fees, //fees
+        new_times //times
     };
 
     //set new config
     configs.set(new_config, get_self());
+}
+
+ACTION trail::updatefee(name fee_name, asset fee_amount) {
+    //authenticate
+    require_auth(get_self());
+
+    //open configs singleton
+    config_singleton configs(get_self(), get_self().value);
+    auto conf = configs.get();
+
+    //validate
+    check(fee_amount >= asset(0, TLOS_SYM), "fee amount must be a positive number");
+
+    //update fee
+    conf.fees[fee_name] = fee_amount;
+
+    //update fee
+    configs.set(conf, get_self());
+}
+
+ACTION trail::updatetime(name time_name, uint32_t length) {
+
 }
 
 //======================== registry actions ========================
@@ -62,6 +84,8 @@ ACTION trail::newregistry(name manager, asset max_supply, name access) {
         check(max_supply.symbol.code().raw() != VOTE_SYM.code().raw(), "VOTE symbol is reserved");
         check(max_supply.symbol.code().raw() != TRAIL_SYM.code().raw(), "TRAIL symbol is reserved");
     }
+
+    //TODO: charge registry fee
 
     //set up initial settings
     map<name, bool> initial_settings;
@@ -331,7 +355,7 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
     auto bal = ballots.find(ballot_name.value);
 
     //charge ballot listing fee to publisher
-    require_fee(publisher, conf.ballot_listing_fee);
+    require_fee(publisher, conf.fees.at(name("ballot")));
 
     //validate
     check(bal == ballots.end(), "ballot name already exists");
@@ -497,7 +521,7 @@ ACTION trail::readyballot(name ballot_name, time_point_sec end_time) {
     //validate
     check(bal.options.size() >= 2, "ballot must have at least 2 options");
     check(bal.status == name("setup"), "ballot must be in setup mode to ready");
-    check(end_time.sec_since_epoch() - now.sec_since_epoch() >= conf.min_ballot_length, "ballot must be open for minimum ballot length");
+    check(end_time.sec_since_epoch() - now.sec_since_epoch() >= conf.times.at(name("minballength")), "ballot must be open for minimum ballot length");
     check(end_time.sec_since_epoch() > now.sec_since_epoch(), "end time must be in the future");
 
     ballots.modify(bal, same_payer, [&](auto& col) {
@@ -551,7 +575,7 @@ ACTION trail::deleteballot(name ballot_name) {
     //validate
     check(bal.status != name("voting"), "cannot delete while voting is in progress");
     check(bal.status != name("archived"), "cannot delete archived ballot");
-    check(now > bal.end_time + conf.ballot_cooldown, "cannot delete until 5 days past ballot's end time");
+    check(now > bal.end_time + conf.times.at(name("balcooldown")), "cannot delete until 5 days past ballot's end time");
     check(bal.cleaned_count == bal.total_voters, "must clean all ballot votes before deleting");
 
     //erase ballot
@@ -679,7 +703,7 @@ ACTION trail::archive(name ballot_name, time_point_sec archived_until) {
     check(archived_until.sec_since_epoch() > now, "archived until must be in the future");
     
     //calculate archive fee
-    asset archival_fee = asset(conf.archival_base_fee.amount * days_to_archive, TLOS_SYM);
+    asset archival_fee = asset(conf.fees.at(name("archive")).amount * int64_t(days_to_archive), TLOS_SYM);
 
     //charge ballot publisher total fee
     require_fee(bal.publisher, (archival_fee));

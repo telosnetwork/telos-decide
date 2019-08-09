@@ -17,7 +17,6 @@
 using namespace eosio;
 using namespace std;
 
-//TODO: light ballot logic
 //TODO: rebalance logic
 //TODO: worker payment logic
 
@@ -49,8 +48,13 @@ public:
     //======================== admin actions ========================
 
     //sets new config singleton
-    ACTION setconfig(string trail_version, asset ballot_fee, asset registry_fee, asset archival_fee,
-        uint32_t min_ballot_length, uint32_t ballot_cooldown, uint16_t max_vote_receipts);
+    ACTION setconfig(string trail_version, bool set_defaults);
+
+    //updates fee amount
+    ACTION updatefee(name fee_name, asset fee_amount);
+
+    //updates time length
+    ACTION updatetime(name time_name, uint32_t length);
 
     //======================== registry actions ========================
 
@@ -248,15 +252,14 @@ public:
     //ram: 
     TABLE config {
         string trail_version;
-        asset ballot_listing_fee;
-        asset registry_creation_fee;
-        asset archival_base_fee;
-        uint32_t min_ballot_length;
-        uint32_t ballot_cooldown;
-        uint16_t max_vote_receipts; //TODO: remove
+        map<name, asset> fees; //ballot, registry, archival
+        map<name, uint32_t> times; //balcooldown, minballength
 
-        //TODO: map<name, asset> fees; //ballot, registry, archival
-        //TODO: map<name, uint32_t> times; //balcooldown, minballength
+        // asset ballot_listing_fee;
+        // asset registry_creation_fee;
+        // asset archival_base_fee;
+        // uint32_t min_ballot_length;
+        // uint32_t ballot_cooldown;
 
     };
     typedef singleton<name("config"), config> config_singleton;
