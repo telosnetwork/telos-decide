@@ -58,7 +58,21 @@ ACTION trail::updatefee(name fee_name, asset fee_amount) {
 }
 
 ACTION trail::updatetime(name time_name, uint32_t length) {
+    //authenticate
+    require_auth(get_self());
 
+    //open configs singleton
+    config_singleton configs(get_self(), get_self().value);
+    auto conf = configs.get();
+
+    //validate
+    check(length >= 1, "length must be a positive number");
+
+    //update time name with new length
+    conf.times[time_name] = length;
+
+    //update fee
+    configs.set(conf, get_self());
 }
 
 //======================== registry actions ========================
