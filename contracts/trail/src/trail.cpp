@@ -558,7 +558,32 @@ ACTION trail::deleteballot(name ballot_name) {
     ballots.erase(bal);
 }
 
-ACTION trail::closeballot(name ballot_name, bool post_results) {
+ACTION trail::postresults(name ballot_name, map<name, asset> light_results, uint32_t total_voters) {
+    //open ballots table, get ballot
+    ballots_table ballots(get_self(), get_self().value);
+    auto& bal = ballots.get(ballot_name.value, "ballot not found");
+
+    //authenticate
+    require_auth(bal.publisher);
+
+    //validate
+    check(bal.settings.at(name("lightballot")), "ballot is not a light ballot");
+    check(bal.status == name("voting"), "ballot must be in voting mode to post results");
+    check(bal.end_time < time_point_sec(current_time_point()), "must be past ballot end time to post");
+
+    for (auto i = light_results.begin(); i != light_results.end(); i++) {
+        check(i->second.symbol == bal.registry_symbol, "result has incorrect symbol");
+    }
+    
+    //apply results to ballot
+    ballots.modify(bal, same_payer, [&](auto& col) {
+        col.options = light_results;
+        col.total_voters = total_voters;
+        col.cleaned_count = total_voters;
+    });
+}
+
+ACTION trail::closeballot(name ballot_name, bool broadcast) {
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -585,7 +610,7 @@ ACTION trail::closeballot(name ballot_name, bool post_results) {
     });
 
     //perform 1tokensquare1v final sqrt()
-    if (bal.voting_method == name("1tsquare1v")) {
+    if (bal.voting_method == name("1tsquare1v") && !bal.settings.at(name("lightballot"))) {
         map<name, asset> squared_options = bal.options;
 
         //square root total votes on each option
@@ -599,20 +624,17 @@ ACTION trail::closeballot(name ballot_name, bool post_results) {
         });
     }
 
-    //if post_results true, send postresults inline to self
-    if (post_results) {
-        action(permission_level{get_self(), name("active")}, name("trailservice"), name("postresults"), make_tuple(
+    //if broadcast true, send postresults inline to self
+    if (broadcast) {
+        action(permission_level{get_self(), name("active")}, name("trailservice"), name("bcastresults"), make_tuple(
             ballot_name, //ballot_name
-            bal.options, //results
-            bal.voting_method, //voting_method
+            bal.options, //final_results
             bal.total_voters //total_voters
         )).send();
     }
 }
 
-ACTION trail::postresults(name ballot_name, map<name, asset> final_results, 
-    name voting_method, uint32_t total_voters) {
-
+ACTION trail::bcastresults(name ballot_name, map<name, asset> final_results, uint32_t total_voters) {
     //authenticate
     //TODO: require_auth(permission_level{get_self(), name("postresults")});
     require_auth(get_self());
@@ -625,7 +647,7 @@ ACTION trail::postresults(name ballot_name, map<name, asset> final_results,
     auto now = time_point_sec(current_time_point());
 
     //validate
-    check(now > bal.end_time, "ballot voting must be over before posting results");
+    check(now > bal.end_time, "ballot voting must be complete before broadcasting results");
 
     //notify ballot publisher (for external contract processing)
     require_recipient(bal.publisher);
@@ -674,7 +696,7 @@ ACTION trail::archive(name ballot_name, time_point_sec archived_until) {
     });
 }
 
-ACTION trail::unarchive(name ballot_name, bool force_unarchive) {
+ACTION trail::unarchive(name ballot_name, bool force) {
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -687,7 +709,7 @@ ACTION trail::unarchive(name ballot_name, bool force_unarchive) {
     auto now = time_point_sec(current_time_point());
 
     //authenticate if force unarchive is true
-    if (force_unarchive) {
+    if (force) {
         //authenticate
         require_auth(bal.publisher);
     } else {
@@ -810,10 +832,6 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     accounts_table accounts(get_self(), voter.value);
     auto& acct = accounts.get(bal.registry_symbol.code().raw(), "account not found");
 
-    //open votes table, search for existing vote
-    votes_table votes(get_self(), voter.value);
-    auto v_itr = votes.find(ballot_name.value);
-
     //initialize
     auto now = time_point_sec(current_time_point());
     asset raw_vote_weight = asset(0, bal.registry_symbol);
@@ -831,6 +849,15 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     check(now >= bal.begin_time && now <= bal.end_time, "vote must occur between ballot begin and end times");
     check(options.size() <= bal.max_options, "cannot vote for more than ballot's max options");
     check(raw_vote_weight.amount > 0, "must vote with a positive amount");
+
+    //skip vote tracking if light ballot
+    if (bal.settings.at(name("lightballot"))) {
+        return;
+    }
+
+    //open votes table, search for existing vote
+    votes_table votes(get_self(), voter.value);
+    auto v_itr = votes.find(ballot_name.value);
 
     //rollback if vote already exists
     if (v_itr != votes.end()) {
@@ -899,10 +926,6 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
 
-    //open votes table, get vote
-    votes_table votes(get_self(), voter.value);
-    auto& v = votes.get(ballot_name.value, "vote not found");
-
     //open accounts table, get account
     accounts_table accounts(get_self(), voter.value);
     auto& acct = accounts.get(bal.registry_symbol.code().raw(), "account not found");
@@ -914,6 +937,15 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
     //validate
     check(bal.status == name("voting"), "ballot must be in voting mode to unvote");
     check(now >= bal.begin_time && now <= bal.end_time, "must unvote between begin and end time");
+
+    //return if light ballot
+    if (bal.settings.at(name("lightballot"))) {
+        return;
+    }
+
+    //open votes table, get vote
+    votes_table votes(get_self(), voter.value);
+    auto& v = votes.get(ballot_name.value, "vote not found");
 
     //rollback current options voted
     for (auto i = v.options_voted.begin(); i != v.options_voted.end(); i++) {

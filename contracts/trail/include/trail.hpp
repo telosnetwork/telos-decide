@@ -117,18 +117,20 @@ public:
     //deletes an expired ballot
     ACTION deleteballot(name ballot_name);
 
-    //closes a ballot and post final results
-    ACTION closeballot(name ballot_name, bool post_results);
+    //posts results from a light ballot before closing
+    ACTION postresults(name ballot_name, map<name, asset> light_results, uint32_t total_voters);
 
-    //posts ballot results and complete
-    ACTION postresults(name ballot_name, map<name, asset> final_results, 
-        name voting_method, uint32_t total_voters);
+    //closes a ballot and post final results
+    ACTION closeballot(name ballot_name, bool broadcast);
+
+    //broadcast ballot results
+    ACTION bcastresults(name ballot_name, map<name, asset> final_results, uint32_t total_voters);
 
     //archives a ballot for a fee
     ACTION archive(name ballot_name, time_point_sec archived_until);
 
     //unarchives a ballot after archival time has expired
-    ACTION unarchive(name ballot_name, bool force_unarchive);
+    ACTION unarchive(name ballot_name, bool force);
 
     //======================== voter actions ========================
 

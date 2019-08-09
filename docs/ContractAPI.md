@@ -492,4 +492,3 @@ Sets the data in the contract's config singleton.
 - `memo`
 
     cleos push action trailservice delcommittee '["jedicouncil", "2,TEST", "order 66 executed"]' -p testaccountc
-
