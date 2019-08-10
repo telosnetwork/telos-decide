@@ -12,6 +12,8 @@
 #include <eosio/asset.hpp>
 #include <eosio/singleton.hpp>
 
+#include "utility.hpp"
+
 #include <cmath>
 
 using namespace eosio;
@@ -175,8 +177,10 @@ public:
     ACTION rebalance(name voter, symbol registry_symbol, optional<uint16_t> count);
 
     //cleans up an expired vote
-    //TODO: add optional ballot_name so rebalance specific vote receipts?
-    ACTION cleanupvote(name voter, optional<uint16_t> count);
+    ACTION cleanupvote(name voter, name ballot_name);
+
+    //attempts to clean all expired votes
+    ACTION cleanhouse(name voter, optional<uint16_t> count);
 
     //======================== committee actions ========================
 
@@ -242,6 +246,10 @@ public:
     //charges a fee to a TLOS balance
     void require_fee(name account_name, asset fee);
 
+    asset get_eosio_stake(name account_name, name token_contract);
+
+    void sync_external_account(name voter, symbol internal_symbol, symbol external_symbol);
+
     //calculates vote mapping
     map<name, asset> calc_vote_mapping(symbol registry_symbol, name voting_method, 
     vector<name> selections,  asset raw_vote_weight);
@@ -254,13 +262,6 @@ public:
         string trail_version;
         map<name, asset> fees; //ballot, registry, archival
         map<name, uint32_t> times; //balcooldown, minballength
-
-        // asset ballot_listing_fee;
-        // asset registry_creation_fee;
-        // asset archival_base_fee;
-        // uint32_t min_ballot_length;
-        // uint32_t ballot_cooldown;
-
     };
     typedef singleton<name("config"), config> config_singleton;
 

@@ -21,7 +21,7 @@ ACTION trail::setconfig(string trail_version, bool set_defaults) {
         new_fees[name("archival")] = asset(50000, TLOS_SYM); //5 TLOS (per day)
 
         //set default times
-        new_times[name("minballength")] = uint32_t(86400); //1 day in seconds
+        new_times[name("minballength")] = uint32_t(60); //1 day in seconds
         new_times[name("balcooldown")] = uint32_t(432000); //5 days in seconds
     }
 
@@ -85,6 +85,10 @@ ACTION trail::newregistry(name manager, asset max_supply, name access) {
     registries_table registries(get_self(), get_self().value);
     auto reg = registries.find(max_supply.symbol.code().raw());
 
+    //open configs singleton, get configs
+    config_singleton configs(get_self(), get_self().value);
+    auto conf = configs.get();
+
     //validate
     check(reg == registries.end(), "registry already exists");
     check(max_supply.amount > 0, "max supply must be greater than 0");
@@ -93,13 +97,14 @@ ACTION trail::newregistry(name manager, asset max_supply, name access) {
     check(valid_access_method(access), "invalid access method");
 
     //check reserved symbols
-    if (manager != get_self()) {
+    if (manager != name("eosio")) {
         check(max_supply.symbol.code().raw() != TLOS_SYM.code().raw(), "TLOS symbol is reserved");
         check(max_supply.symbol.code().raw() != VOTE_SYM.code().raw(), "VOTE symbol is reserved");
         check(max_supply.symbol.code().raw() != TRAIL_SYM.code().raw(), "TRAIL symbol is reserved");
     }
 
-    //TODO: charge registry fee
+    //charge registry fee
+    require_fee(manager, conf.fees.at(name("registry")));
 
     //set up initial settings
     map<name, bool> initial_settings;
@@ -353,6 +358,7 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
     //authenticate
     require_auth(publisher);
 
+    //open configs singleton, get config
     config_singleton configs(get_self(), get_self().value);
     auto conf = configs.get();
 
@@ -851,7 +857,6 @@ ACTION trail::unregvoter(name voter, symbol registry_symbol) {
     check(acct.staked == asset(0, registry_symbol), "cannot unregister unless staked is zero");
 
     //TODO: let voter unregister anyway by sending liquid and staked amount?
-
     //TODO: require voter to cleanup/unvote all existing votes first?
 
     //erase account
@@ -1073,6 +1078,8 @@ ACTION trail::regworker(name worker_name) {
         col.rebalance_volume = new_rebalance_volume;
         col.rebalance_count = new_rebalance_count;
     });
+
+    //TODO: also create trail and tlos accounts if not exists already
 }
 
 ACTION trail::unregworker(name worker_name) {
@@ -1210,15 +1217,43 @@ ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> c
 
 }
 
-ACTION trail::cleanupvote(name voter, optional<uint16_t> count) {
+ACTION trail::cleanupvote(name voter, name ballot_name) {
+    //sort votes by expiration, lowest first
+    votes_table votes(get_self(), voter.value);
+    auto& v = votes.get(ballot_name.value, "vote not found");
+
+    //initialize
+    auto now = time_point_sec(current_time_point());
+    
+    //check if vote has expired
+    if (v.expiration < now) { //expired
+        //open ballots table, get ballot
+        ballots_table ballots(get_self(), get_self().value);
+        auto& bal = ballots.get(ballot_name.value);
+
+        //update cleaned count on ballot
+        ballots.modify(bal, same_payer, [&](auto& col) {
+            col.cleaned_count += 1;
+        });
+
+        //erase expired vote
+        votes.erase(v);
+
+    }
+
+    //TODO: pay worker for cleaning
+    
+}
+
+ACTION trail::cleanhouse(name voter, optional<uint16_t> count) {
     //sort votes by expiration, lowest first
     votes_table votes(get_self(), voter.value);
     auto votes_byexp = votes.get_index<name("byexp")>(); 
     auto byexp_itr = votes_byexp.begin();
 
     //initialize
-    uint16_t cleaned = 0;
     auto now = time_point_sec(current_time_point());
+    uint16_t cleaned = 0;
     uint16_t to_clean = 1;
 
     if (count) {
@@ -1227,21 +1262,31 @@ ACTION trail::cleanupvote(name voter, optional<uint16_t> count) {
 
     //cleans expired votes until count reaches 0 or end of table, skips active votes
     while (to_clean > 0 && byexp_itr != votes_byexp.end()) {
+        
         //check if vote has expired
         if (byexp_itr->expiration < now) { //expired
+           
+            //open ballots table, get ballot
+            ballots_table ballots(get_self(), get_self().value);
+            auto bal = ballots.find(byexp_itr->ballot_name.value);
+
+            //update cleaned count if ballot still exists (should still exist)
+            if (bal != ballots.end()) {
+                ballots.modify(*bal, same_payer, [&](auto& col) {
+                    col.cleaned_count += 1;
+                });
+            }
+            
             byexp_itr = votes_byexp.erase(byexp_itr); //returns next iterator
             to_clean--;
             cleaned++;
-
-            //TODO: update cleaned count on ballot
-
         } else { //active
             byexp_itr++;
         }
+
     }
 
-    //TODO: update worker data
-    
+    //TODO: pay worker for cleanup
 }
 
 //======================== committee actions ========================
@@ -1363,64 +1408,13 @@ ACTION trail::delcommittee(name committee_name, symbol registry_symbol, string m
 //========== notification methods ==========
 
 void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {
-    //validate (softfail)
-
-    //TODO: get current stake, compare to get difference
-
-    //open accounts table, search for account
-    accounts_table accounts(get_self(), from.value);
-    auto acct = accounts.find(VOTE_SYM.code().raw());
-
-    //initialize
-    asset total_staked = stake_net_quantity + stake_cpu_quantity;
-
-    //add to vote stake
-    if (acct != accounts.end()) { //account exists
-        add_stake(from, asset(total_staked.amount, VOTE_SYM));
-        
-        //open registries table, search for registry
-        registries_table registries(get_self(), get_self().value);
-        auto reg = registries.find(VOTE_SYM.code().raw());
-
-        //check if registry exists (should always be true)
-        if (reg != registries.end()) {
-            registries.modify(*reg, same_payer, [&](auto& col) {
-                col.supply += asset(total_staked.amount, VOTE_SYM);
-            });
-        }
-
-        //TODO: check that staked VOTE == staked TLOS
-    }
+    //sync external stake with internal stake
+    sync_external_account(from, VOTE_SYM, stake_net_quantity.symbol);
 }
 
 void trail::catch_undelegatebw(name from, name receiver, asset unstake_net_quantity, asset unstake_cpu_quantity) {
-    //authenticate
-
-    //TODO: get current stake, compare to get difference
-
-    //open accounts table, search for account
-    accounts_table accounts(get_self(), from.value);
-    auto acct = accounts.find(VOTE_SYM.code().raw());
-
-    //initialize
-    asset total_unstaked = unstake_net_quantity + unstake_cpu_quantity;
-
-    //subtract from VOTE stake
-    //TODO: overflow into balance if necessary (not applicable for VOTE)
-    if (acct != accounts.end()) { //account exists
-        sub_stake(from, total_unstaked);
-
-        //open registries table, search for registry
-        registries_table registries(get_self(), get_self().value);
-        auto reg = registries.find(VOTE_SYM.code().raw());
-
-        //check if registry exists (should always be true)
-        if (reg != registries.end()) {
-            registries.modify(*reg, same_payer, [&](auto& col) {
-                col.supply -= asset(total_unstaked.amount, VOTE_SYM);
-            });
-        }
-    }
+    //sync external stake with internal stake
+    sync_external_account(from, VOTE_SYM, unstake_net_quantity.symbol);
 }
 
 void trail::catch_transfer(name from, name to, asset quantity, string memo) {
@@ -1428,13 +1422,11 @@ void trail::catch_transfer(name from, name to, asset quantity, string memo) {
     name rec = get_first_receiver();
 
     //validate
-    if (rec == name("eosio.token") && from != get_self()) {
+    if (rec == name("eosio.token") && from != get_self() && quantity.symbol == TLOS_SYM) {
         //allows transfers to trail without triggering reaction
         if (memo == std::string("skip")) {
             return;
         } else if (memo == "deposit") {
-
-            //TODO: check quantity.symbol == TLOS_SYM
 
             //deposit into account
             accounts_table accounts(get_self(), from.value);
@@ -1446,7 +1438,7 @@ void trail::catch_transfer(name from, name to, asset quantity, string memo) {
                     col.staked = asset(0, TLOS_SYM);
                 });
             } else {
-                accounts.modify(acct, same_payer, [&](auto& col) {
+                accounts.modify(*acct, same_payer, [&](auto& col) {
                     col.balance += quantity;
                 });
             }
@@ -1582,6 +1574,51 @@ void trail::require_fee(name account_name, asset fee) {
     tlos_accounts.modify(tlos_acct, same_payer, [&](auto& col) {
         col.balance -= fee;
     });
+}
+
+void trail::sync_external_account(name voter, symbol internal_symbol, symbol external_symbol) {
+    //initialize
+    asset tlos_stake;
+
+    //check external symbol is TLOS, if not then return
+    if (external_symbol == TLOS_SYM) {
+        tlos_stake = get_staked_tlos(voter);
+    } else {
+        return;
+    }
+
+    //TODO: refactor to use external_symbol instead of hardcoded VOTE_SYM
+
+    //open accounts table, search for account
+    accounts_table accounts(get_self(), voter.value);
+    auto acct = accounts.find(VOTE_SYM.code().raw());
+
+    //subtract from VOTE stake
+    if (acct != accounts.end()) { //account exists
+
+        //open registries table, search for registry
+        registries_table registries(get_self(), get_self().value);
+        auto reg = registries.find(VOTE_SYM.code().raw());
+
+        //check if registry exists (should always be true)
+        if (reg != registries.end()) {
+            //calc delta
+            asset delta = asset(tlos_stake.amount - acct->staked.amount, VOTE_SYM);
+
+            registries.modify(*reg, same_payer, [&](auto& col) {
+                col.supply += asset(delta.amount, VOTE_SYM);
+            });
+        } else {
+            return;
+        }
+
+        //mirror tlos_stake to VOTE stake
+        accounts.modify(*acct, same_payer, [&](auto& col) {
+            col.staked = asset(tlos_stake.amount, VOTE_SYM);
+        });
+
+    }
+
 }
 
 map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_method, 
