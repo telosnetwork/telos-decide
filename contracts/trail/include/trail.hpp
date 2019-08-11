@@ -173,14 +173,13 @@ public:
     ACTION claimpayment(name worker_name, symbol registry_symbol);
 
     //rebalance an unbalanced vote
-    //TODO: add optional ballot_name so rebalance specific vote receipts?
-    ACTION rebalance(name voter, symbol registry_symbol, optional<uint16_t> count);
+    ACTION rebalance(name voter, symbol registry_symbol, optional<uint16_t> count, optional<name> worker);
 
     //cleans up an expired vote
-    ACTION cleanupvote(name voter, name ballot_name);
+    ACTION cleanupvote(name voter, name ballot_name, optional<name> worker);
 
-    //attempts to clean all expired votes
-    ACTION cleanhouse(name voter, optional<uint16_t> count);
+    //attempts to clean all expired votes, or up to a given count
+    ACTION cleanhouse(name voter, optional<uint16_t> count, optional<name> worker);
 
     //======================== committee actions ========================
 
@@ -246,8 +245,10 @@ public:
     //charges a fee to a TLOS balance
     void require_fee(name account_name, asset fee);
 
+    //
     asset get_eosio_stake(name account_name, name token_contract);
 
+    //
     void sync_external_account(name voter, symbol internal_symbol, symbol external_symbol);
 
     //calculates vote mapping
@@ -262,6 +263,7 @@ public:
         string trail_version;
         map<name, asset> fees; //ballot, registry, archival
         map<name, uint32_t> times; //balcooldown, minballength
+        //map<name, double> job_weights; //rebalvolume, rebalcount, cleancount
     };
     typedef singleton<name("config"), config> config_singleton;
 
@@ -281,9 +283,11 @@ public:
         name manager; //registry manager
         map<name, bool> settings; //setting_name -> on/off
 
-        asset worker_funds; //bucket to pay workers for rebalances
+        asset worker_funds; //bucket to pay workers
         asset rebalanced_volume; //total volume of rebalanced votes
         uint32_t rebalanced_count; //total count of rebalanced votes
+        //asset cleaned_volume; //total volume of cleaned votes
+        //uint32_t cleaned_count; //total count of cleaned votes
         uint16_t open_ballots; //number of open ballots
 
         uint64_t primary_key() const { return supply.symbol.code().raw(); }
@@ -334,10 +338,11 @@ public:
 
     //scope: voter.value
     //ram: 
-    TABLE vote {
+    TABLE vote { //TODO: rename to vote_receipt?
         name ballot_name;
         symbol registry_symbol;
         map<name, asset> options_voted;
+        //uint8_t rebalance_count;
         time_point_sec expiration;
 
         uint64_t primary_key() const { return ballot_name.value; }
@@ -352,9 +357,14 @@ public:
 
     //scope: voter.value
     //ram: 
-    TABLE account {
-        asset balance;
+    TABLE account { //TODO: rename to voter
+        asset balance; //TODO: rename to liquid
         asset staked;
+
+        //asset delegated;
+        //name delegated_to;
+
+        //uint16_t vote_receipts;
 
         uint64_t primary_key() const { return balance.symbol.code().raw(); }
         EOSLIB_SERIALIZE(account, (balance)(staked))
@@ -391,6 +401,8 @@ public:
         //by registry symbol
         map<symbol, asset> rebalance_volume;
         map<symbol, uint16_t> rebalance_count;
+        //map<symbol> clean_volume;
+        //map<symbol, uint16_t> clean_count;
 
         uint64_t primary_key() const { return worker_name.value; }
         EOSLIB_SERIALIZE(worker, 
@@ -410,5 +422,15 @@ public:
             (ballot_name)(archived_until))
     };
     typedef multi_index<name("archivals"), archival> archivals_table;
+
+
+    //TODO: use account table for tlos deposits and worker payouts
+
+    //scope: account_name.value
+    //ram: 
+    // TABLE account {
+    //     asset balance;
+    // };
+    // typedef multi_index<name("accounts"), account> accounts_table;
 
 };

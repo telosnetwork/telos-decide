@@ -1080,6 +1080,8 @@ ACTION trail::regworker(name worker_name) {
     });
 
     //TODO: also create trail and tlos accounts if not exists already
+    // accounts_table tlos_accounts(get_self(), worker_name.value);
+
 }
 
 ACTION trail::unregworker(name worker_name) {
@@ -1100,15 +1102,20 @@ ACTION trail::unregworker(name worker_name) {
 }
 
 ACTION trail::claimpayment(name worker_name, symbol registry_symbol) {
-    // open workers table, get worker
+    //open workers table, get worker
     workers_table workers(get_self(), get_self().value);
     auto& wrk = workers.get(worker_name.value);
+
+    //open registries table, get registry
+    registries_table registries(get_self(), get_self().value);
+    auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
 
     //authenticate
     require_auth(wrk.worker_name);
 
     //initialize
     asset total_tlos_payout = asset(0, TLOS_SYM);
+    asset total_trail_payout = asset(0, TRAIL_SYM);
     auto now = time_point_sec(current_time_point()).sec_since_epoch();
 
     //validate
@@ -1116,9 +1123,15 @@ ACTION trail::claimpayment(name worker_name, symbol registry_symbol) {
     check(wrk.standing == name("good"), "must be in good standing to claim payment");
 
     //diminish rate: 1% of payout per day without claiming
-    double reduced_by = (now - (wrk.last_payment.sec_since_epoch()) / 86400) / 100;
+    double reduced_by = ( (now - wrk.last_payment.sec_since_epoch() / 86400) - 1 ) / 100;
 
-    //TODO: calculate worker payment
+    //calculate worker payment
+    asset pay_bucket = reg.worker_funds;
+
+    
+
+    //validate
+    // check(rebalance_share > 0.0 && rebalance_share < 1.0, "share is out of proportions");
 
     //reset worker data
     workers.modify(wrk, same_payer, [&](auto& col) {
@@ -1126,9 +1139,19 @@ ACTION trail::claimpayment(name worker_name, symbol registry_symbol) {
         col.rebalance_volume[registry_symbol] = asset(0, registry_symbol);
         col.rebalance_count[registry_symbol] = uint16_t(0);
     });
+
+    //update registry volume
+    // registries.modify(reg, same_payer, [&](auto& col) {
+    //     col.worker_funds
+    //     col.rebalanced_volume[]
+    //     col.rebalanced_count[]
+    // });
+
 }
 
-ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> count) {
+ACTION trail::rebalance(name voter, symbol registry_symbol, 
+    optional<uint16_t> count, optional<name> worker) {
+    
     //open accounts table, get account
     accounts_table accounts(get_self(), voter.value);
     auto& acct = accounts.get(registry_symbol.code().raw(), "account not found");
@@ -1138,30 +1161,25 @@ ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> c
     auto votes_bysymbol = votes.get_index<name("bysymbol")>();
     auto vote_sym_itr = votes_bysymbol.lower_bound(registry_symbol.code().raw());
 
-    //validate
-    
-
-    //TODO: start at receipt first to expire?
-    //TODO: if ballot_name supplied, start at ballot_name instead of lower bound
-
     //initialize
     auto now = time_point_sec(current_time_point());
-    uint16_t remaining;
+    uint16_t remaining = 1;
     uint16_t rebalanced = 0;
     asset rebalanced_volume = asset(0, registry_symbol);
-    asset vote_weight = acct.balance;
+    asset raw_vote_weight;
 
-    //TODO: set vote weight source to staked if votestake
-
-    (count) ? remaining = *count : remaining = 1;
+    if (count) {
+        remaining = *count;
+    }
 
     while (remaining > 0 && vote_sym_itr != votes_bysymbol.end()) {
+        
         //intitialize
         auto curr_vote = *vote_sym_itr;
 
         //skip if expired or not correct symbol
         if (now > curr_vote.expiration || registry_symbol != curr_vote.registry_symbol) {
-            vote_sym_itr++; 
+            vote_sym_itr++;
             continue;
         }
 
@@ -1169,21 +1187,27 @@ ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> c
         ballots_table ballots(get_self(), get_self().value);
         auto& bal = ballots.get(curr_vote.ballot_name.value, "ballot not found");
 
+        if (bal.settings.at(name("votestake"))) { //use stake
+            raw_vote_weight = acct.staked;
+        } else { //use balance
+            raw_vote_weight = acct.balance;
+        }
+
         //intialize
         map<name, asset> new_bal_options = bal.options;
-        vector<name> selected_options;
+        vector<name> options_vector;
         asset vol = asset(0, registry_symbol);
 
         //rollback current voted options
-        //TODO: rollback in order of weight so ranked ballots aren't corrupted when rebalanced
         for (auto i = curr_vote.options_voted.begin(); i == curr_vote.options_voted.end(); i++) {
             new_bal_options[i->first] -= i->second;
-            selected_options.push_back(i->first);
+            
+            options_vector.push_back(i->first);
         }
 
         //recalculate voted options
         map<name, asset> new_options_voted = calc_vote_mapping(registry_symbol, bal.voting_method, 
-            selected_options, vote_weight);
+            options_vector, raw_vote_weight);
 
         //apply new voted options to ballot
         //TODO: reapply votes in order of weight to preserve ranked votes
@@ -1215,9 +1239,20 @@ ACTION trail::rebalance(name voter, symbol registry_symbol, optional<uint16_t> c
 
     //TODO: update rebalanced volume on registry
 
+    //log cleaned amount to worker profile
+    if (worker) {
+        name worker_name = *worker;
+
+        //authenticate
+        require_auth(worker_name);
+
+        //TODO: log
+    }
+
 }
 
-ACTION trail::cleanupvote(name voter, name ballot_name) {
+ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
+    
     //sort votes by expiration, lowest first
     votes_table votes(get_self(), voter.value);
     auto& v = votes.get(ballot_name.value, "vote not found");
@@ -1227,6 +1262,7 @@ ACTION trail::cleanupvote(name voter, name ballot_name) {
     
     //check if vote has expired
     if (v.expiration < now) { //expired
+
         //open ballots table, get ballot
         ballots_table ballots(get_self(), get_self().value);
         auto& bal = ballots.get(ballot_name.value);
@@ -1241,11 +1277,19 @@ ACTION trail::cleanupvote(name voter, name ballot_name) {
 
     }
 
-    //TODO: pay worker for cleaning
+    //log cleaned amount to worker profile
+    if (worker) {
+        name worker_name = *worker;
+
+        //authenticate
+        require_auth(worker_name);
+
+        //TODO: log
+    }
     
 }
 
-ACTION trail::cleanhouse(name voter, optional<uint16_t> count) {
+ACTION trail::cleanhouse(name voter, optional<uint16_t> count, optional<name> worker) {
     //sort votes by expiration, lowest first
     votes_table votes(get_self(), voter.value);
     auto votes_byexp = votes.get_index<name("byexp")>(); 
@@ -1286,7 +1330,16 @@ ACTION trail::cleanhouse(name voter, optional<uint16_t> count) {
 
     }
 
-    //TODO: pay worker for cleanup
+    //log cleaned amount to worker profile
+    if (worker) {
+        name worker_name = *worker;
+
+        //authenticate
+        require_auth(worker_name);
+
+        //TODO: log
+    }
+
 }
 
 //======================== committee actions ========================
