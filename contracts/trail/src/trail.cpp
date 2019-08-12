@@ -168,8 +168,8 @@ ACTION trail::mint(name to, asset quantity, string memo) {
     check(quantity.is_valid(), "invalid quantity");
     check(memo.size() <= 256, "memo has more than 256 bytes");
 
-    //update recipient balance
-    add_balance(to, quantity);
+    //update recipient liquid amount
+    add_liquid(to, quantity);
 
     //update registry supply
     registries.modify(reg, same_payer, [&](auto& col) {
@@ -196,11 +196,11 @@ ACTION trail::transfer(name from, name to, asset quantity, string memo) {
     check(quantity.is_valid(), "invalid quantity");
     check(memo.size() <= 256, "memo has more than 256 bytes");
 
-    //subtract quantity from sender balance
-    sub_balance(from, quantity);
+    //subtract quantity from sender liquid amount
+    sub_liquid(from, quantity);
 
-    //add quantity to recipient balance
-    add_balance(to, quantity);
+    //add quantity to recipient liquid amount
+    add_liquid(to, quantity);
 
     //notify from and to accounts
     require_recipient(from);
@@ -215,20 +215,20 @@ ACTION trail::burn(asset quantity, string memo) {
     //authenticate
     require_auth(reg.manager);
 
-    //open accounts table, get manager account
-    accounts_table accounts(get_self(), reg.manager.value);
-    auto& mgr_acct = accounts.get(quantity.symbol.code().raw(), "account not found");
+    //open voters table, get manager
+    voters_table voters(get_self(), reg.manager.value);
+    auto& mgr = voters.get(quantity.symbol.code().raw(), "manager voter not found");
 
     //validate
     check(reg.settings.at(name("burnable")), "token is not burnable");
     check(reg.supply - quantity >= asset(0, quantity.symbol), "cannot burn supply below zero");
-    check(mgr_acct.balance >= quantity, "burning would overdraw balance");
+    check(mgr.liquid >= quantity, "burning would overdraw balance");
     check(quantity.amount > 0, "must burn a positive quantity");
     check(quantity.is_valid(), "invalid quantity");
     check(memo.size() <= 256, "memo has more than 256 bytes");
 
-    //subtract quantity from manager balance
-    sub_balance(reg.manager, quantity);
+    //subtract quantity from manager liquid amount
+    sub_liquid(reg.manager, quantity);
 
     //update registry supply
     registries.modify(reg, same_payer, [&](auto& col) {
@@ -255,11 +255,11 @@ ACTION trail::reclaim(name voter, asset quantity, string memo) {
     check(quantity.amount > 0, "must reclaim positive amount");
     check(memo.size() <= 256, "memo has more than 256 bytes");
 
-    //sub quantity from voter balance
-    sub_balance(voter, quantity);
+    //sub quantity from liquid
+    sub_liquid(voter, quantity);
 
     //add quantity to manager balance
-    add_balance(reg.manager, quantity);
+    add_liquid(reg.manager, quantity);
 
     //notify voter account
     require_recipient(voter);
@@ -366,9 +366,9 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
     registries_table registries(get_self(), get_self().value);
     auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
 
-    //open accounts table, get account
-    accounts_table accounts(get_self(), publisher.value);
-    auto& acct = accounts.get(registry_symbol.code().raw(), "account not found");
+    //open voters table, get voter
+    voters_table voters(get_self(), publisher.value);
+    auto& vtr = voters.get(registry_symbol.code().raw(), "voter not found");
 
     //open ballots table
     ballots_table ballots(get_self(), get_self().value);
@@ -387,7 +387,7 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
     map<name, bool> new_settings;
 
     //loop and assign initial options
-    //NOTE: duplicates are OK, they will be consolidated into 1 key
+    //NOTE: duplicates are OK, they will be consolidated into 1 key anyway
     for (name n : initial_options) {
         new_initial_options[n] = asset(0, registry_symbol);
     }
@@ -668,7 +668,7 @@ ACTION trail::closeballot(name ballot_name, bool broadcast) {
         });
     }
 
-    //if broadcast true, send postresults inline to self
+    //if broadcast true, send bcastresults inline to self
     if (broadcast) {
         action(permission_level{get_self(), name("active")}, name("trailservice"), name("bcastresults"), make_tuple(
             ballot_name, //ballot_name
@@ -726,7 +726,7 @@ ACTION trail::archive(name ballot_name, time_point_sec archived_until) {
     asset archival_fee = asset(conf.fees.at(name("archive")).amount * int64_t(days_to_archive), TLOS_SYM);
 
     //charge ballot publisher total fee
-    require_fee(bal.publisher, (archival_fee));
+    require_fee(bal.publisher, archival_fee);
 
     //emplace in archived table
     archivals.emplace(bal.publisher, [&](auto& col) {
@@ -777,13 +777,14 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
     registries_table registries(get_self(), get_self().value);
     auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
 
-    //check account balance doesn't already exist
-    accounts_table accounts(get_self(), voter.value);
-    auto acct = accounts.find(registry_symbol.code().raw());
+    //open voters table, search for voter
+    voters_table voters(get_self(), voter.value);
+    auto vtr_itr = voters.find(registry_symbol.code().raw());
 
     //validate
-    check(acct == accounts.end(), "voter already exists");
-    check(registry_symbol != symbol("TLOS", 4), "cannot register as TLOS voter, use VOTE instead");
+    check(vtr_itr == voters.end(), "voter already exists");
+    check(registry_symbol != TLOS_SYM, "cannot register as TLOS voter, use VOTE instead");
+    check(registry_symbol != TRAIL_SYM, "cannot register as TRAIL voter, call regworker() instead");
 
     //initialize
     name ram_payer = voter;
@@ -802,6 +803,8 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
 
                 //check referrer is registry manager
                 check(ref == reg.manager, "referrer must be registry manager");
+
+                //set referrer as ram payer
                 ram_payer = ref;
             } else {
                 require_auth(reg.manager);
@@ -814,9 +817,9 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
                 //authenticate
                 require_auth(ref);
 
-                //check referrer has a balance of token
-                accounts_table accounts(get_self(), ref.value);
-                auto& acct = accounts.get(registry_symbol.code().raw(), "referrer account not found");
+                //TODO: check referrer is a voter
+
+                //set referrer as ram payer
                 ram_payer = ref;
             } else {
                 require_auth(reg.manager);
@@ -832,10 +835,12 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
             check(false, "invalid access method. contact registry manager.");
     }
 
-    //emplace account with zero balance
-    accounts.emplace(ram_payer, [&](auto& col) {
-        col.balance = asset(0, registry_symbol);
+    //emplace new voter
+    voters.emplace(ram_payer, [&](auto& col) {
+        col.liquid = asset(0, registry_symbol);
         col.staked = asset(0, registry_symbol);
+        col.delegated = asset(0, registry_symbol);
+        col.delegated_to = name(0);
     });
 
     //update registry
@@ -848,19 +853,19 @@ ACTION trail::unregvoter(name voter, symbol registry_symbol) {
     //authenticate
     require_auth(voter);
 
-    //open accounts table, get account
-    accounts_table accounts(get_self(), voter.value);
-    auto& acct = accounts.get(registry_symbol.code().raw(), "account not found");
+    //open voters table, get account
+    voters_table voters(get_self(), voter.value);
+    auto& vtr = voters.get(registry_symbol.code().raw(), "voter not found");
 
     //validate
-    check(acct.balance == asset(0, registry_symbol), "cannot unregister unless balance is zero");
-    check(acct.staked == asset(0, registry_symbol), "cannot unregister unless staked is zero");
+    check(vtr.liquid == asset(0, registry_symbol), "cannot unregister unless liquid is zero");
+    check(vtr.staked == asset(0, registry_symbol), "cannot unregister unless staked is zero");
 
     //TODO: let voter unregister anyway by sending liquid and staked amount?
-    //TODO: require voter to cleanup/unvote all existing votes first?
+    //TODO: require voter to cleanup/unvote all existing vote receipts first
 
     //erase account
-    accounts.erase(acct);
+    voters.erase(vtr);
 }
 
 ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
@@ -871,20 +876,20 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
 
-    //open accounts table, get account
-    accounts_table accounts(get_self(), voter.value);
-    auto& acct = accounts.get(bal.registry_symbol.code().raw(), "account not found");
+    //open voters table, get voter
+    voters_table voters(get_self(), voter.value);
+    auto& vtr = voters.get(bal.registry_symbol.code().raw(), "voter not found");
 
-    //initialize
+    //initialize acct
     auto now = time_point_sec(current_time_point());
     asset raw_vote_weight = asset(0, bal.registry_symbol);
     uint32_t new_voter = 1;
     map<name, asset> temp_bal_options = bal.options;
 
     if (bal.settings.at(name("votestake"))) { //use stake
-        raw_vote_weight = acct.staked;
+        raw_vote_weight = vtr.staked;
     } else { //use balance
-        raw_vote_weight = acct.balance;
+        raw_vote_weight = vtr.liquid;
     }
 
     //validate
@@ -898,24 +903,24 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
         return;
     }
 
-    //open votes table, search for existing vote
-    votes_table votes(get_self(), voter.value);
-    auto v_itr = votes.find(ballot_name.value);
+    //open votereceipts table, search for existing vote receipt
+    votereceipts_table votereceipts(get_self(), voter.value);
+    auto vr_itr = votereceipts.find(ballot_name.value);
 
     //rollback if vote already exists
-    if (v_itr != votes.end()) {
+    if (vr_itr != votereceipts.end()) {
+        
         //initialize
-        auto v = *v_itr;
+        auto vr = *vr_itr;
 
         //validate
         check(bal.settings.at(name("revotable")), "ballot is not revotable");
         
         //rollback old vote
-        for (auto i = v.options_voted.begin(); i != v.options_voted.end(); i++) {
-            //check voted option exists on ballot to rollback
-            check(temp_bal_options.find(i->first) != temp_bal_options.end(), "previously voted option no longer exists on ballot");
+        for (auto i = vr.votes.begin(); i != vr.votes.end(); i++) {
             
-            //TODO: rollback in order of weight so ranked votes aren't corrupted
+            //check voted option exists on ballot to rollback
+            // check(temp_bal_options.find(i->first) != temp_bal_options.end(), "previously voted option no longer exists on ballot");
 
             //rollback old vote
             temp_bal_options[i->first] -= i->second;
@@ -925,16 +930,17 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
         new_voter = 0;
     }
 
-    //calc new vote mapping
+    //calculate new votes
     auto new_votes = calc_vote_mapping(bal.registry_symbol, bal.voting_method, 
     options, raw_vote_weight);
 
     //apply new votes to ballot options
     for (auto i = new_votes.begin(); i != new_votes.end(); i++) {
+        
         //validate
         check(temp_bal_options.find(i->first) != temp_bal_options.end(), "option doesn't exist on ballot");
 
-        //apply effective vote to ballot options
+        //apply effective vote to ballot option
         temp_bal_options[i->first] += i->second;
     }
 
@@ -946,16 +952,16 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
 
     //update existing votes, or emplace votes if new
     if (new_voter == 1) {
-        votes.emplace(voter, [&](auto& col) {
+        votereceipts.emplace(voter, [&](auto& col) {
             col.ballot_name = ballot_name;
             col.registry_symbol = bal.registry_symbol;
-            col.options_voted = new_votes;
+            col.votes = new_votes;
             col.expiration = bal.end_time;
         });
     } else {
         //update votes
-        votes.modify(v_itr, same_payer, [&](auto& col) {
-            col.options_voted = new_votes;
+        votereceipts.modify(vr_itr, same_payer, [&](auto& col) {
+            col.votes = new_votes;
         });
     }
 
@@ -969,9 +975,9 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
 
-    //open accounts table, get account
-    accounts_table accounts(get_self(), voter.value);
-    auto& acct = accounts.get(bal.registry_symbol.code().raw(), "account not found");
+    //open voters table, get voter
+    voters_table voters(get_self(), voter.value);
+    auto& vtr = voters.get(bal.registry_symbol.code().raw(), "voter not found");
 
     //initialize
     map<name, asset> temp_bal_options = bal.options;
@@ -987,13 +993,14 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
     }
 
     //open votes table, get vote
-    votes_table votes(get_self(), voter.value);
-    auto& v = votes.get(ballot_name.value, "vote not found");
+    votereceipts_table votereceipts(get_self(), voter.value);
+    auto& vr = votereceipts.get(ballot_name.value, "vote not found");
 
     //rollback current options voted
-    for (auto i = v.options_voted.begin(); i != v.options_voted.end(); i++) {
-        //check voted option still exists on ballot
-        check(temp_bal_options.find(i->first) != temp_bal_options.end(), "previously voted option doesn't exist on ballot");
+    for (auto i = vr.votes.begin(); i != vr.votes.end(); i++) {
+        
+        //check vote still exists on ballot
+        // check(temp_bal_options.find(i->first) != temp_bal_options.end(), "previous vote no longer exists on ballot");
 
         //rollback old vote
         temp_bal_options[i->first] -= i->second;
@@ -1005,8 +1012,11 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
         col.total_voters -= 1;
     });
 
-    //erase old votes
-    votes.erase(v);
+    //TODO: erase all votes in map instead of whole table row (preserves rebalance count)
+    //col.votes.clear();
+
+    //erase old vote
+    votereceipts.erase(vr);
     
 }
 
@@ -1024,10 +1034,10 @@ ACTION trail::stake(name voter, asset quantity) {
     check(quantity.is_valid(), "invalid amount");
     check(quantity.amount > 0, "must stake positive amount");
 
-    //subtract quantity from liquid balance
-    sub_balance(voter, quantity);
+    //subtract quantity from liquid
+    sub_liquid(voter, quantity);
 
-    //add quantity to staked balance
+    //add quantity to staked
     add_stake(voter, quantity);
 }
 
@@ -1048,8 +1058,8 @@ ACTION trail::unstake(name voter, asset quantity) {
     //subtract quantity from stake
     sub_stake(voter, quantity);
 
-    //add quantity to balance
-    add_balance(voter, quantity);
+    //add quantity to liquid
+    add_liquid(voter, quantity);
 }
 
 //======================== worker actions ========================
@@ -1079,9 +1089,18 @@ ACTION trail::regworker(name worker_name) {
         col.rebalance_count = new_rebalance_count;
     });
 
-    //TODO: also create trail and tlos accounts if not exists already
-    // accounts_table tlos_accounts(get_self(), worker_name.value);
+    //open accounts table, search for account
+    accounts_table tlos_accounts(get_self(), worker_name.value);
+    auto acct = tlos_accounts.find(TLOS_SYM.code().raw());
 
+    //emplace new account if not exists
+    if (acct == tlos_accounts.end()) {
+        tlos_accounts.emplace(worker_name, [&](auto& col) {
+            col.balance = asset(0, TLOS_SYM);
+        });
+    }
+
+    //TODO: create TRAIL voter
 }
 
 ACTION trail::unregworker(name worker_name) {
@@ -1128,7 +1147,7 @@ ACTION trail::claimpayment(name worker_name, symbol registry_symbol) {
     //calculate worker payment
     asset pay_bucket = reg.worker_funds;
 
-    
+
 
     //validate
     // check(rebalance_share > 0.0 && rebalance_share < 1.0, "share is out of proportions");
@@ -1149,94 +1168,65 @@ ACTION trail::claimpayment(name worker_name, symbol registry_symbol) {
 
 }
 
-ACTION trail::rebalance(name voter, symbol registry_symbol, 
-    optional<uint16_t> count, optional<name> worker) {
+ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
     
-    //open accounts table, get account
-    accounts_table accounts(get_self(), voter.value);
-    auto& acct = accounts.get(registry_symbol.code().raw(), "account not found");
+    //open ballots table, get ballot
+    ballots_table ballots(get_self(), get_self().value);
+    auto& bal = ballots.get(ballot_name.value, "ballot not found");
 
-    //open votes table, get bysymbol sec index
-    votes_table votes(get_self(), voter.value);
-    auto votes_bysymbol = votes.get_index<name("bysymbol")>();
-    auto vote_sym_itr = votes_bysymbol.lower_bound(registry_symbol.code().raw());
+    //open voters table, get voter
+    voters_table voters(get_self(), voter.value);
+    auto& vtr = voters.get(bal.registry_symbol.code().raw(), "voter not found");
+
+    //open votereceipts table, get vote receipt
+    votereceipts_table votereceipts(get_self(), voter.value);
+    auto& vr = votereceipts.get(ballot_name.value, "vote receipt not found");
 
     //initialize
     auto now = time_point_sec(current_time_point());
-    uint16_t remaining = 1;
-    uint16_t rebalanced = 0;
-    asset rebalanced_volume = asset(0, registry_symbol);
-    asset raw_vote_weight;
+    asset rebalanced_volume = asset(0, vr.registry_symbol);
+    asset raw_vote_weight = asset(0, vr.registry_symbol);
+    map<name, asset> new_bal_options = bal.options;
+    vector<name> selections;
 
-    if (count) {
-        remaining = *count;
+    //validate
+    check(now > vr.expiration, "vote receipt has expired");
+    check(vr.registry_symbol == bal.registry_symbol, "vote receipt/ballot symbol mismatch");
+
+    if (bal.settings.at(name("votestake"))) { //use stake
+        raw_vote_weight = vtr.staked;
+    } else { //use liquid
+        raw_vote_weight = vtr.liquid;
     }
 
-    while (remaining > 0 && vote_sym_itr != votes_bysymbol.end()) {
-        
-        //intitialize
-        auto curr_vote = *vote_sym_itr;
+    //rollback old vote
+    for (auto i = vr.votes.begin(); i == vr.votes.end(); i++) {
+        new_bal_options[i->first] -= i->second;
 
-        //skip if expired or not correct symbol
-        if (now > curr_vote.expiration || registry_symbol != curr_vote.registry_symbol) {
-            vote_sym_itr++;
-            continue;
-        }
-
-        //open ballots table, get ballot
-        ballots_table ballots(get_self(), get_self().value);
-        auto& bal = ballots.get(curr_vote.ballot_name.value, "ballot not found");
-
-        if (bal.settings.at(name("votestake"))) { //use stake
-            raw_vote_weight = acct.staked;
-        } else { //use balance
-            raw_vote_weight = acct.balance;
-        }
-
-        //intialize
-        map<name, asset> new_bal_options = bal.options;
-        vector<name> options_vector;
-        asset vol = asset(0, registry_symbol);
-
-        //rollback current voted options
-        for (auto i = curr_vote.options_voted.begin(); i == curr_vote.options_voted.end(); i++) {
-            new_bal_options[i->first] -= i->second;
-            
-            options_vector.push_back(i->first);
-        }
-
-        //recalculate voted options
-        map<name, asset> new_options_voted = calc_vote_mapping(registry_symbol, bal.voting_method, 
-            options_vector, raw_vote_weight);
-
-        //apply new voted options to ballot
-        //TODO: reapply votes in order of weight to preserve ranked votes
-        for (auto i = new_options_voted.begin(); i == new_options_voted.end(); i++) {
-            vol += curr_vote.options_voted[i->first];
-            new_bal_options[i->first] += i->second;
-        }
-
-        //update voted options
-        votes_bysymbol.modify(vote_sym_itr, same_payer, [&](auto& col) {
-            col.options_voted = new_options_voted;
-        });
-
-        //update ballot
-        ballots.modify(bal, same_payer, [&](auto& col) {
-            col.options = new_bal_options;
-        });
-
-        //update counters
-        remaining--;
-        rebalanced++;
-        rebalanced_volume += vol;
-
-        //iterate vote_sym_itr
-        vote_sym_itr++;
+        //rebuild selections
+        selections.push_back(i->first);
     }
+
+    //calculate new votes
+    map<name, asset> new_votes = calc_vote_mapping(bal.registry_symbol, bal.voting_method, 
+        selections, raw_vote_weight);
+
+    //apply new votes to ballot
+    for (auto i = new_votes.begin(); i == new_votes.end(); i++) {
+        new_bal_options[i->first] += i->second;
+    }
+
+    //update voted options
+    votereceipts.modify(vr, same_payer, [&](auto& col) {
+        col.votes = new_votes;
+    });
+
+    //update ballot
+    ballots.modify(bal, same_payer, [&](auto& col) {
+        col.options = new_bal_options;
+    });
 
     //TODO: update rebalanced volume on worker data (if not a worker then skip)
-
     //TODO: update rebalanced volume on registry
 
     //log cleaned amount to worker profile
@@ -1246,22 +1236,20 @@ ACTION trail::rebalance(name voter, symbol registry_symbol,
         //authenticate
         require_auth(worker_name);
 
-        //TODO: log
+        //TODO: log rebalance work
     }
-
 }
 
 ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
-    
-    //sort votes by expiration, lowest first
-    votes_table votes(get_self(), voter.value);
-    auto& v = votes.get(ballot_name.value, "vote not found");
+    //open vote receipts table, get vote receipt
+    votereceipts_table votereceipts(get_self(), voter.value);
+    auto& vr = votereceipts.get(ballot_name.value, "vote receipt not found");
 
     //initialize
     auto now = time_point_sec(current_time_point());
     
     //check if vote has expired
-    if (v.expiration < now) { //expired
+    if (vr.expiration < now) { //expired
 
         //open ballots table, get ballot
         ballots_table ballots(get_self(), get_self().value);
@@ -1272,8 +1260,8 @@ ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
             col.cleaned_count += 1;
         });
 
-        //erase expired vote
-        votes.erase(v);
+        //erase expired vote receipt
+        votereceipts.erase(vr);
 
     }
 
@@ -1284,16 +1272,16 @@ ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
         //authenticate
         require_auth(worker_name);
 
-        //TODO: log
+        //TODO: log cleanup work
     }
     
 }
 
 ACTION trail::cleanhouse(name voter, optional<uint16_t> count, optional<name> worker) {
     //sort votes by expiration, lowest first
-    votes_table votes(get_self(), voter.value);
-    auto votes_byexp = votes.get_index<name("byexp")>(); 
-    auto byexp_itr = votes_byexp.begin();
+    votereceipts_table votereceipts(get_self(), voter.value);
+    auto byexp = votereceipts.get_index<name("byexp")>(); 
+    auto byexp_itr = byexp.begin();
 
     //initialize
     auto now = time_point_sec(current_time_point());
@@ -1305,7 +1293,7 @@ ACTION trail::cleanhouse(name voter, optional<uint16_t> count, optional<name> wo
     }
 
     //cleans expired votes until count reaches 0 or end of table, skips active votes
-    while (to_clean > 0 && byexp_itr != votes_byexp.end()) {
+    while (to_clean > 0 && byexp_itr != byexp.end()) {
         
         //check if vote has expired
         if (byexp_itr->expiration < now) { //expired
@@ -1321,7 +1309,7 @@ ACTION trail::cleanhouse(name voter, optional<uint16_t> count, optional<name> wo
                 });
             }
             
-            byexp_itr = votes_byexp.erase(byexp_itr); //returns next iterator
+            byexp_itr = byexp.erase(byexp_itr); //returns next iterator
             to_clean--;
             cleaned++;
         } else { //active
@@ -1337,7 +1325,7 @@ ACTION trail::cleanhouse(name voter, optional<uint16_t> count, optional<name> wo
         //authenticate
         require_auth(worker_name);
 
-        //TODO: log
+        //TODO: log cleanup work
     }
 
 }
@@ -1476,77 +1464,79 @@ void trail::catch_transfer(name from, name to, asset quantity, string memo) {
 
     //validate
     if (rec == name("eosio.token") && from != get_self() && quantity.symbol == TLOS_SYM) {
-        //allows transfers to trail without triggering reaction
-        if (memo == std::string("skip")) {
+        
+        //parse memo
+        if (memo == std::string("skip")) { //allows transfers to trail without triggering reaction
             return;
         } else if (memo == "deposit") {
 
-            //deposit into account
+            //open accounts tbale, search for account
             accounts_table accounts(get_self(), from.value);
             auto acct = accounts.find(TLOS_SYM.code().raw());
 
+            //empalce account if not found, update if exists
             if (acct == accounts.end()) { //no account
                 accounts.emplace(get_self(), [&](auto& col) {
                     col.balance = quantity;
-                    col.staked = asset(0, TLOS_SYM);
                 });
-            } else {
+            } else { //exists
                 accounts.modify(*acct, same_payer, [&](auto& col) {
                     col.balance += quantity;
                 });
             }
         }
     }
+
 }
 
 //========== utility methods ==========
 
-void trail::add_balance(name voter, asset quantity) {
-    //open accounts table, get account
-    accounts_table to_accts(get_self(), voter.value);
-    auto& to_acct = to_accts.get(quantity.symbol.code().raw(), "add_balance: account not found");
+void trail::add_liquid(name voter, asset quantity) {
+    //open voters table, get voter
+    voters_table to_voters(get_self(), voter.value);
+    auto& to_voter = to_voters.get(quantity.symbol.code().raw(), "add_liquid: voter not found");
 
-    //add quantity to liquid balance
-    to_accts.modify(to_acct, same_payer, [&](auto& col) {
-        col.balance += quantity;
+    //add quantity to liquid
+    to_voters.modify(to_voter, same_payer, [&](auto& col) {
+        col.liquid += quantity;
     });
 }
 
-void trail::sub_balance(name voter, asset quantity) {
-    //open accounts table, get account
-    accounts_table from_accts(get_self(), voter.value);
-    auto& from_acct = from_accts.get(quantity.symbol.code().raw(), "sub_balance: account not found");
+void trail::sub_liquid(name voter, asset quantity) {
+    //open voters table, get voter
+    voters_table from_voters(get_self(), voter.value);
+    auto& from_voter = from_voters.get(quantity.symbol.code().raw(), "sub_liquid: voter not found");
 
     //validate
-    check(from_acct.balance >= quantity, "insufficient balance");
+    check(from_voter.liquid >= quantity, "insufficient liquid amount");
 
-    //subtract quantity from balance
-    from_accts.modify(from_acct, same_payer, [&](auto& col) {
-        col.balance -= quantity;
+    //subtract quantity from liquid
+    from_voters.modify(from_voter, same_payer, [&](auto& col) {
+        col.liquid -= quantity;
     });
 }
 
 void trail::add_stake(name voter, asset quantity) {
-    //open accounts table, get account
-    accounts_table to_accts(get_self(), voter.value);
-    auto& to_acct = to_accts.get(quantity.symbol.code().raw(), "add_stake: account not found");
+    //open voters table, get voter
+    voters_table to_voters(get_self(), voter.value);
+    auto& to_voter = to_voters.get(quantity.symbol.code().raw(), "add_stake: voter not found");
 
     //add quantity to stake
-    to_accts.modify(to_acct, same_payer, [&](auto& col) {
+    to_voters.modify(to_voter, same_payer, [&](auto& col) {
         col.staked += quantity;
     });
 }
 
 void trail::sub_stake(name voter, asset quantity) {
-    //open accounts table, get account
-    accounts_table from_accts(get_self(), voter.value);
-    auto& from_acct = from_accts.get(quantity.symbol.code().raw(), "sub_stake: account not found");
+    //open voters table, get voter
+    voters_table from_voters(get_self(), voter.value);
+    auto& from_voter = from_voters.get(quantity.symbol.code().raw(), "sub_stake: voter not found");
 
     //validate
-    check(from_acct.staked >= quantity, "insufficient staked");
+    check(from_voter.staked >= quantity, "insufficient staked amount");
 
     //subtract quantity from stake
-    from_accts.modify(from_acct, same_payer, [&](auto& col) {
+    from_voters.modify(from_voter, same_payer, [&](auto& col) {
         col.staked -= quantity;
     });
 }
@@ -1581,6 +1571,7 @@ bool trail::valid_voting_method(name voting_method) {
         case (name("quadratic").value):
             return true;
         case (name("ranked").value):
+            check(false, "ranked voitng method feature under development");
             return true;
         default:
             return false;
@@ -1595,12 +1586,15 @@ bool trail::valid_access_method(name access_method) {
             return true;
         case (name("invite").value):
             return true;
+        case (name("membership").value):
+            check(false, "membership access feature under development");
+            return true;
         default:
             return false;
     }
 }
 
-void trail::add_rebalance_work(name worker_name, symbol registry_symbol, asset volume, uint16_t count) {
+void trail::log_rebalance_work(name worker_name, symbol registry_symbol, asset volume, uint16_t count) {
     //open workers table, search for worker
     workers_table workers(get_self(), get_self().value);
     auto wrk = workers.find(worker_name.value);
@@ -1630,44 +1624,48 @@ void trail::require_fee(name account_name, asset fee) {
 }
 
 void trail::sync_external_account(name voter, symbol internal_symbol, symbol external_symbol) {
+    
     //initialize
     asset tlos_stake;
 
     //check external symbol is TLOS, if not then return
     if (external_symbol == TLOS_SYM) {
         tlos_stake = get_staked_tlos(voter);
+        check(internal_symbol == VOTE_SYM, "internal symbol must be VOTE for external TLOS");
     } else {
+        check(false, "syncing external accounts is under development");
         return;
     }
 
-    //TODO: refactor to use external_symbol instead of hardcoded VOTE_SYM
-
-    //open accounts table, search for account
-    accounts_table accounts(get_self(), voter.value);
-    auto acct = accounts.find(VOTE_SYM.code().raw());
+    //open voters table, search for voter
+    voters_table voters(get_self(), voter.value);
+    auto vtr_itr = voters.find(internal_symbol.code().raw());
 
     //subtract from VOTE stake
-    if (acct != accounts.end()) { //account exists
+    if (vtr_itr != voters.end()) { //voter exists
 
         //open registries table, search for registry
         registries_table registries(get_self(), get_self().value);
-        auto reg = registries.find(VOTE_SYM.code().raw());
+        auto reg_itr = registries.find(internal_symbol.code().raw());
 
         //check if registry exists (should always be true)
-        if (reg != registries.end()) {
+        if (reg_itr != registries.end()) {
+            
             //calc delta
-            asset delta = asset(tlos_stake.amount - acct->staked.amount, VOTE_SYM);
+            asset delta = asset(tlos_stake.amount - vtr_itr->staked.amount, internal_symbol);
 
-            registries.modify(*reg, same_payer, [&](auto& col) {
-                col.supply += asset(delta.amount, VOTE_SYM);
+            //apply delta to supply
+            registries.modify(*reg_itr, same_payer, [&](auto& col) {
+                col.supply += asset(delta.amount, internal_symbol);
             });
+
         } else {
             return;
         }
 
-        //mirror tlos_stake to VOTE stake
-        accounts.modify(*acct, same_payer, [&](auto& col) {
-            col.staked = asset(tlos_stake.amount, VOTE_SYM);
+        //mirror tlos_stake to internal_symbol stake
+        voters.modify(*vtr_itr, same_payer, [&](auto& col) {
+            col.staked = asset(tlos_stake.amount, internal_symbol);
         });
 
     }
@@ -1676,6 +1674,7 @@ void trail::sync_external_account(name voter, symbol internal_symbol, symbol ext
 
 map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_method, 
     vector<name> selections,  asset raw_vote_weight) {
+    
     //initialize
     map<name, asset> vote_mapping;
     int64_t effective_amount;
@@ -1701,6 +1700,7 @@ map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_me
             effective_amount = sqrtl(raw_vote_weight.amount);
             break;
         case (name("ranked").value):
+            //NOTE: requires selections to always be in order
             for (name n : selections) {
                 effective_amount = raw_vote_weight.amount / pos;
                 vote_mapping[n] = asset(effective_amount, registry_symbol);
@@ -1711,6 +1711,7 @@ map<name, asset> trail::calc_vote_mapping(symbol registry_symbol, name voting_me
             check(false, "calc_vote_mapping: invalid voting method");
     }
 
+    //apply effective weight to vote mapping
     for (name n : selections) {
         vote_mapping[n] = asset(effective_amount, registry_symbol);
     }

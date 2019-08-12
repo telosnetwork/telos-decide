@@ -172,8 +172,11 @@ public:
     //pays a worker
     ACTION claimpayment(name worker_name, symbol registry_symbol);
 
-    //rebalance an unbalanced vote
-    ACTION rebalance(name voter, symbol registry_symbol, optional<uint16_t> count, optional<name> worker);
+    //rebalance an unbalaned vote
+    ACTION rebalance(name voter, name ballot_name, optional<name> worker);
+
+    //rebalance a number of unbalanced votes
+    // ACTION bigrebalance(name voter, symbol registry_symbol, optional<uint16_t> count, optional<name> worker);
 
     //cleans up an expired vote
     ACTION cleanupvote(name voter, name ballot_name, optional<name> worker);
@@ -218,11 +221,11 @@ public:
 
     //========== utility methods ==========
 
-    //add quantity to balance
-    void add_balance(name voter, asset quantity);
+    //add quantity to liquid amount
+    void add_liquid(name voter, asset quantity);
 
-    //subtract quantity from balance
-    void sub_balance(name voter, asset quantity);
+    //subtract quantity from liquid amount
+    void sub_liquid(name voter, asset quantity);
 
     //add quantity to staked amount
     void add_stake(name voter, asset quantity);
@@ -239,16 +242,16 @@ public:
     //validates access method
     bool valid_access_method(name access_method);
 
-    //updates worker rebalance data
-    void add_rebalance_work(name worker_name, symbol registry_symbol, asset volume, uint16_t count);
+    //logs rebalance work
+    void log_rebalance_work(name worker_name, symbol registry_symbol, asset volume, uint16_t count);
+
+    //logs cleanup work
+    // void log_cleanup_work(name worker_name, symbol registry_symbol, asset volume, uint16_t count);
 
     //charges a fee to a TLOS balance
     void require_fee(name account_name, asset fee);
 
-    //
-    asset get_eosio_stake(name account_name, name token_contract);
-
-    //
+    //syncs an exernal account balance with a linked voter balance
     void sync_external_account(name voter, symbol internal_symbol, symbol external_symbol);
 
     //calculates vote mapping
@@ -338,38 +341,36 @@ public:
 
     //scope: voter.value
     //ram: 
-    TABLE vote { //TODO: rename to vote_receipt?
+    TABLE vote_receipt {
         name ballot_name;
         symbol registry_symbol;
-        map<name, asset> options_voted;
-        //uint8_t rebalance_count;
+        map<name, asset> votes;
+        uint8_t rebalances;
         time_point_sec expiration;
 
         uint64_t primary_key() const { return ballot_name.value; }
         uint64_t by_symbol() const { return registry_symbol.code().raw(); }
         uint64_t by_exp() const { return static_cast<uint64_t>(expiration.utc_seconds); }
-        EOSLIB_SERIALIZE(vote, (ballot_name)(registry_symbol)(options_voted)(expiration))
+        EOSLIB_SERIALIZE(vote_receipt, (ballot_name)(registry_symbol)(votes)(rebalances)(expiration))
     };
-    typedef multi_index<name("votes"), vote,
-        indexed_by<name("bysymbol"), const_mem_fun<vote, uint64_t, &vote::by_symbol>>,
-        indexed_by<name("byexp"), const_mem_fun<vote, uint64_t, &vote::by_exp>>
-    > votes_table;
+    typedef multi_index<name("votereceipts"), vote_receipt,
+        indexed_by<name("bysymbol"), const_mem_fun<vote_receipt, uint64_t, &vote_receipt::by_symbol>>,
+        indexed_by<name("byexp"), const_mem_fun<vote_receipt, uint64_t, &vote_receipt::by_exp>>
+    > votereceipts_table;
 
     //scope: voter.value
     //ram: 
-    TABLE account { //TODO: rename to voter
-        asset balance; //TODO: rename to liquid
+    TABLE voter {
+        asset liquid;
         asset staked;
-
-        //asset delegated;
-        //name delegated_to;
-
+        asset delegated;
+        name delegated_to;
         //uint16_t vote_receipts;
 
-        uint64_t primary_key() const { return balance.symbol.code().raw(); }
-        EOSLIB_SERIALIZE(account, (balance)(staked))
+        uint64_t primary_key() const { return liquid.symbol.code().raw(); }
+        EOSLIB_SERIALIZE(voter, (liquid)(staked)(staked)(delegated)(delegated_to))
     };
-    typedef multi_index<name("accounts"), account> accounts_table;
+    typedef multi_index<name("voters"), voter> voters_table;
 
     //scope: registry_symbol.code().raw()
     //ram: 
@@ -423,14 +424,14 @@ public:
     };
     typedef multi_index<name("archivals"), archival> archivals_table;
 
-
-    //TODO: use account table for tlos deposits and worker payouts
-
     //scope: account_name.value
     //ram: 
-    // TABLE account {
-    //     asset balance;
-    // };
-    // typedef multi_index<name("accounts"), account> accounts_table;
+    TABLE account {
+        asset balance;
+
+        uint64_t primary_key() const { return balance.symbol.code().raw(); }
+        EOSLIB_SERIALIZE(account, (balance))
+    };
+    typedef multi_index<name("accounts"), account> accounts_table;
 
 };
