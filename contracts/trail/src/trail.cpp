@@ -841,6 +841,7 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
         col.staked = asset(0, registry_symbol);
         col.delegated = asset(0, registry_symbol);
         col.delegated_to = name(0);
+        col.vote_receipts = uint16_t(0);
     });
 
     //update registry

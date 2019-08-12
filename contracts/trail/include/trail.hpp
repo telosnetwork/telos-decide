@@ -19,9 +19,6 @@
 using namespace eosio;
 using namespace std;
 
-//TODO: rebalance logic
-//TODO: worker payment logic
-
 CONTRACT trail : public contract {
 
 public:
@@ -149,7 +146,7 @@ public:
     //casts a vote on a ballot
     ACTION castvote(name voter, name ballot_name, vector<name> options);
 
-    //TODDO: unvotes a single option
+    //TODO: unvotes a single option 
     // ACTION unvote(name voter, name ballot_name, name option_to_unvote);
 
     //rollback all votes on a ballot
@@ -365,10 +362,10 @@ public:
         asset staked;
         asset delegated;
         name delegated_to;
-        //uint16_t vote_receipts;
+        uint16_t vote_receipts;
 
         uint64_t primary_key() const { return liquid.symbol.code().raw(); }
-        EOSLIB_SERIALIZE(voter, (liquid)(staked)(staked)(delegated)(delegated_to))
+        EOSLIB_SERIALIZE(voter, (liquid)(staked)(delegated)(delegated_to)(vote_receipts))
     };
     typedef multi_index<name("voters"), voter> voters_table;
 

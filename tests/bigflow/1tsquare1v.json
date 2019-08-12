@@ -16,12 +16,7 @@
                         ],
                         "data": {
                             "trail_version": "v2.0.0-RFC1",
-                            "ballot_fee": "15.0000 TLOS",
-                            "registry_fee": "250.0000 TLOS",
-                            "archival_fee": "25.0000 TLOS",
-                            "min_ballot_length": 60,
-                            "ballot_cooldown": 60,
-                            "max_vote_receipts": 51
+                            "set_defaults": true
                         }
                     },
 
@@ -1847,7 +1842,7 @@
                     ],
                     "data": {
                         "ballot_name": "trailballot1",
-                        "end_time": "2019-08-08T17:35:00"
+                        "end_time": "2019-08-12T08:15:00"
                     }
                 },
 
