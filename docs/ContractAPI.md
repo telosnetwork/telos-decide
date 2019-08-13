@@ -2,6 +2,8 @@
 
 ...
 
+-----
+
 ## Admin Actions
 
 ...
@@ -12,17 +14,31 @@ Sets the data in the contract's config singleton.
 
 - `trail_version` is the version number of the deployed Trail contract.
 
-- `ballot_fee` is the fee collected for creating a new ballot with the `newballot()` action.
+- `set_defaults` sets default values if true.
 
-- `registry_fee` is the fee collected for creating a new registry with the `newregistry()` action.
+    cleos push action trailservice setconfig '["v2.0.0-RFC1", true]' -p trailservice
 
-- `archival_fee` is the fee collected for archiving a ballot with the `archive()` action.
+### ACTION `updatefee()`
 
-- `min_ballot_length` is the minimum length of time (in seconds) that a ballot may be open for voting.
+...
 
-- `ballot_cooldown` is the length of time that must pass (in seconds) after closing before a ballot can be deleted.
+- `fee_name`
 
-    cleos push action trailservice setconfig '[...]' -p trailservice
+- `fee_amount`
+
+    cleos push action trailservice updatefee '["ballot", "35.0000 TLOS"]' -p trailservice
+
+### ACTION `updatetime()`
+
+...
+
+- `time_name`
+
+- `length`
+
+    cleos push action trailservice updatetime '["balcooldown", 86400]' -p trailservice
+
+-----
 
 ## Registry Actions
 
@@ -147,6 +163,8 @@ Sets the data in the contract's config singleton.
 - `quantity`
 
     cleos push action trailservice addtofund '["2,TEST", "voteraccount", "quantity"]' -p publisher
+
+-----
 
 ## Ballot Actions
 
@@ -297,6 +315,8 @@ Sets the data in the contract's config singleton.
 
     cleos push action trailservice unarchive '["ballot1", false]' -p testaccounta
 
+-----
+
 ## Voter Actions
 
 ...
@@ -363,6 +383,8 @@ Sets the data in the contract's config singleton.
 
     cleos push action trailservice unstake '["testaccounb", "5.00 TEST"]' -p testaccountb
 
+-----
+
 ## Worker Actions
 
 ...
@@ -404,6 +426,8 @@ Sets the data in the contract's config singleton.
 ...
 
     cleos push action trailservice cleanupvote ...
+
+-----
 
 ## Committee Actions
 
