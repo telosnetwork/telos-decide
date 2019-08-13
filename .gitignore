@@ -3,3 +3,4 @@ build/
 
 # Local
 .vscode/
+.DS_Store

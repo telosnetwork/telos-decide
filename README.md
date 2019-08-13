@@ -10,7 +10,7 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 * `Advanced Voting Methods`
 
-    The Trail Voting Platform boasts an extensive set of voting methods and customization options. Voting Methods include but are not limited to: `1acct1vote`, `1tokennvote`, `1token1vote`, `1tsquare1v`, `quadratic`, and `ranked`. See the `Voting Methods` section of the `Trail Developer Guide` for more information on the many different voting methods available.
+    The Trail Voting Platform boasts an extensive set of voting methods and customization options. Voting Methods available include: `1acct1vote`, `1tokennvote`, `1token1vote`, `1tsquare1v`, `quadratic`, and `ranked`. See the `Voting Methods` section of the [Trail Developer Guide](docs/DeveloperGuide.md) for more information on the different voting methods and how they are used.
 
 * `Custom Token Registries`
 
@@ -18,13 +18,13 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 * `Optional Light Ballots`
 
-    Light ballots disable the on-chain vote tracking portion of the voting process - this allows for developers to track votes in an off-chain database that is built by an Iris or Demux style service instead. 
+    Light ballots disable the on-chain vote tracking portion of the voting process - this allows for developers to track votes in an off-chain database that is built by an [Iris](https://github.com/CALEOS/iris-client) or [Demux](https://github.com/EOSIO/demux-js) style service instead. 
     
     This option enables Trail to power vastly more voting services by saving RAM costs for both the platform and voters, while at the same time retaining the complete traceability and auditability benefits offered by the blockchain.
 
 * `Committee Management Tools`
 
-    Trail offers a suite of committe creation and management tools that are available as a free service to any active token registry and its voters. Developers can also hook their external smart contracts into Trail's committee tools to enable complete on-chain management of committees and their members.
+    Trail offers a suite of committee creation and management tools that are available as a free service to any active token registry and its voters. Developers can also hook their external smart contracts into Trail's committee tools to enable complete on-chain management of committees and their members.
 
 * `Traceable Vote Integrity`
 
@@ -36,7 +36,7 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 ## Join the Firewatch
 
-The Firewatch is a league of voters, developers, and stakeholders dedicated to running a secure and optimized voting platform. Firewatch workers may claim a portion of Trail profits porportional to their recent contributions, and may also be eligible for platform-wide leaderboard rewards.
+The Firewatch is a league of voters and developers dedicated to running a secure and optimized voting platform. Firewatch workers may claim a portion of Trail profits porportional to their recent contributions, and may also be eligible for platform-wide leaderboard rewards.
 
 ## The TRAIL Token
 
@@ -59,8 +59,9 @@ Proposed Use Cases:
 
 ### Q4 2019
 
-- Staking, Stake Voting
+- Example Guides
 - External Contract Examples
+- Staking, Stake Voting
 
 ### Q1 2020
 
@@ -71,6 +72,10 @@ Proposed Use Cases:
 
 - Delegates, Delegate Voting
 - Optional Identity Services
+
+## References
+
+1. [Voting Methods by Eric Pacuit - Stanford Encyclopedia of Philosophy](https://plato.stanford.edu/entries/voting-methods/#CritForCompVotiMeth)
 
 ## Contributing to Trail
 
