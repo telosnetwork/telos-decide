@@ -10,11 +10,11 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 * `Advanced Voting Methods`
 
-    The Trail Voting Platform boasts an extensive set of voting methods and customization options. Voting Methods available include: `1acct1vote`, `1tokennvote`, `1token1vote`, `1tsquare1v`, `quadratic`, and `ranked`. See the `Voting Methods` section of the [Trail Developer Guide](docs/DeveloperGuide.md) for more information on the different voting methods and how they are used.
+    The Trail Voting Platform boasts an extensive set of voting methods and customization options. Voting Methods available include: `1acct1vote`, `1tokennvote`, `1token1vote`, `1tsquare1v`, `quadratic`, and `ranked`. For more information on the different voting methods and how they are used see the `Voting Methods` section of the [Trail Developer Guide](docs/DeveloperGuide.md).
 
 * `Custom Token Registries`
 
-    Any user on the Telos Blockchain Network may create a custom token registry that automatically inherits Trail's entire suite of voting services. These registries can also be customized to allow or disallow specific behaviors like transferring, burning, or reclaiming of tokens.
+    Any user on the Telos Blockchain Network may create a custom token registry that automatically inherits Trail's entire suite of voting services. These registries can also be customized to allow or disallow specific behaviors like transferring, burning, staking, or reclaiming of tokens.
 
 * `Optional Light Ballots`
 
@@ -28,11 +28,11 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 * `Traceable Vote Integrity`
 
-    Trail has implemented a custom rebalance system that detects changes to a user's staked resources and either updates all open votes for the user, or posts a new rebalance job for any user to complete and earn rewards. Future updates will allow for optional identity services to futher enhance voting and platform features.
+    Trail has implemented a custom rebalance system that detects changes to a user's balances and allows workers to recalculate vote weights. Future updates will allow for optional identity services to futher enhance voting and platform features.
 
 * `Profitable Worker Services`
 
-    Trail has several janitorial actions that incentivize workers on the network to maintain an optimized voting system.
+    Trail has several janitorial actions that incentivize workers on the network to maintain an optimized voting system. Workers are paid proportionally for their work in keeping the platform clean and balanced for all users.
 
 ## Join the Firewatch
 
@@ -61,7 +61,6 @@ Proposed Use Cases:
 
 - Example Guides
 - External Contract Examples
-- Staking, Stake Voting
 
 ### Q1 2020
 
