@@ -60,7 +60,9 @@ Creates a new Registry with the given access method and max supply.
 
 - `access` is the access method for acquiring a balance of the registry's tokens.
 
+    ```
     cleos push action trailservice newregistry '["youraccount", "2,TEST", "public"]' -p manager
+    ```
 
 ### ACTION `togglereg()`
 
@@ -351,7 +353,7 @@ Broadcasts ballot results and notifies the ballot publisher.
 - `total_voters` is the total number of unique voters who voted on the ballot.
 
     ```
-    Called as an inline from closeballot()
+    Inline from closeballot()
     ```
 
 ### ACTION `archive()`
