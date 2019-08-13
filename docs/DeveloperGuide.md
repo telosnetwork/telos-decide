@@ -6,9 +6,122 @@ In this Developer Guide, we will explore Trail's suite of platform services avai
 
 Trail's primary role is to consolidate many of the boilerplate functions of voting contracts into a single service, while also keeping the system flexible enough to offer verbose ballot and registry management. 
 
-In other words, this design means developers can leave the "vote counting" up to Trail and instead write their contracts to interpret final ballot results posted by Trail. Through cross-contract table lookup, any contract can view the results of a ballot and then have their contracts act based on those results.
+In other words, this means developers can leave the "vote counting" up to Trail and instead write their contracts to interpret final ballot results. 
+
+-----
 
 ## Building External Contract
 
 ...
 
+-----
+
+## Registries
+
+...
+
+### Registry Creation
+
+...
+
+### Registry Management
+
+...
+
+### Registry Funding
+
+...
+
+## Ballots
+
+...
+
+### Ballot Creation
+
+...
+
+### Ballot Management
+
+...
+
+### Ballot Closing
+
+...
+
+### Broadcasting Ballot Results
+
+...
+
+### Ballot Deletion
+
+...
+
+### Ballot Cancellation
+
+...
+
+### Archiving and Unarchiving
+
+...
+
+-----
+
+## Voters
+
+...
+
+### Voter Registration
+
+...
+
+### Casting Votes
+
+...
+
+### Unvoting
+
+...
+
+### Staking and Unstaking
+
+...
+
+-----
+
+## Workers
+
+...
+
+### Worker Registration
+
+...
+
+### Rebalancing Votes
+
+...
+
+### Cleaning Votes
+
+...
+
+### Claiming Worker Payout
+
+...
+
+-----
+
+## Committees
+
+...
+
+### Committee Creation
+
+...
+
+### Committee Management
+
+...
+
+### External Contract Hooks
+
+...

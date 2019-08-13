@@ -1,4 +1,4 @@
-// Trail is an on-chain voting platform for the Telos Blockchain Network offering
+// Trail is an on-chain voting platform for the Telos Blockchain Network that provides
 // a full suite of voting services for users and developers.
 //
 // @author Craig Branscom
