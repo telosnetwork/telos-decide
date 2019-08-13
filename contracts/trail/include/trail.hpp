@@ -179,7 +179,7 @@ public:
     ACTION cleanupvote(name voter, name ballot_name, optional<name> worker);
 
     //attempts to clean all expired votes, or up to a given count
-    ACTION cleanhouse(name voter, optional<uint16_t> count, optional<name> worker);
+    // ACTION cleanhouse(name voter, optional<uint16_t> count, optional<name> worker);
 
     //======================== committee actions ========================
 
@@ -239,20 +239,20 @@ public:
     //validates access method
     bool valid_access_method(name access_method);
 
-    //logs rebalance work
-    void log_rebalance_work(name worker_name, symbol registry_symbol, asset volume, uint16_t count);
-
-    //logs cleanup work
-    // void log_cleanup_work(name worker_name, symbol registry_symbol, asset volume, uint16_t count);
-
     //charges a fee to a TLOS balance
     void require_fee(name account_name, asset fee);
+
+    //logs rebalance work
+    void log_rebalance_work(name worker, symbol registry_symbol, asset volume, uint16_t count);
+
+    //logs cleanup work
+    void log_cleanup_work(name worker, symbol registry_symbol, uint16_t count);
 
     //syncs an exernal account balance with a linked voter balance
     void sync_external_account(name voter, symbol internal_symbol, symbol external_symbol);
 
     //calculates vote mapping
-    map<name, asset> calc_vote_mapping(symbol registry_symbol, name voting_method, 
+    map<name, asset> calc_vote_weights(symbol registry_symbol, name voting_method, 
     vector<name> selections,  asset raw_vote_weight);
 
     //======================== tables ========================
@@ -283,12 +283,12 @@ public:
         name manager; //registry manager
         map<name, bool> settings; //setting_name -> on/off
 
+        uint16_t open_ballots; //number of open ballots
         asset worker_funds; //bucket to pay workers
+
         asset rebalanced_volume; //total volume of rebalanced votes
         uint32_t rebalanced_count; //total count of rebalanced votes
-        //asset cleaned_volume; //total volume of cleaned votes
-        //uint32_t cleaned_count; //total count of cleaned votes
-        uint16_t open_ballots; //number of open ballots
+        uint32_t cleaned_count; //total count of cleaned votes
 
         uint64_t primary_key() const { return supply.symbol.code().raw(); }
         EOSLIB_SERIALIZE(registry, 
@@ -296,7 +296,8 @@ public:
             (voters)(access)
             (locked)(unlock_acct)(unlock_auth)
             (manager)(settings)
-            (worker_funds)(rebalanced_volume)(rebalanced_count)(open_ballots))
+            (open_ballots)(worker_funds)
+            (rebalanced_volume)(rebalanced_count)(cleaned_count))
     };
     typedef multi_index<name("registries"), registry> registries_table;
 
@@ -312,12 +313,13 @@ public:
         string description; //markdown
         string ballot_info; //typically IPFS link to content
 
-        name voting_method; //1acct1vote, 1tokennvote, 1token1vote, 1tsquare1v, quadratic, ranked, graded
+        name voting_method; //1acct1vote, 1tokennvote, 1token1vote, 1tsquare1v, quadratic, ranked
         uint8_t max_options; //max options per voter
         map<name, asset> options; //option name -> total weighted votes
 
         symbol registry_symbol; //token registry used for counting votes
         uint32_t total_voters; //unique voters who have voted on ballot
+        //asset total_raw_weight; 
         map<name, bool> settings; //setting name -> on/off
 
         uint32_t cleaned_count; //number of expired vote receipts cleaned
@@ -338,34 +340,37 @@ public:
 
     //scope: voter.value
     //ram: 
-    TABLE vote_receipt {
+    TABLE vote {
         name ballot_name;
         symbol registry_symbol;
-        map<name, asset> votes;
-        uint8_t rebalances;
+        asset raw_vote_weight;
+        map<name, asset> weighted_votes;
         time_point_sec expiration;
+        
+        name worker;
+        uint8_t rebalances;
+        asset rebalance_volume;
 
         uint64_t primary_key() const { return ballot_name.value; }
         uint64_t by_symbol() const { return registry_symbol.code().raw(); }
         uint64_t by_exp() const { return static_cast<uint64_t>(expiration.utc_seconds); }
-        EOSLIB_SERIALIZE(vote_receipt, (ballot_name)(registry_symbol)(votes)(rebalances)(expiration))
+        EOSLIB_SERIALIZE(vote, 
+            (ballot_name)(registry_symbol)(raw_vote_weight)(weighted_votes)(expiration)
+            (worker)(rebalances)(rebalance_volume))
     };
-    typedef multi_index<name("votereceipts"), vote_receipt,
-        indexed_by<name("bysymbol"), const_mem_fun<vote_receipt, uint64_t, &vote_receipt::by_symbol>>,
-        indexed_by<name("byexp"), const_mem_fun<vote_receipt, uint64_t, &vote_receipt::by_exp>>
-    > votereceipts_table;
+    typedef multi_index<name("votes"), vote,
+        indexed_by<name("bysymbol"), const_mem_fun<vote, uint64_t, &vote::by_symbol>>,
+        indexed_by<name("byexp"), const_mem_fun<vote, uint64_t, &vote::by_exp>>
+    > votes_table;
 
     //scope: voter.value
     //ram: 
     TABLE voter {
         asset liquid;
         asset staked;
-        asset delegated;
-        name delegated_to;
-        uint16_t vote_receipts;
 
         uint64_t primary_key() const { return liquid.symbol.code().raw(); }
-        EOSLIB_SERIALIZE(voter, (liquid)(staked)(delegated)(delegated_to)(vote_receipts))
+        EOSLIB_SERIALIZE(voter, (liquid)(staked))
     };
     typedef multi_index<name("voters"), voter> voters_table;
 
@@ -399,13 +404,12 @@ public:
         //by registry symbol
         map<symbol, asset> rebalance_volume;
         map<symbol, uint16_t> rebalance_count;
-        //map<symbol> clean_volume;
-        //map<symbol, uint16_t> clean_count;
+        map<symbol, uint16_t> clean_count;
 
         uint64_t primary_key() const { return worker_name.value; }
         EOSLIB_SERIALIZE(worker, 
             (worker_name)(standing)(last_payment)
-            (rebalance_volume)(rebalance_count))
+            (rebalance_volume)(rebalance_count)(clean_count))
     };
     typedef multi_index<name("workers"), worker> workers_table;
 
