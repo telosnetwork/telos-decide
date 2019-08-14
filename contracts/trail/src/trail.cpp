@@ -677,7 +677,7 @@ ACTION trail::closeballot(name ballot_name, bool broadcast) {
 
     //if broadcast true, send bcastresults inline to self
     if (broadcast) {
-        action(permission_level{get_self(), name("active")}, name("trailservice"), name("bcastresults"), make_tuple(
+        action(permission_level{get_self(), name("active")}, get_self(), name("bcastresults"), make_tuple(
             ballot_name, //ballot_name
             bal.options, //final_results
             bal.total_voters //total_voters
@@ -789,6 +789,7 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
     auto vtr_itr = voters.find(registry_symbol.code().raw());
 
     //validate
+    check(is_account(voter), "voter account doesn't exist");
     check(vtr_itr == voters.end(), "voter already exists");
     check(registry_symbol != TLOS_SYM, "cannot register as TLOS voter, use VOTE instead");
     check(registry_symbol != TRAIL_SYM, "cannot register as TRAIL voter, call regworker() instead");
@@ -1330,6 +1331,36 @@ ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
     //erase expired vote
     votes.erase(v);
     
+}
+
+ACTION trail::withdraw(name voter, asset quantity) {
+    
+    //authenticate
+    require_auth(voter);
+    
+    //open accounts table, get account
+    accounts_table tlos_accounts(get_self(), voter.value);
+    auto& acct = tlos_accounts.get(TLOS_SYM.code().raw(), "account not found");
+
+    //validate
+    check(quantity.symbol == TLOS_SYM, "can only withdraw TLOS");
+    check(acct.balance >= quantity, "insufficient balance");
+    check(quantity > asset(0, TLOS_SYM), "must withdraw a positive amount");
+
+    //update balances
+    tlos_accounts.modify(acct, same_payer, [&](auto& col) {
+        col.balance -= quantity;
+    });
+
+    //transfer to eosio.token
+    //inline trx requires trailservice@active to have trailservice@eosio.code
+    action(permission_level{get_self(), name("active")}, name("eosio.token"), name("transfer"), make_tuple(
+		get_self(), //from
+		voter, //to
+		quantity, //quantity
+        std::string("trailservice withdrawal") //memo
+	)).send();
+
 }
 
 // ACTION trail::cleanhouse(name voter, optional<uint16_t> count, optional<name> worker) {
