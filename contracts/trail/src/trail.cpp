@@ -50,11 +50,14 @@ ACTION trail::updatefee(name fee_name, asset fee_amount) {
     //validate
     check(fee_amount >= asset(0, TLOS_SYM), "fee amount must be a positive number");
 
-    //update fee
-    conf.fees[fee_name] = fee_amount;
+    //initialize
+    config new_conf = conf;
 
     //update fee
-    configs.set(conf, get_self());
+    new_conf.fees[fee_name] = fee_amount;
+
+    //update fee
+    configs.set(new_conf, get_self());
 }
 
 ACTION trail::updatetime(name time_name, uint32_t length) {
@@ -68,11 +71,14 @@ ACTION trail::updatetime(name time_name, uint32_t length) {
     //validate
     check(length >= 1, "length must be a positive number");
 
-    //update time name with new length
-    conf.times[time_name] = length;
+    //initialize
+    config new_conf = conf;
 
-    //update fee
-    configs.set(conf, get_self());
+    //update time name with new length
+    new_conf.times[time_name] = length;
+
+    //update time
+    configs.set(new_conf, get_self());
 }
 
 //======================== registry actions ========================
@@ -1390,9 +1396,13 @@ ACTION trail::regcommittee(name committee_name, string committee_title,
     committees_table committees(get_self(), registry_symbol.code().raw());
     auto cmt = committees.find(committee_name.value);
 
-    //open accounts table, get account
-    accounts_table accounts(get_self(), registree.value);
-    auto& acct = accounts.get(registry_symbol.code().raw(), "account not found");
+    //open voters table, get voter
+    voters_table voters(get_self(), registree.value);
+    auto& vtr = voters.get(registry_symbol.code().raw(), "voter not found");
+
+    //open configs singleton, get config
+    config_singleton configs(get_self(), get_self().value);
+    auto conf = configs.get();
 
     //initialize
     map<name, name> new_seats;
@@ -1400,6 +1410,9 @@ ACTION trail::regcommittee(name committee_name, string committee_title,
     //validate
     check(cmt == committees.end(), "committtee already exists");
     check(committee_title.size() <= 256, "committee title has more than 256 bytes");
+
+    //charge committee fee
+    require_fee(registree, conf.fees.at(name("committee")));
 
     for (name n : initial_seats) {
         check(new_seats.find(n) == new_seats.end(), "seat names must be unique");
@@ -1717,7 +1730,7 @@ void trail::log_cleanup_work(name worker, symbol registry_symbol, uint16_t count
             workers.modify(wrk, same_payer, [&](auto& col) {
                 col.clean_count[registry_symbol] += count;
             });
-            
+
         }
 
     }
