@@ -88,3 +88,16 @@ Sometimes voters want to retract previously submitted votes. Note that unvoting 
 ### Staking and Unstaking
 
 Certain registries will allow or disallow staking of it's tokens. If staking is allowed, vote weights will be pulled from the voter's staked amount instead of liquid when casting votes. 
+
+## Voters Table Breakdown
+
+Voters are the lifeblood of Trail, so it's important that voters remain knowledgable about how the platform works and how to interpret their own voter tables.
+
+Table: `voters`
+
+Scope: `your-voter-name`
+
+| Field | Type | Description |
+| --- | --- | --- |
+| liquid | asset | Current liquid amount of tokens. |
+| staked | asset | Current staked amount of tokens. |

@@ -528,6 +528,18 @@ Cleans a single expired vote. If worker name is supplied, credits worker with cl
     cleos push action trailservice cleanupvote '["testaccounta", "ballot1", "testaccountb"]' -p testaccountb
     ```
 
+### ACTION `withdraw()`
+
+Withdraws a quantity of tokens from the voter's TLOS balance out of Trail.
+
+- `voter` is the voter account to withdraw from.
+
+- `quantity` is the amount of TLOS to withdraw.
+
+    ```
+    cleos push action trailservice withdraw '["testaccounta", "5.0000 TLOS"]' -p testaccounta
+    ```
+
 -----
 
 ## Committee Actions

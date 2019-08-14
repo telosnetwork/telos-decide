@@ -181,6 +181,9 @@ public:
     //attempts to clean all expired votes, or up to a given count
     // ACTION cleanhouse(name voter, optional<uint16_t> count, optional<name> worker);
 
+    //withdraws tlos balance to eosio.token
+    ACTION withdraw(name voter, asset quantity);
+
     //======================== committee actions ========================
 
     //registers a new committee for a token registry

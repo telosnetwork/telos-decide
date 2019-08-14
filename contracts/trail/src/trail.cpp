@@ -50,11 +50,14 @@ ACTION trail::updatefee(name fee_name, asset fee_amount) {
     //validate
     check(fee_amount >= asset(0, TLOS_SYM), "fee amount must be a positive number");
 
-    //update fee
-    conf.fees[fee_name] = fee_amount;
+    //initialize
+    config new_conf = conf;
 
     //update fee
-    configs.set(conf, get_self());
+    new_conf.fees[fee_name] = fee_amount;
+
+    //update fee
+    configs.set(new_conf, get_self());
 }
 
 ACTION trail::updatetime(name time_name, uint32_t length) {
@@ -68,11 +71,14 @@ ACTION trail::updatetime(name time_name, uint32_t length) {
     //validate
     check(length >= 1, "length must be a positive number");
 
-    //update time name with new length
-    conf.times[time_name] = length;
+    //initialize
+    config new_conf = conf;
 
-    //update fee
-    configs.set(conf, get_self());
+    //update time name with new length
+    new_conf.times[time_name] = length;
+
+    //update time
+    configs.set(new_conf, get_self());
 }
 
 //======================== registry actions ========================
@@ -671,7 +677,7 @@ ACTION trail::closeballot(name ballot_name, bool broadcast) {
 
     //if broadcast true, send bcastresults inline to self
     if (broadcast) {
-        action(permission_level{get_self(), name("active")}, name("trailservice"), name("bcastresults"), make_tuple(
+        action(permission_level{get_self(), name("active")}, get_self(), name("bcastresults"), make_tuple(
             ballot_name, //ballot_name
             bal.options, //final_results
             bal.total_voters //total_voters
@@ -783,6 +789,7 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
     auto vtr_itr = voters.find(registry_symbol.code().raw());
 
     //validate
+    check(is_account(voter), "voter account doesn't exist");
     check(vtr_itr == voters.end(), "voter already exists");
     check(registry_symbol != TLOS_SYM, "cannot register as TLOS voter, use VOTE instead");
     check(registry_symbol != TRAIL_SYM, "cannot register as TRAIL voter, call regworker() instead");
@@ -1326,6 +1333,36 @@ ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
     
 }
 
+ACTION trail::withdraw(name voter, asset quantity) {
+    
+    //authenticate
+    require_auth(voter);
+    
+    //open accounts table, get account
+    accounts_table tlos_accounts(get_self(), voter.value);
+    auto& acct = tlos_accounts.get(TLOS_SYM.code().raw(), "account not found");
+
+    //validate
+    check(quantity.symbol == TLOS_SYM, "can only withdraw TLOS");
+    check(acct.balance >= quantity, "insufficient balance");
+    check(quantity > asset(0, TLOS_SYM), "must withdraw a positive amount");
+
+    //update balances
+    tlos_accounts.modify(acct, same_payer, [&](auto& col) {
+        col.balance -= quantity;
+    });
+
+    //transfer to eosio.token
+    //inline trx requires trailservice@active to have trailservice@eosio.code
+    action(permission_level{get_self(), name("active")}, name("eosio.token"), name("transfer"), make_tuple(
+		get_self(), //from
+		voter, //to
+		quantity, //quantity
+        std::string("trailservice withdrawal") //memo
+	)).send();
+
+}
+
 // ACTION trail::cleanhouse(name voter, optional<uint16_t> count, optional<name> worker) {
 //     //sort votes by expiration, lowest first
 //     votereceipts_table votereceipts(get_self(), voter.value);
@@ -1390,9 +1427,13 @@ ACTION trail::regcommittee(name committee_name, string committee_title,
     committees_table committees(get_self(), registry_symbol.code().raw());
     auto cmt = committees.find(committee_name.value);
 
-    //open accounts table, get account
-    accounts_table accounts(get_self(), registree.value);
-    auto& acct = accounts.get(registry_symbol.code().raw(), "account not found");
+    //open voters table, get voter
+    voters_table voters(get_self(), registree.value);
+    auto& vtr = voters.get(registry_symbol.code().raw(), "voter not found");
+
+    //open configs singleton, get config
+    config_singleton configs(get_self(), get_self().value);
+    auto conf = configs.get();
 
     //initialize
     map<name, name> new_seats;
@@ -1400,6 +1441,9 @@ ACTION trail::regcommittee(name committee_name, string committee_title,
     //validate
     check(cmt == committees.end(), "committtee already exists");
     check(committee_title.size() <= 256, "committee title has more than 256 bytes");
+
+    //charge committee fee
+    require_fee(registree, conf.fees.at(name("committee")));
 
     for (name n : initial_seats) {
         check(new_seats.find(n) == new_seats.end(), "seat names must be unique");
@@ -1717,7 +1761,7 @@ void trail::log_cleanup_work(name worker, symbol registry_symbol, uint16_t count
             workers.modify(wrk, same_payer, [&](auto& col) {
                 col.clean_count[registry_symbol] += count;
             });
-            
+
         }
 
     }
