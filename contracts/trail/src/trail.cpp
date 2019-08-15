@@ -863,12 +863,21 @@ ACTION trail::unregvoter(name voter, symbol registry_symbol) {
     voters_table voters(get_self(), voter.value);
     auto& vtr = voters.get(registry_symbol.code().raw(), "voter not found");
 
+    //open registries table, get registry
+    registries_table registries(get_self(), get_self().value);
+    auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
+
     //validate
     check(vtr.liquid == asset(0, registry_symbol), "cannot unregister unless liquid is zero");
     check(vtr.staked == asset(0, registry_symbol), "cannot unregister unless staked is zero");
 
     //TODO: let voter unregister anyway by sending liquid and staked amount?
-    //TODO: require voter to cleanup/unvote all existing vote receipts first
+    
+    //TODO: require voter to cleanup/unvote all existing vote receipts first?
+
+    registries.modify(reg, same_payer, [&](auto& col) {
+        col.voters -= uint32_t(1);
+    });
 
     //erase account
     voters.erase(vtr);
@@ -1362,59 +1371,6 @@ ACTION trail::withdraw(name voter, asset quantity) {
 	)).send();
 
 }
-
-// ACTION trail::cleanhouse(name voter, optional<uint16_t> count, optional<name> worker) {
-//     //sort votes by expiration, lowest first
-//     votereceipts_table votereceipts(get_self(), voter.value);
-//     auto byexp = votereceipts.get_index<name("byexp")>(); 
-//     auto byexp_itr = byexp.begin();
-
-//     //initialize
-//     auto now = time_point_sec(current_time_point());
-//     uint16_t cleaned = 0;
-//     uint16_t to_clean = 1;
-
-//     if (count) {
-//         to_clean = *count;
-//     }
-
-//     //cleans expired votes until count reaches 0 or end of table, skips active votes
-//     while (to_clean > 0 && byexp_itr != byexp.end()) {
-        
-//         //check if vote has expired
-//         if (byexp_itr->expiration < now) { //expired
-           
-//             //open ballots table, get ballot
-//             ballots_table ballots(get_self(), get_self().value);
-//             auto bal = ballots.find(byexp_itr->ballot_name.value);
-
-//             //update cleaned count if ballot still exists (should still exist)
-//             if (bal != ballots.end()) {
-//                 ballots.modify(*bal, same_payer, [&](auto& col) {
-//                     col.cleaned_count += 1;
-//                 });
-//             }
-            
-//             byexp_itr = byexp.erase(byexp_itr); //returns next iterator
-//             to_clean--;
-//             cleaned++;
-//         } else { //active
-//             byexp_itr++;
-//         }
-
-//     }
-
-//     //log cleaned amount to worker profile
-//     if (worker) {
-//         name worker_name = *worker;
-
-//         //authenticate
-//         require_auth(worker_name);
-
-//         //TODO: log cleanup work
-//     }
-
-// }
 
 //======================== committee actions ========================
 
