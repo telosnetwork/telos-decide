@@ -2,6 +2,8 @@
 
 if [[ "$1" == "trail" ]]; then
     contract=trail
+elif [[ "$1" == "example" ]]; then
+    contract=example
 else
     echo "need contract"
     exit 0
@@ -15,4 +17,4 @@ fi
 # -R=<string>              - Add a resource path for inclusion
 
 #eosio.cdt v1.6.1
-eosio-cpp -I="./$contract/include/" -R="./$contract/resources" -o="./build/$contract/$contract.wasm" -contract="trail" -abigen ./$contract/src/$contract.cpp
+eosio-cpp -I="./$contract/include/" -R="./$contract/resources" -o="./build/$contract/$contract.wasm" -contract="$contract" -abigen "./$contract/src/$contract.cpp"
