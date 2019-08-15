@@ -2,6 +2,16 @@
 
 In this guide we will explore all the different interactions a Registry Manager can perform on the Trail Voting Platform.
 
+#### What is a Registry?
+
+A Trail Registry is a place to keep track of data about a certain family of token. Information like the current supply of tokens, the max supply, the registry settings, and who the registry manager is are all tracked on the Token Registry. Note that tokens cannot exist on Trail without an accompanying Registry.
+
+#### What is a Registry Symbol?
+
+All Registries are identified by the symbol of the tokens they manage - also called a Registry Symbol. 
+
+Note that Registry Symbols contain the precision amount of the token as well as the actual ticker name. So a `1.000 TEST` token would have a symbol of: `3,TEST`. The number 3 for the three decimal places of precision, followed by a comma with no space, then the ticker symbol in all caps.
+
 ## Getting Started
 
 Follow these steps to get started creating your own Trail Registry:
@@ -38,12 +48,12 @@ In order to mint tokens we have to have a voter to hold them, so lets go ahead a
 
 - **Registry Symbol:** the symbol of the registry to register for. This includes the token precision (the number of decimal places the token uses).
 
-- **Referrer:** the 
+- **Referrer:** the account that is referring the new voter, if any. If no referrer, then give `null` as an argument.
 
-Depending on the access method, a registry may require extra signatures from certain voters to qualify. Since we made our registry public, we don't need to worry about that.
+Depending on the access method, a registry may require extra signatures from certain voters to qualify. Since we made our registry public, we don't need to worry about finding a referrer.
 
 ```
-cleos push action trailservice regvoter '["", "", ""]'
+cleos push action trailservice regvoter '["craig.tf", "2,CRAIG", null]' -p craig.tf
 ```
 
 -----
