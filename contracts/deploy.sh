@@ -3,6 +3,9 @@
 if [[ "$1" == "trail" ]]; then
     contract=trail
     account=trailservice
+elif [[ "$1" == "example" ]]; then
+    contract=example
+    account=testaccounta
 else
     echo "need contract"
     exit 0
@@ -10,7 +13,7 @@ fi
 
 if [[ "$2" == "production" ]]; then
     url=http://api.tlos.goodblock.io
-elif [[ "$2" == "test" ]]; then
+elif [[ "$2" == "testnet" ]]; then
     url=https://api-test.tlos.goodblock.io/
 elif [[ "$2" == "local" ]]; then
     url=http://127.0.0.1:8888

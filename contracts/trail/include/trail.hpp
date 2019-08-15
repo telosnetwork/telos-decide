@@ -172,14 +172,8 @@ public:
     //rebalance an unbalaned vote
     ACTION rebalance(name voter, name ballot_name, optional<name> worker);
 
-    //rebalance a number of unbalanced votes
-    // ACTION bigrebalance(name voter, symbol registry_symbol, optional<uint16_t> count, optional<name> worker);
-
     //cleans up an expired vote
     ACTION cleanupvote(name voter, name ballot_name, optional<name> worker);
-
-    //attempts to clean all expired votes, or up to a given count
-    // ACTION cleanhouse(name voter, optional<uint16_t> count, optional<name> worker);
 
     //withdraws tlos balance to eosio.token
     ACTION withdraw(name voter, asset quantity);
