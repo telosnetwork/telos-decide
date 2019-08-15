@@ -872,7 +872,7 @@ ACTION trail::unregvoter(name voter, symbol registry_symbol) {
     check(vtr.staked == asset(0, registry_symbol), "cannot unregister unless staked is zero");
 
     //TODO: let voter unregister anyway by sending liquid and staked amount?
-    
+
     //TODO: require voter to cleanup/unvote all existing vote receipts first?
 
     registries.modify(reg, same_payer, [&](auto& col) {
@@ -1261,7 +1261,7 @@ ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
     int64_t weight_delta = abs(v.raw_vote_weight.amount - raw_vote_weight.amount);
 
     //apply new votes to ballot
-    for (auto i = new_votes.begin(); i == new_votes.end(); i++) {
+    for (auto i = new_votes.begin(); i != new_votes.end(); i++) {
         new_bal_options[i->first] += i->second;
     }
 

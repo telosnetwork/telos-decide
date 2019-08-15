@@ -50,11 +50,13 @@ In order to mint tokens we have to have a voter to hold them, so lets go ahead a
 
 - **Referrer:** the account that is referring the new voter, if any. If no referrer, then give `null` as an argument.
 
-Depending on the access method, a registry may require extra signatures from certain voters to qualify. Since we made our registry public, we don't need to worry about finding a referrer.
+Depending on the access method, a registry may require extra signatures from certain voters to qualify. Since we made our registry public we don't need to worry about referrals.
 
 ```
 cleos push action trailservice regvoter '["craig.tf", "2,CRAIG", null]' -p craig.tf
 ```
+
+
 
 -----
 
@@ -82,4 +84,3 @@ Scope: `trailservice`
 | rebalanced_volume | asset | Volume of tokens rebalanced across all ballots. |
 | rebalanced_count| uint32 | Number of rebalance events across all ballots. |
 | cleaned_count | uint32 | Number of clean events across all ballots. |
-
