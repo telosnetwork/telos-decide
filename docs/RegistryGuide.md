@@ -56,7 +56,25 @@ Depending on the access method, a registry may require extra signatures from cer
 cleos push action trailservice regvoter '["craig.tf", "2,CRAIG", null]' -p craig.tf
 ```
 
+#### Registry Settings
 
+| Setting | Description |
+| --- | --- |
+| transferable | Allows tokens to be transferred. |
+| burnable | Allows tokens to be burned by the manager. |
+| reclaimable | Allows tokens to be reclaimed by the manager. |
+| stakeable | Allows tokens to be staked. |
+| unstakeable | Allows tokens to be unstaked. |
+| maxmutable | Allows max supply to be mutated. |
+
+#### Registry Access
+
+| Access Method | Description |
+| --- | --- |
+| Public | Open to everyone |
+| Private | Requires referral by manager |
+| Invite | Requires referral by voter |
+| Membership | Requires payment to manager |
 
 -----
 

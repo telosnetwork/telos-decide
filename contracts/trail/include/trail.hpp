@@ -32,7 +32,7 @@ public:
     const symbol VOTE_SYM = symbol("VOTE", 4);
     const symbol TRAIL_SYM = symbol("TRAIL", 0);
 
-    //registry settings: transferable, burnable, reclaimable, stakeable, maxmutable
+    //registry settings: transferable, burnable, reclaimable, stakeable, unstakeable, maxmutable
 
     //registry access: public, private, invite, membership?
 
