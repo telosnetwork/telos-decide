@@ -50,6 +50,16 @@ Proposed Use Cases:
 
 **Disclaimer:** *The TRAIL token is not an ICO nor should it be considered for investment or speculative purposes. It is a reward for user assistance in maintaining an efficiently run voting platform and will have evolving purposes as the platform grows.*
 
+## Trail Documentation
+
+| Name | Description |
+| --- | --- |
+| [Developer Guide](docs/DeveloperGuide.md) | Complete breakdown of Trail features and how developers can integrate Trail into their projects. |
+| [Voter Guide](docs/VoterGuide.md) | Describes how to become a voter and how voting works. |
+| [Registry Guide](docs/RegistryGuide.md) | Describes how to create and manage Trail Registries. |
+| [Worker Guide](docs/WorkerGuide.md) | Describes how to become a worker and what workers can do. |
+| [Contract API](docs/ContractAPI.md) | Full Action and Table Breakdown. |
+
 ## Roadmap
 
 ### Ongoing
