@@ -16,12 +16,6 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
     Any user on the Telos Blockchain Network may create a custom token registry that automatically inherits Trail's entire suite of voting services. These registries can also be customized to allow or disallow specific behaviors like transferring, burning, staking, or reclaiming of tokens.
 
-* `Optional Light Ballots`
-
-    Light ballots disable the on-chain vote tracking portion of the voting process - this allows for developers to track votes in an off-chain database that is built by an [Iris](https://github.com/CALEOS/iris-client) or [Demux](https://github.com/EOSIO/demux-js) style service instead. 
-    
-    This option enables Trail to power vastly more voting services by saving RAM costs for both the platform and voters, while at the same time retaining the complete traceability and auditability benefits offered by the blockchain.
-
 * `Committee Management Tools`
 
     Trail offers a suite of committee creation and management tools that are available as a free service to any active token registry and its voters. Developers can also hook their external smart contracts into Trail's committee tools to enable complete on-chain management of committees and their members.
@@ -30,9 +24,25 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
     Trail has implemented a custom rebalance system that detects changes to a user's balances and allows workers to recalculate vote weights. Future updates will allow for optional identity services to futher enhance voting and platform features.
 
+* `Optional Light Ballots`
+
+    Light ballots disable the on-chain vote tracking portion of the voting process - this allows for developers to track votes in an off-chain database that is built by an [Iris](https://github.com/CALEOS/iris-client) or [Demux](https://github.com/EOSIO/demux-js) style service instead. 
+    
+    This option enables Trail to power vastly more voting services by saving RAM costs for both the platform and voters, while at the same time retaining the complete traceability and auditability benefits offered by the blockchain.
+
 * `Profitable Worker Services`
 
     Trail has several janitorial actions that incentivize workers on the network to maintain an optimized voting system. Workers are paid proportionally for their work in keeping the platform clean and balanced for all users.
+
+## Trail Documentation
+
+| Name | Description |
+| --- | --- |
+| [Developer Guide](docs/DeveloperGuide.md) | Complete breakdown of Trail features and how developers can integrate Trail into their projects. |
+| [Voter Guide](docs/VoterGuide.md) | Describes how to become a voter and how voting works. |
+| [Registry Guide](docs/RegistryGuide.md) | Describes how to create and manage Trail Registries. |
+| [Worker Guide](docs/WorkerGuide.md) | Describes how to become a worker and the types of jobs available for workers to perform. |
+| [Contract API](docs/ContractAPI.md) | Full Action and Table Breakdown. |
 
 ## Join the Firewatch
 
@@ -49,16 +59,6 @@ Proposed Use Cases:
 - Burn in exchange for listing on Featured table.
 
 **Disclaimer:** *The TRAIL token is not an ICO nor should it be considered for investment or speculative purposes. It is a reward for user assistance in maintaining an efficiently run voting platform and will have evolving purposes as the platform grows.*
-
-## Trail Documentation
-
-| Name | Description |
-| --- | --- |
-| [Developer Guide](docs/DeveloperGuide.md) | Complete breakdown of Trail features and how developers can integrate Trail into their projects. |
-| [Voter Guide](docs/VoterGuide.md) | Describes how to become a voter and how voting works. |
-| [Registry Guide](docs/RegistryGuide.md) | Describes how to create and manage Trail Registries. |
-| [Worker Guide](docs/WorkerGuide.md) | Describes how to become a worker and what workers can do. |
-| [Contract API](docs/ContractAPI.md) | Full Action and Table Breakdown. |
 
 ## Roadmap
 

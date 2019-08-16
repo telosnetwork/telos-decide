@@ -632,6 +632,8 @@ Sets a new updater account and updater authority. The committee updater is the o
 
 Deletes a committee. Requires the authority of the committee updater.
 
+`delcommittee(name committee_name, symbol registry_symbol, string memo)`
+
 - `committee_name` is the name of the committee to delete.
 
 - `registry_symbol` is the registry symbol that the committee belongs to.

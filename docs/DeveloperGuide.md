@@ -4,20 +4,21 @@ In this Developer Guide, we will explore Trail's suite of platform services avai
 
 ## Understanding Trail's Role
 
-Trail's primary role is to consolidate many of the common boilerplate functions of voting contracts into a single chain-wide service available to all accounts on the network.
+Trail's primary purpose is to consolidate all the common boilerplate functions of voting contracts into a single chain-wide service available to organizations, developers, and general users.
 
-In other words, this means developers can leave the "vote counting" up to Trail and instead write their contracts to listen to Trail for final ballot results. External Smart Contracts can then immediately act on these results and interpret them according to their intended use case.
+For developers, this means they can leave the user registration, token management, and vote tracking up to Trail, and instead design their contracts to listen for Trail to broadcast final ballot results. External Smart Contracts can then *contractually* interpret and act on these broadcasts according to their intended use cases.
 
 ### Trail Voting Platform Services
 
 | Service | Description | Cost |
 | --- | --- | --- |
+| Voting | Voter registration, token balances, voting, unvoting, staking, and unstaking. | Free |
 | Ballots | Ballot hosting, managing, and results broadcasting. | 35 TLOS per ballot |
-| Registries  | Registry creation and management. | 250 TLOS per registry |
-| Committees | Committee creation and management. | 100 TLOS per committee |
-| Archival | Archive important ballots. | 2 TLOS per day |
-| Workers | Worker registration, work tracking, and profit incentives. | Free |
-| Voters | Voter registration, token tracking, and unlimited voting. | Free |
+| Registries  | Registry creation, locking/unlocking, verbose settings, worker fund, token minting, transferring, reclaiming, and burning. | 250 TLOS per registry |
+| Committees | Committee creation, management, security, and seat control. | 100 TLOS per committee |
+| Archival | Archive important ballots to prevent deletion. | 2 TLOS per day |
+| Workers | Worker registration, progress tracking, and profit incentives. | Free |
+
 
 More information about each service can be found in the relevent documentation.
 
