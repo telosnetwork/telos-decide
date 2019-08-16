@@ -12,24 +12,28 @@ In other words, this means developers can leave the "vote counting" up to Trail 
 
 | Service | Description | Cost |
 | --- | --- | --- |
-| Ballots | Ballot publishing, managing, and closing. | 35 TLOS |
-| Registries | Registry creation and management. | 250 TLOS |
-| Committees | Committee creation and management. | 100 TLOS |
-| Archival | Archive important ballots. | 5 TLOS |
-| Workers | Worker registration, payments, and incentivization. | Free |
-| Voters | Voter registration, balances, and management. | Free |
+| Ballots | Ballot hosting, managing, and results broadcasting. | 35 TLOS per ballot |
+| Registries  | Registry creation and management. | 250 TLOS per registry |
+| Committees | Committee creation and management. | 100 TLOS per committee |
+| Archival | Archive important ballots. | 2 TLOS per day |
+| Workers | Worker registration, work tracking, and profit incentives. | Free |
+| Voters | Voter registration, token tracking, and unlimited voting. | Free |
 
-More information about each service can be found in each service's relevent documentation.
+More information about each service can be found in the relevent documentation.
 
 -----
 
-## Building External Contract
+## Building Your External Contract
 
-For this Developer Guide we will also build a simple external contract to act on ballot results when they're broadcast. 
+For this Developer Guide we will also walk through building a simple external contract to act on ballot results after ballot closure. 
 
-In our contract, we will launch a new election ballot and then act on the results broadcasted by the `bcastresults()` action. Upon hearing the broadcast from Trail, our contract will read the final results, determine the winner, then send an inline action back to Trail to update a Committee with the election winner.
+In our contract, we will launch a new election ballot and then *contractually act* on the results broadcast by Trail's `bcastresults()` action. Upon hearing the broadcast, our contract will read the final results, determine the winning candidate, and then send an inline action back to Trail to update our committee with the election winner. This of course requires a registry, ballot, and committee to be set up on Trail beforehand, but we will walk though that in the setup guide below.
 
-The source code for this contract can be found [here](../contracts/example/src/exmaple.cpp).
+> Setup: [Example Setup Guide](../contracts/example/README.md)
+
+> Contract:
+[example.hpp](../contracts/example/include/example.hpp) / 
+[example.cpp](../contracts/example/src/example.cpp)
 
 -----
 
