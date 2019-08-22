@@ -32,15 +32,15 @@ public:
     const symbol VOTE_SYM = symbol("VOTE", 4);
     const symbol TRAIL_SYM = symbol("TRAIL", 0);
 
-    //registry settings: transferable, burnable, reclaimable, stakeable, unstakeable, maxmutable
+    //treasury settings: transferable, burnable, reclaimable, stakeable, unstakeable, maxmutable
 
-    //registry access: public, private, invite, membership?
-
-    //ballot settings: lightballot, revotable, votestake
+    //treasury access: public, private, invite, membership?
 
     //ballot statuses: setup, voting, closed, cancelled, archived
 
-    //voting methods: 1acct1vote, 1tokennvote, 1token1vote, 1tsquare1v, quadratic, ranked
+    //ballot settings: lightballot, revotable, votestake
+
+    //voting methods: 1acct1vote, 1tokennvote, 1token1vote, 1tsquare1v, quadratic, ranked?
 
     //ballot categories: proposal, referendum, election, poll, leaderboard
 
@@ -55,13 +55,13 @@ public:
     //updates time length
     ACTION updatetime(name time_name, uint32_t length);
 
-    //======================== registry actions ========================
+    //======================== treasury actions ========================
 
-    //create a new token registry
-    ACTION newregistry(name manager, asset max_supply, name access);
+    //create a new treasury
+    ACTION newtreasury(name manager, asset max_supply, name access);
 
-    //toggle a registry setting
-    ACTION togglereg(symbol registry_symbol, name setting_name);
+    //toggle a treasury setting
+    ACTION toggle(symbol treasury_symbol, name setting_name);
 
     //mint new tokens to the recipient
     ACTION mint(name to, asset quantity, string memo);
@@ -72,32 +72,32 @@ public:
     //burn tokens from manager balance
     ACTION burn(asset quantity, string memo);
 
-    //reclaim tokens from voter
+    //reclaim tokens from voter to the manager balance
     ACTION reclaim(name voter, asset quantity, string memo);
 
     //change max supply
     ACTION mutatemax(asset new_max_supply, string memo);
 
     //set new unlock auth
-    ACTION setunlocker(symbol registry_symbol, name new_unlock_acct, name new_unlock_auth);
+    ACTION setunlocker(symbol treasury_symbol, name new_unlock_acct, name new_unlock_auth);
 
-    //lock a token registry
-    ACTION lockreg(symbol registry_symbol);
+    //lock a treasury
+    ACTION lock(symbol treasury_symbol);
 
-    //unlock a token registry
-    ACTION unlockreg(symbol registry_symbol);
+    //unlock a treasury
+    ACTION unlock(symbol treasury_symbol);
 
-    //adds to registry worker fund
-    ACTION addtofund(symbol registry_symbol, name voter, asset quantity);
+    //adds to treasury worker fund
+    ACTION addwrkrfunds(symbol treasury_symbol, name voter, asset quantity);
 
     //======================== ballot actions ========================
 
     //creates a new ballot
     ACTION newballot(name ballot_name, name category, name publisher,  
-        symbol registry_symbol, name voting_method, vector<name> initial_options);
+        symbol treasury_symbol, name voting_method, vector<name> initial_options);
 
     //edits ballots details
-    ACTION editdetails(name ballot_name, string title, string description, string ballot_info);
+    ACTION editdetails(name ballot_name, string title, string description, string content);
 
     //toggles ballot settings
     ACTION togglebal(name ballot_name, name setting_name);
@@ -138,10 +138,10 @@ public:
     //======================== voter actions ========================
 
     //registers a new voter
-    ACTION regvoter(name voter, symbol registry_symbol, optional<name> referrer);
+    ACTION regvoter(name voter, symbol treasury_symbol, optional<name> referrer);
 
     //unregisters an existing voter
-    ACTION unregvoter(name voter, symbol registry_symbol);
+    ACTION unregvoter(name voter, symbol treasury_symbol);
 
     //casts a vote on a ballot
     ACTION castvote(name voter, name ballot_name, vector<name> options);
@@ -167,7 +167,7 @@ public:
     ACTION unregworker(name worker_name);
 
     //pays a worker
-    ACTION claimpayment(name worker_name, symbol registry_symbol);
+    ACTION claimpayment(name worker_name, symbol treasury_symbol);
 
     //rebalance an unbalaned vote
     ACTION rebalance(name voter, name ballot_name, optional<name> worker);
@@ -180,24 +180,24 @@ public:
 
     //======================== committee actions ========================
 
-    //registers a new committee for a token registry
+    //registers a new committee for a treasury
     ACTION regcommittee(name committee_name, string committee_title,
-        symbol registry_symbol, vector<name> initial_seats, name registree);
+        symbol treasury_symbol, vector<name> initial_seats, name registree);
 
     //adds a committee seat
-    ACTION addseat(name committee_name, symbol registry_symbol, name new_seat_name);
+    ACTION addseat(name committee_name, symbol treasury_symbol, name new_seat_name);
 
     //removes a committee seat
-    ACTION removeseat(name committee_name, symbol registry_symbol, name seat_name);
+    ACTION removeseat(name committee_name, symbol treasury_symbol, name seat_name);
 
     //assigns a new member to a committee seat
-    ACTION assignseat(name committee_name, symbol registry_symbol, name seat_name, name seat_holder, string memo);
+    ACTION assignseat(name committee_name, symbol treasury_symbol, name seat_name, name seat_holder, string memo);
 
     //sets updater account and auth
-    ACTION setupdater(name committee_name, symbol registry_symbol, name updater_account, name updater_auth);
+    ACTION setupdater(name committee_name, symbol treasury_symbol, name updater_account, name updater_auth);
 
     //deletes a committee
-    ACTION delcommittee(name committee_name, symbol registry_symbol, string memo);
+    ACTION delcommittee(name committee_name, symbol treasury_symbol, string memo);
 
     //========== notification methods ==========
 
@@ -240,16 +240,16 @@ public:
     void require_fee(name account_name, asset fee);
 
     //logs rebalance work
-    void log_rebalance_work(name worker, symbol registry_symbol, asset volume, uint16_t count);
+    void log_rebalance_work(name worker, symbol treasury_symbol, asset volume, uint16_t count);
 
     //logs cleanup work
-    void log_cleanup_work(name worker, symbol registry_symbol, uint16_t count);
+    void log_cleanup_work(name worker, symbol treasury_symbol, uint16_t count);
 
     //syncs an exernal account balance with a linked voter balance
     void sync_external_account(name voter, symbol internal_symbol, symbol external_symbol);
 
     //calculates vote mapping
-    map<name, asset> calc_vote_weights(symbol registry_symbol, name voting_method, 
+    map<name, asset> calc_vote_weights(symbol treasury_symbol, name voting_method, 
     vector<name> selections,  asset raw_vote_weight);
 
     //======================== tables ========================
@@ -258,7 +258,7 @@ public:
     //ram: 
     TABLE config {
         string trail_version;
-        map<name, asset> fees; //ballot, registry, archival
+        map<name, asset> fees; //ballot, treasury, archival
         map<name, uint32_t> times; //balcooldown, minballength
         //map<name, double> job_weights; //rebalvolume, rebalcount, cleancount
     };
@@ -266,29 +266,38 @@ public:
 
     //scope: get_self().value
     //ram: 
-    TABLE registry {
+    TABLE treasury {
         asset supply; //current supply
         asset max_supply; //maximum supply
-
-        uint32_t voters; //open token accounts with this registry
         name access; //public, private, invite, membership
+        name manager; //treasury manager
+
+        uint32_t voters; //number of registered voters
+        //uint16_t delegates;
 
         bool locked; //locks all settings
         name unlock_acct; //account name to unlock
         name unlock_auth; //authorization name to unlock
-
-        name manager; //registry manager
         map<name, bool> settings; //setting_name -> on/off
 
         uint16_t open_ballots; //number of open ballots
+
+
+
+
         asset worker_funds; //bucket to pay workers
+        //name per; //ballot, day, week, month, year
+        //asset per_ballot;
 
         asset rebalanced_volume; //total volume of rebalanced votes
         uint32_t rebalanced_count; //total count of rebalanced votes
         uint32_t cleaned_count; //total count of cleaned votes
 
+        //map<name, asset> worked_volume;
+        //map<name, uint32_t> worked_count;
+
         uint64_t primary_key() const { return supply.symbol.code().raw(); }
-        EOSLIB_SERIALIZE(registry, 
+        EOSLIB_SERIALIZE(treasury, 
             (supply)(max_supply)
             (voters)(access)
             (locked)(unlock_acct)(unlock_auth)
@@ -296,7 +305,7 @@ public:
             (open_ballots)(worker_funds)
             (rebalanced_volume)(rebalanced_count)(cleaned_count))
     };
-    typedef multi_index<name("registries"), registry> registries_table;
+    typedef multi_index<name("treasuries"), treasury> treasuries_table;
 
     //scope: get_self().value
     //ram:
@@ -308,15 +317,15 @@ public:
 
         string title; //markdown
         string description; //markdown
-        string ballot_info; //typically IPFS link to content
+        string content; //typically IPFS link to content
 
         name voting_method; //1acct1vote, 1tokennvote, 1token1vote, 1tsquare1v, quadratic, ranked
         uint8_t max_options; //max options per voter
         map<name, asset> options; //option name -> total weighted votes
 
-        symbol registry_symbol; //token registry used for counting votes
+        symbol treasury_symbol; //treasury used for counting votes
         uint32_t total_voters; //unique voters who have voted on ballot
-        //asset total_raw_weight; 
+        asset total_raw_weight; //total raw weight cast on ballot
         map<name, bool> settings; //setting name -> on/off
 
         uint32_t cleaned_count; //number of expired vote receipts cleaned
@@ -327,9 +336,9 @@ public:
         uint64_t primary_key() const { return ballot_name.value; }
         EOSLIB_SERIALIZE(ballot, 
             (ballot_name)(category)(publisher)(status)
-            (title)(description)(ballot_info)
+            (title)(description)(content)
             (voting_method)(max_options)(options)
-            (registry_symbol)(total_voters)(settings)
+            (treasury_symbol)(total_voters)(settings)
             (cleaned_count)
             (begin_time)(end_time))
     };
@@ -339,8 +348,9 @@ public:
     //ram: 
     TABLE vote {
         name ballot_name;
-        symbol registry_symbol;
+        symbol treasury_symbol;
         asset raw_vote_weight;
+        //bool delegate_vote;
         map<name, asset> weighted_votes;
         time_point_sec expiration;
         
@@ -349,10 +359,10 @@ public:
         asset rebalance_volume;
 
         uint64_t primary_key() const { return ballot_name.value; }
-        uint64_t by_symbol() const { return registry_symbol.code().raw(); }
+        uint64_t by_symbol() const { return treasury_symbol.code().raw(); }
         uint64_t by_exp() const { return static_cast<uint64_t>(expiration.utc_seconds); }
         EOSLIB_SERIALIZE(vote, 
-            (ballot_name)(registry_symbol)(raw_vote_weight)(weighted_votes)(expiration)
+            (ballot_name)(treasury_symbol)(raw_vote_weight)(weighted_votes)(expiration)
             (worker)(rebalances)(rebalance_volume))
     };
     typedef multi_index<name("votes"), vote,
@@ -366,18 +376,21 @@ public:
         asset liquid;
         asset staked;
 
+        //delegated;
+        //name delegated_to;
+
         uint64_t primary_key() const { return liquid.symbol.code().raw(); }
         EOSLIB_SERIALIZE(voter, (liquid)(staked))
     };
     typedef multi_index<name("voters"), voter> voters_table;
 
-    //scope: registry_symbol.code().raw()
+    //scope: treasury_symbol.code().raw()
     //ram: 
     TABLE committee {
         string committee_title;
         name committee_name;
 
-        symbol registry_symbol;
+        symbol treasury_symbol;
         map<name, name> seats; //seat_name -> seat_holder (0 if empty)
 
         name updater_acct; //account name that can update committee members
@@ -386,22 +399,25 @@ public:
         uint64_t primary_key() const { return committee_name.value; }
         EOSLIB_SERIALIZE(committee, 
             (committee_title)(committee_name)
-            (registry_symbol)(seats)
+            (treasury_symbol)(seats)
             (updater_acct)(updater_auth))
     };
     typedef multi_index<name("committees"), committee> committees_table;
 
-    //scope: get_self().value
+    //scope: get_self().value //TODO: scope by treasury_symbol instead?
     //ram: 
     TABLE worker {
         name worker_name;
         name standing;
         time_point_sec last_payment;
 
-        //by registry symbol
+        //by treasury symbol
         map<symbol, asset> rebalance_volume;
         map<symbol, uint16_t> rebalance_count;
         map<symbol, uint16_t> clean_count;
+
+        //map<name, asset> job_volume;
+        //map<name, uint16_t> job_counts;
 
         uint64_t primary_key() const { return worker_name.value; }
         EOSLIB_SERIALIZE(worker, 
@@ -417,8 +433,7 @@ public:
         time_point_sec archived_until;
 
         uint64_t primary_key() const { return ballot_name.value; }
-        EOSLIB_SERIALIZE(archival,
-            (ballot_name)(archived_until))
+        EOSLIB_SERIALIZE(archival, (ballot_name)(archived_until))
     };
     typedef multi_index<name("archivals"), archival> archivals_table;
 
