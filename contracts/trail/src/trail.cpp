@@ -1,4 +1,4 @@
-#include "../include/trail.hpp"
+#include <trail.hpp>
 
 trail::trail(name self, name code, datastream<const char*> ds) : contract(self, code, ds) {}
 

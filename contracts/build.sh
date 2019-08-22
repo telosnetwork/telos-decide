@@ -5,8 +5,8 @@ if [[ "$1" == "trail" ]]; then
 elif [[ "$1" == "example" ]]; then
     contract=example
 else
-    echo "need contract"
-    exit 0
+    echo "Please provide a contract name."
+    exit 1
 fi
 
 # -contract=<string>       - Contract name

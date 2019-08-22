@@ -1,4 +1,4 @@
-#include "../include/example.hpp"
+#include <example.hpp>
 
 example::example(name self, name code, datastream<const char*> ds) : contract(self, code, ds) {}
 
