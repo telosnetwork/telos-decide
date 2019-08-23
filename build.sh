@@ -6,6 +6,10 @@ RED='\033[0;31m'
 NC='\033[0m'
 CORES=`getconf _NPROCESSORS_ONLN`
 
+usage_info() {
+    echo "Usage: build.sh [-c] contract_name"
+}
+
 printf "\t=========== Building Trail Service ===========\n\n"
 
 find_out=$(find ./contracts/ -type d -mindepth 1  -maxdepth 1 -exec basename {} \; | tr "\n" " ")
