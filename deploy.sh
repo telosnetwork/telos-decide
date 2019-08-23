@@ -78,4 +78,5 @@ if [[ $has_error == true ]]; then
     exit 1
 fi
 
-eval "cleos -u $url set contract $account ./build/contracts/$contract/ $contract.wasm $contract.abi -p $account"
+command="cleos -u $url set contract $account ./build/contracts/$contract/ $contract.wasm $contract.abi -p $account"
+eval $command
