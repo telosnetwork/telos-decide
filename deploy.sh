@@ -79,4 +79,5 @@ if [[ $has_error == true ]]; then
 fi
 
 command="cleos -u $url set contract $account ./build/contracts/$contract/ $contract.wasm $contract.abi -p $account"
+echo $command
 eval $command
