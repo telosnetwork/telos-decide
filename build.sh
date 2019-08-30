@@ -10,8 +10,6 @@ usage_info() {
     echo "Usage: build.sh [-c] contract_name"
 }
 
-printf "\t=========== Building Trail Service ===========\n\n"
-
 find_out=$(find ./contracts/ -type d -mindepth 1  -maxdepth 1 -exec basename {} \; | tr "\n" " ")
 IFS=' ' && read -ra contracts_array <<< "$find_out"
 len=${#contracts_array[@]} && options=""
@@ -25,6 +23,7 @@ done
 
 if ! [[ -d "./build" ]]; then
     printf "${RED}\tBuild folder not found, generating cmake files\n\n${NC}"
+    printf "\t=========== Building Trail Service ===========\n\n"
     mkdir -p build
     pushd build &> /dev/null
     cmake ../
@@ -48,6 +47,7 @@ shift $((OPTIND -1))
 
 if [[ $contract != "" ]]; then
     if [[ " ${contracts_array[@]} " =~ " ${contract} " ]]; then
+        printf "\t=========== Building ${contract} Contract ===========\n\n"
         pushd build/contracts/${contract} &> /dev/null
         make -j${CORES}
         popd &> /dev/null
