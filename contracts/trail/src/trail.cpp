@@ -344,7 +344,7 @@ ACTION trail::unlock(symbol treasury_symbol) {
     });
 }
 
-ACTION trail::addwrkrfunds(symbol treasury_symbol, name voter, asset quantity) {
+ACTION trail::addfunds(name from, symbol treasury_symbol, name fund_name, asset quantity) {
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
     auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");

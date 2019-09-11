@@ -71,15 +71,15 @@ Proposed Use Cases:
 
 - Example Guides
 - External Contract Examples
+- Delegates, Delegate Voting
 
 ### Q1 2020
 
-- Additional Worker Services
-- Additional Voting Methods
+- Additional Worker Services (cleanspeed, rebalspeed)
+- Additional Voting Methods (ranked, graded)
 
 ### Down Yonder
 
-- Delegates, Delegate Voting
 - Optional Identity Services
 
 ## References
