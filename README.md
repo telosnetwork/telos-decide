@@ -72,11 +72,12 @@ Proposed Use Cases:
 - Example Guides
 - External Contract Examples
 - Delegates, Delegate Voting
+- External Token Mirroring
 
 ### Q1 2020
 
-- Additional Worker Services (cleanspeed, rebalspeed)
-- Additional Voting Methods (ranked, graded)
+- Additional Worker Services
+- Additional Voting Methods
 
 ### Down Yonder
 

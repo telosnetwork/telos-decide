@@ -294,7 +294,7 @@ public:
     //scope: treasury_symbol.code().raw()
     //ram:
     TABLE payroll {
-        name payroll_name; //worker payroll, delegate payroll
+        name payroll_name; //workers, delegates
         asset payroll_funds; //TLOS, TLOSD
 
         uint32_t period_length; //in seconds
@@ -313,15 +313,15 @@ public:
 
     //scope: treasury_symbol.code().raw()
     //ram: 
-    TABLE payroll_log {
+    TABLE labor_bucket {
         name payroll_name;
         map<name, asset> claimable_volume; //rebalvolume, dgatevolume
         map<name, uint32_t> claimable_events; //rebalcount, cleancount, cleanspeed, rebalspeed, dgatecount
 
         uint64_t primary_key() const { return payroll_name.value; }
-        EOSLIB_SERIALIZE(payroll_log,(payroll_name)(claimable_volume)(claimable_events))
+        EOSLIB_SERIALIZE(labor_bucket, (payroll_name)(claimable_volume)(claimable_events))
     };
-    typedef multi_index<name("payrolllogs"), payroll_log> payroll_logs_table;
+    typedef multi_index<name("laborbuckets"), labor_bucket> labor_buckets_table;
 
     //scope: treasury_symbol.code().raw()
     //ram:

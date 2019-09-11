@@ -1694,33 +1694,45 @@ void trail::log_rebalance_work(name worker, symbol treasury_symbol, asset volume
 }
 
 void trail::log_cleanup_work(name worker, symbol treasury_symbol, uint16_t count) {
-    //open workers table, get worker
-    workers_table workers(get_self(), get_self().value);
-    auto w = workers.find(worker.value);
+    //open labor table, get labor log
+    labors_table labors(get_self(), get_self().value);
+    auto l = labors.find(worker.value);
 
-    if (w != workers.end()) {
+    //open labor buckets table, get labor bucket
+    laborbuckets_table laborbuckets(get_self(), treasury_symbol.code().raw());
+    auto lb = laborbuckets.get(name("workers"), "worker labor bucket not found");
+
+    if (l != workers.end()) {
 
         //initialize
-        auto& wrk = *w;
+        auto& lab = *l;
 
-        if (wrk.clean_count.find(treasury_symbol) == wrk.clean_count.end()) {
+        labors.modify(lab, same_payer, [&](auto& col) {
+            col.unclaimed_events[name("cleancount")] += count;
+        });
 
-            auto new_clean_count = wrk.clean_count;
-            new_clean_count[treasury_symbol] = count;
 
-            workers.modify(wrk, same_payer, [&](auto& col) {
-                col.clean_count = new_clean_count;
-            });
+    } else {
 
-        } else {
+        //initialize new maps
+        map<name, asset> new_unclaimed_volume;
+        map<name, uint32_t> new_unclaimed_events;
 
-            workers.modify(wrk, same_payer, [&](auto& col) {
-                col.clean_count[treasury_symbol] += count;
-            });
+        //log work to new maps
+        new_unclaimed_events[name("cleancount")] = count;
 
-        }
+        //emplace new labor
+        labors.emplace(l, [&](auto& col){
+            col.worker_name = worker;
+            col.work_start_time = time_point_sec(current_time_point());
+            col.unclaimed_volume = new_unclaimed_volume;
+            col.unclaimed_events = new_unclaimed_events;
+        });
 
     }
+
+    //add work to payroll log
+    
 
 }
 
