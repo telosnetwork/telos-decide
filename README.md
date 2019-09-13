@@ -12,13 +12,13 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
     The Trail Voting Platform boasts an extensive set of voting methods and customization options. Voting Methods available include: `1acct1vote`, `1tokennvote`, `1token1vote`, `1tsquare1v`, `quadratic`, and `ranked`. For more information on the different voting methods and how they are used see the `Voting Methods` section of the [Trail Developer Guide](docs/DeveloperGuide.md).
 
-* `Custom Token Registries`
+* `Custom Token Treasuries`
 
-    Any user on the Telos Blockchain Network may create a custom token registry that automatically inherits Trail's entire suite of voting services. These registries can also be customized to allow or disallow specific behaviors like transferring, burning, staking, or reclaiming of tokens.
+    Any user on the Telos Blockchain Network may create a custom token treasury that automatically inherits Trail's entire suite of voting services. These registries can also be customized to allow or disallow specific behaviors like transferring, burning, staking, or reclaiming of tokens.
 
 * `Committee Management Tools`
 
-    Trail offers a suite of committee creation and management tools that are available as a free service to any active token registry and its voters. Developers can also hook their external smart contracts into Trail's committee tools to enable complete on-chain management of committees and their members.
+    Trail offers a suite of committee creation and management tools that are available as a free service to any active token treasury and its voters. Developers can also hook their external smart contracts into Trail's committee tools to enable complete on-chain management of committees and their members.
 
 * `Traceable Vote Integrity`
 
@@ -38,15 +38,15 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 | Name | Description |
 | --- | --- |
-| [Developer Guide](docs/DeveloperGuide.md) | Complete breakdown of Trail features and how developers can integrate Trail into their projects. |
-| [Voter Guide](docs/VoterGuide.md) | Describes how to become a voter and how voting works. |
-| [Registry Guide](docs/RegistryGuide.md) | Describes how to create and manage Trail Registries. |
-| [Worker Guide](docs/WorkerGuide.md) | Describes how to become a worker and the types of jobs available for workers to perform. |
+| [Developer Guide](docs/DeveloperGuide.md) | Breakdown of Trail features for developers interfacing with Trail. |
+| [Voter Guide](docs/VoterGuide.md) | How to become a voter and how voting works. |
+| [Treasury Guide](docs/TreasuryGuide.md) | How to create and manage Trail Treasuries. |
+| [Worker Guide](docs/WorkerGuide.md) | How to become a worker and the types of jobs available for workers to perform. |
 | [Contract API](docs/ContractAPI.md) | Full Action and Table Breakdown. |
 
 ## Join the Firewatch
 
-The Firewatch is a league of voters and developers dedicated to running a secure and optimized voting platform. Firewatch workers may claim a portion of Trail profits porportional to their recent contributions, and may also be eligible for platform-wide leaderboard rewards.
+The Firewatch is a league of voters and developers dedicated to running a secure and optimized voting platform. Firewatch workers may claim a portion of Trail profits proportional to their recent contributions, and may also be eligible for platform-wide leaderboard rewards.
 
 ## The TRAIL Token
 
@@ -54,7 +54,7 @@ Trail has a platform specific token that is only obtainable by performing variou
 
 Proposed Use Cases:
 
-- Burn in exchange for free Registry Creation, Ballot Listing, or Committee Registration.
+- Burn in exchange for free Treasury Creation, Ballot Listing, or Committee Registration.
 - Burn in exchange for extension on Payment Claim deadlines.
 - Burn in exchange for listing on Featured table.
 

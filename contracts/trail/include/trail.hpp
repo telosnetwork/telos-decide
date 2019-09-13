@@ -87,8 +87,13 @@ public:
     //unlock a treasury
     ACTION unlock(symbol treasury_symbol);
 
+    //======================== payroll actions ========================
+
     //adds to specified payroll
-    ACTION addfunds(name from, symbol treasury_symbol, name fund_name, asset quantity);
+    ACTION addfunds(name from, symbol treasury_symbol, name payroll_name, asset quantity);
+
+    //edit pay rate
+    ACTION editpayrate(name payroll_name, symbol treasury_symbol, uint32_t period_length, asset per_period);
 
     //======================== ballot actions ========================
 
@@ -102,8 +107,8 @@ public:
     //toggles ballot settings
     ACTION togglebal(name ballot_name, name setting_name);
 
-    //edits ballot max options
-    ACTION editmaxopts(name ballot_name, uint8_t new_max_options);
+    //edits ballot min and max options
+    ACTION editminmax(name ballot_name, uint8_t new_min_options, uint8_t new_max_options);
 
     //adds an option to a ballot
     ACTION addoption(name ballot_name, name new_option_name);
@@ -166,7 +171,7 @@ public:
     //pays a worker
     ACTION claimpayment(name worker_name, symbol treasury_symbol);
 
-    //rebalance an unbalaned vote
+    //rebalance an unbalanced vote
     ACTION rebalance(name voter, name ballot_name, optional<name> worker);
 
     //cleans up an expired vote
@@ -314,24 +319,24 @@ public:
     //scope: treasury_symbol.code().raw()
     //ram: 
     TABLE labor_bucket {
-        name payroll_name;
+        name payroll_name; //workers, delegates
         map<name, asset> claimable_volume; //rebalvolume, dgatevolume
         map<name, uint32_t> claimable_events; //rebalcount, cleancount, cleanspeed, rebalspeed, dgatecount
 
         uint64_t primary_key() const { return payroll_name.value; }
         EOSLIB_SERIALIZE(labor_bucket, (payroll_name)(claimable_volume)(claimable_events))
     };
-    typedef multi_index<name("laborbuckets"), labor_bucket> labor_buckets_table;
+    typedef multi_index<name("laborbuckets"), labor_bucket> laborbuckets_table;
 
     //scope: treasury_symbol.code().raw()
     //ram:
     TABLE labor {
         name worker_name;
-        time_point_sec work_start_time; //time point work was first credited
+        time_point_sec start_time; //time point work was first credited
         map<name, asset> unclaimed_volume; //rebalvolume
         map<name, uint32_t> unclaimed_events; //rebalcount, cleancount, cleanspeed, rebalspeed
 
-        uint64_t primary_key() const { return payroll_name.value; }
+        uint64_t primary_key() const { return worker_name.value; }
         EOSLIB_SERIALIZE(labor, (worker_name)(start_time)(unclaimed_volume)(unclaimed_events))
     };
     typedef multi_index<name("labors"), labor> labors_table;
@@ -423,7 +428,7 @@ public:
         uint64_t primary_key() const { return delegate_name.value; }
         EOSLIB_SERIALIZE(delegate, (delegate_name)(total_delegated)(constituents))
     };
-    multi_index<name("delegates"), delegate> delegates_table;
+    typedef multi_index<name("delegates"), delegate> delegates_table;
 
     //scope: treasury_symbol.code().raw()
     //ram: 
