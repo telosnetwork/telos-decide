@@ -89,7 +89,7 @@ public:
 
     //======================== payroll actions ========================
 
-    //adds to specified payroll
+    //adds tokens to specified payroll
     ACTION addfunds(name from, symbol treasury_symbol, name payroll_name, asset quantity);
 
     //edit pay rate
