@@ -7,6 +7,7 @@ trail::~trail() {}
 //======================== admin actions ========================
 
 ACTION trail::setconfig(string trail_version, bool set_defaults) {
+    
     //authenticate
     require_auth(get_self());
 
@@ -17,8 +18,9 @@ ACTION trail::setconfig(string trail_version, bool set_defaults) {
     if (set_defaults) {
         //set default fees
         new_fees[name("ballot")] = asset(300000, TLOS_SYM); //30 TLOS
-        new_fees[name("registry")] = asset(2500000, TLOS_SYM); //250 TLOS
-        new_fees[name("archival")] = asset(50000, TLOS_SYM); //5 TLOS (per day)
+        new_fees[name("treasury")] = asset(5000000, TLOS_SYM); //500 TLOS
+        new_fees[name("archival")] = asset(30000, TLOS_SYM); //3 TLOS (per day)
+        new_fees[name("committee")] = asset(100000, TLOS_SYM); //100 TLOS
 
         //set default times
         new_times[name("minballength")] = uint32_t(60); //1 day in seconds
@@ -37,9 +39,11 @@ ACTION trail::setconfig(string trail_version, bool set_defaults) {
 
     //set new config
     configs.set(new_config, get_self());
+
 }
 
 ACTION trail::updatefee(name fee_name, asset fee_amount) {
+    
     //authenticate
     require_auth(get_self());
 
@@ -58,9 +62,11 @@ ACTION trail::updatefee(name fee_name, asset fee_amount) {
 
     //update fee
     configs.set(new_conf, get_self());
+
 }
 
 ACTION trail::updatetime(name time_name, uint32_t length) {
+    
     //authenticate
     require_auth(get_self());
 
@@ -79,24 +85,26 @@ ACTION trail::updatetime(name time_name, uint32_t length) {
 
     //update time
     configs.set(new_conf, get_self());
+
 }
 
-//======================== registry actions ========================
+//======================== treasury actions ========================
 
-ACTION trail::newregistry(name manager, asset max_supply, name access) {
+ACTION trail::newtreasury(name manager, asset max_supply, name access) {
+    
     //authenticate
     require_auth(manager);
 
-    //open registries table, search for registry
-    registries_table registries(get_self(), get_self().value);
-    auto reg = registries.find(max_supply.symbol.code().raw());
+    //open treasuries table, search for treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto trs = treasuries.find(max_supply.symbol.code().raw());
 
     //open configs singleton, get configs
     config_singleton configs(get_self(), get_self().value);
     auto conf = configs.get();
 
     //validate
-    check(reg == registries.end(), "registry already exists");
+    check(trs == treasuries.end(), "treasury already exists");
     check(max_supply.amount > 0, "max supply must be greater than 0");
     check(max_supply.symbol.is_valid(), "invalid symbol name");
     check(max_supply.is_valid(), "invalid max supply");
@@ -109,8 +117,8 @@ ACTION trail::newregistry(name manager, asset max_supply, name access) {
         check(max_supply.symbol.code().raw() != TRAIL_SYM.code().raw(), "TRAIL symbol is reserved");
     }
 
-    //charge registry fee
-    require_fee(manager, conf.fees.at(name("registry")));
+    //charge treasury fee
+    require_fee(manager, conf.fees.at(name("treasury")));
 
     //set up initial settings
     map<name, bool> initial_settings;
@@ -121,56 +129,98 @@ ACTION trail::newregistry(name manager, asset max_supply, name access) {
     initial_settings[name("unstakeable")] = false;
     initial_settings[name("maxmutable")] = false;
 
-    //emplace new token registry, RAM paid by manager
-    registries.emplace(manager, [&](auto& col) {
+    //emplace new token treasury, RAM paid by manager
+    treasuries.emplace(manager, [&](auto& col) {
         col.supply = asset(0, max_supply.symbol);
         col.max_supply = max_supply;
-        col.voters = uint32_t(0);
         col.access = access;
+        col.manager = manager;
+        col.title = "";
+        col.description = "";
+        col.icon = "";
+        col.voters = uint32_t(0);
+        col.delegates = uint32_t(0);
+        col.committees = uint32_t(0);
+        col.open_ballots = uint32_t(0);
         col.locked = false;
         col.unlock_acct = manager;
         col.unlock_auth = name("active");
-        col.manager = manager;
         col.settings = initial_settings;
-        col.open_ballots = uint16_t(0);
-        col.worker_funds = asset(0, TLOS_SYM);
-        col.rebalanced_volume = asset(0, max_supply.symbol);
-        col.rebalanced_count = uint32_t(0);
-        col.cleaned_count = uint32_t(0);
+    });
+
+    //open payrolls table, find worker payroll
+    payrolls_table payrolls(get_self(), max_supply.symbol.code().raw());
+    auto pr = payrolls.find(name("workers").value);
+
+    //open labor buckets table, find workers bucket
+    laborbuckets_table laborbuckets(get_self(), max_supply.symbol.code().raw());
+    auto lb = laborbuckets.find(name("workers").value);
+
+    //validate
+    check(pr == payrolls.end(), "workers payroll already exists");
+    check(lb == laborbuckets.end(), "workers bucket already exists");
+
+    //emplace worker payroll
+    payrolls.emplace(manager, [&](auto& col) {
+        col.payroll_name = name("workers");
+        col.payroll_funds = asset(0, TLOS_SYM);
+        col.period_length = 604800; //1 week in seconds
+        col.per_period = asset(10, TLOS_SYM);
+        col.last_claim_time = time_point_sec(current_time_point());
+        col.claimable_pay = asset(0, TLOS_SYM);
+        col.payee = name("workers");
+    });
+
+    //intialize
+    map<name, asset> initial_claimable_volume;
+    map<name, uint32_t> initial_claimable_events;
+
+    initial_claimable_volume[name("rebalvolume")] = asset(0, max_supply.symbol);
+    initial_claimable_events[name("rebalcount")] = 0;
+    initial_claimable_events[name("cleancount")] = 0;
+
+    //emplace labor bucket
+    laborbuckets.emplace(manager, [&](auto& col) {
+        col.payroll_name = name("workers");
+        col.claimable_volume = initial_claimable_volume;
+        col.claimable_events = initial_claimable_events;
     });
 
 }
 
-ACTION trail::togglereg(symbol registry_symbol, name setting_name) {
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
+ACTION trail::toggle(symbol treasury_symbol, name setting_name) {
+    
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");
 
     //authenticate
-    require_auth(reg.manager);
+    require_auth(trs.manager);
 
     //validate
-    check(!reg.locked, "registry is locked");
-    auto set_itr = reg.settings.find(setting_name);
-    check(set_itr != reg.settings.end(), "setting not found");
+    check(!trs.locked, "treasury is locked");
+    auto set_itr = trs.settings.find(setting_name);
+    check(set_itr != trs.settings.end(), "setting not found");
 
     //update setting
-    registries.modify(reg, same_payer, [&](auto& col) {
-        col.settings[setting_name] = !reg.settings.at(setting_name);
+    treasuries.modify(trs, same_payer, [&](auto& col) {
+        col.settings[setting_name] = !trs.settings.at(setting_name);
     });
+
 }
 
 ACTION trail::mint(name to, asset quantity, string memo) {
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(quantity.symbol.code().raw(), "registry not found");
+    
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(quantity.symbol.code().raw(), "treasury not found");
 
     //authenticate
-    require_auth(reg.manager);
+    require_auth(trs.manager);
 
     //validate
     check(is_account(to), "to account doesn't exist");
-    check(reg.supply + quantity <= reg.max_supply, "minting would breach max supply");
+    check(trs.supply + quantity <= trs.max_supply, "minting would breach max supply");
     check(quantity.amount > 0, "must mint a positive quantity");
     check(quantity.is_valid(), "invalid quantity");
     check(memo.size() <= 256, "memo has more than 256 bytes");
@@ -178,26 +228,28 @@ ACTION trail::mint(name to, asset quantity, string memo) {
     //update recipient liquid amount
     add_liquid(to, quantity);
 
-    //update registry supply
-    registries.modify(reg, same_payer, [&](auto& col) {
+    //update treasury supply
+    treasuries.modify(trs, same_payer, [&](auto& col) {
         col.supply += quantity;
     });
 
     //notify to account
     require_recipient(to);
+
 }
 
 ACTION trail::transfer(name from, name to, asset quantity, string memo) {
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(quantity.symbol.code().raw(), "registry not found");
+    
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(quantity.symbol.code().raw(), "treasury not found");
 
     //authenticate
     require_auth(from);
 
     //validate
     check(is_account(to), "to account doesn't exist");
-    check(reg.settings.at(name("transferable")), "token is not transferable");
+    check(trs.settings.at(name("transferable")), "token is not transferable");
     check(from != to, "cannot transfer tokens to yourself");
     check(quantity.amount > 0, "must transfer positive quantity");
     check(quantity.is_valid(), "invalid quantity");
@@ -212,51 +264,55 @@ ACTION trail::transfer(name from, name to, asset quantity, string memo) {
     //notify from and to accounts
     require_recipient(from);
     require_recipient(to);
+
 }
 
 ACTION trail::burn(asset quantity, string memo) {
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(quantity.symbol.code().raw(), "registry not found");
+    
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(quantity.symbol.code().raw(), "treasury not found");
 
     //authenticate
-    require_auth(reg.manager);
+    require_auth(trs.manager);
 
     //open voters table, get manager
-    voters_table voters(get_self(), reg.manager.value);
+    voters_table voters(get_self(), trs.manager.value);
     auto& mgr = voters.get(quantity.symbol.code().raw(), "manager voter not found");
 
     //validate
-    check(reg.settings.at(name("burnable")), "token is not burnable");
-    check(reg.supply - quantity >= asset(0, quantity.symbol), "cannot burn supply below zero");
+    check(trs.settings.at(name("burnable")), "token is not burnable");
+    check(trs.supply - quantity >= asset(0, quantity.symbol), "cannot burn supply below zero");
     check(mgr.liquid >= quantity, "burning would overdraw balance");
     check(quantity.amount > 0, "must burn a positive quantity");
     check(quantity.is_valid(), "invalid quantity");
     check(memo.size() <= 256, "memo has more than 256 bytes");
 
     //subtract quantity from manager liquid amount
-    sub_liquid(reg.manager, quantity);
+    sub_liquid(trs.manager, quantity);
 
-    //update registry supply
-    registries.modify(reg, same_payer, [&](auto& col) {
+    //update treasury supply
+    treasuries.modify(trs, same_payer, [&](auto& col) {
         col.supply -= quantity;
     });
 
     //notify manager account
-    require_recipient(reg.manager);
+    require_recipient(trs.manager);
+
 }
 
 ACTION trail::reclaim(name voter, asset quantity, string memo) {
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(quantity.symbol.code().raw(), "registry not found");
+    
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(quantity.symbol.code().raw(), "treasury not found");
 
     //authenticate
-    require_auth(reg.manager);
+    require_auth(trs.manager);
 
     //validate
-    check(reg.settings.at(name("reclaimable")), "token is not reclaimable");
-    check(reg.manager != voter, "cannot reclaim tokens from yourself");
+    check(trs.settings.at(name("reclaimable")), "token is not reclaimable");
+    check(trs.manager != voter, "cannot reclaim tokens from yourself");
     check(is_account(voter), "voter account doesn't exist");
     check(quantity.is_valid(), "invalid amount");
     check(quantity.amount > 0, "must reclaim positive amount");
@@ -266,102 +322,147 @@ ACTION trail::reclaim(name voter, asset quantity, string memo) {
     sub_liquid(voter, quantity);
 
     //add quantity to manager balance
-    add_liquid(reg.manager, quantity);
+    add_liquid(trs.manager, quantity);
 
     //notify voter account
     require_recipient(voter);
+
 }
 
 ACTION trail::mutatemax(asset new_max_supply, string memo) {
-    //get registries table, open registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(new_max_supply.symbol.code().raw(), "registry not found");
+    
+    //get treasuries table, open treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(new_max_supply.symbol.code().raw(), "treasury not found");
 
     //authenticate
-    require_auth(reg.manager);
+    require_auth(trs.manager);
 
     //validate
-    check(reg.settings.at(name("maxmutable")), "max supply is not modifiable");
+    check(trs.settings.at(name("maxmutable")), "max supply is not modifiable");
     check(new_max_supply.is_valid(), "invalid amount");
     check(new_max_supply.amount >= 0, "max supply cannot be below zero");
-    check(new_max_supply >= reg.supply, "cannot lower max supply below current supply");
+    check(new_max_supply >= trs.supply, "cannot lower max supply below current supply");
     check(memo.size() <= 256, "memo has more than 256 bytes");
 
     //update max supply
-    registries.modify(reg, same_payer, [&](auto& col) {
+    treasuries.modify(trs, same_payer, [&](auto& col) {
         col.max_supply = new_max_supply;
     });
+
 }
 
-ACTION trail::setunlocker(symbol registry_symbol, name new_unlock_acct, name new_unlock_auth) {
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
+ACTION trail::setunlocker(symbol treasury_symbol, name new_unlock_acct, name new_unlock_auth) {
+    
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");
 
     //authenticate
-    require_auth(reg.manager);
+    require_auth(trs.manager);
 
     //validate
-    check(!reg.locked, "registry is locked");
+    check(!trs.locked, "treasury is locked");
     check(is_account(new_unlock_acct), "unlock account doesn't exist");
 
     //update unlock acct and auth
-    registries.modify(reg, same_payer, [&](auto& col) {
+    treasuries.modify(trs, same_payer, [&](auto& col) {
         col.unlock_acct = new_unlock_acct;
         col.unlock_auth = new_unlock_auth;
     });
+
 }
 
-ACTION trail::lockreg(symbol registry_symbol) {
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
+ACTION trail::lock(symbol treasury_symbol) {
+    
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");
 
     //authenticate
-    require_auth(reg.manager);
-    check(!reg.locked, "registry is already locked");
+    require_auth(trs.manager);
+    check(!trs.locked, "treasury is already locked");
 
     //update lock
-    registries.modify(reg, same_payer, [&](auto& col) {
+    treasuries.modify(trs, same_payer, [&](auto& col) {
         col.locked = true;
     });
+
 }
 
-ACTION trail::unlockreg(symbol registry_symbol) {
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
+ACTION trail::unlock(symbol treasury_symbol) {
+    
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");
 
     //authenticate
-    require_auth(permission_level{reg.unlock_acct, reg.unlock_auth});
+    require_auth(permission_level{trs.unlock_acct, trs.unlock_auth});
 
     //validate
-    check(reg.locked, "registry is already unlocked");
+    check(trs.locked, "treasury is already unlocked");
 
     //update lock
-    registries.modify(reg, same_payer, [&](auto& col) {
+    treasuries.modify(trs, same_payer, [&](auto& col) {
         col.locked = false;
     });
+
 }
 
-ACTION trail::addtofund(symbol registry_symbol, name voter, asset quantity) {
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
+//======================== payroll actions ========================
+
+ACTION trail::addfunds(name from, symbol treasury_symbol, name payroll_name, asset quantity) {
+    
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");
+
+    //validate
+    check(quantity.symbol == TLOS_SYM, "only TLOS allowed in payrolls");
+
+    //open payrolls table, get payroll
+    payrolls_table payrolls(get_self(), treasury_symbol.code().raw());
+    auto& pr = payrolls.get(payroll_name.value, "payroll not found");
 
     //charge quantity to account
-    require_fee(voter, quantity);
+    require_fee(from, quantity);
 
-    //debit quantity to registry worker fund
-    registries.modify(reg, same_payer, [&](auto& col) {
-        col.worker_funds += quantity;
+    //debit quantity to payroll funds
+    payrolls.modify(pr, same_payer, [&](auto& col) {
+        col.payroll_funds += quantity;
     });
+
+}
+
+ACTION trail::editpayrate(name payroll_name, symbol treasury_symbol, uint32_t period_length, asset per_period) {
+    //open payrolls table, get payroll
+    payrolls_table payrolls(get_self(), treasury_symbol.code().raw());
+    auto& pr = payrolls.get(payroll_name.value, "payroll not found");
+
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");
+
+    //authenticate
+    require_auth(trs.manager);
+
+    //validate
+    check(period_length > 0, "period length must be greater than 0");
+    check(per_period.amount > 0, "per period pay must be greater than 0");
+
+    //update pay rate
+    payrolls.modify(pr, same_payer, [&](auto& col) {
+        col.period_length = period_length;
+        col.per_period = per_period;
+    });
+
 }
 
 //======================== ballot actions ========================
 
 ACTION trail::newballot(name ballot_name, name category, name publisher,  
-    symbol registry_symbol, name voting_method, vector<name> initial_options) {
+    symbol treasury_symbol, name voting_method, vector<name> initial_options) {
+   
     //authenticate
     require_auth(publisher);
 
@@ -369,13 +470,13 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
     config_singleton configs(get_self(), get_self().value);
     auto conf = configs.get();
 
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");
 
     //open voters table, get voter
     voters_table voters(get_self(), publisher.value);
-    auto& vtr = voters.get(registry_symbol.code().raw(), "voter not found");
+    auto& vtr = voters.get(treasury_symbol.code().raw(), "voter not found");
 
     //open ballots table
     ballots_table ballots(get_self(), get_self().value);
@@ -396,13 +497,15 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
     //loop and assign initial options
     //NOTE: duplicates are OK, they will be consolidated into 1 key anyway
     for (name n : initial_options) {
-        new_initial_options[n] = asset(0, registry_symbol);
+        new_initial_options[n] = asset(0, treasury_symbol);
     }
 
     //intitial settings
     new_settings[name("lightballot")] = false;
     new_settings[name("revotable")] = true;
     new_settings[name("votestake")] = true;
+    new_settings[name("writein")] = false;
+    //TODO: new_settings[name("allowdgate")] = true;
 
     //emplace new ballot
     ballots.emplace(publisher, [&](auto& col){
@@ -412,20 +515,25 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
         col.status = name("setup");
         col.title = "";
         col.description = "";
-        col.ballot_info = "";
+        col.content = "";
+        col.treasury_symbol = treasury_symbol;
         col.voting_method = voting_method;
+        col.min_options = 1;
         col.max_options = 1;
         col.options = new_initial_options;
-        col.registry_symbol = registry_symbol;
         col.total_voters = 0;
-        col.settings = new_settings;
+        col.total_delegates = 0;
+        col.total_raw_weight = asset(0, treasury_symbol);
         col.cleaned_count = 0;
+        col.settings = new_settings;
         col.begin_time = time_point_sec(0);
         col.end_time = time_point_sec(0);
     });
+
 }
 
-ACTION trail::editdetails(name ballot_name, string title, string description, string ballot_info) {
+ACTION trail::editdetails(name ballot_name, string title, string description, string content) {
+    
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -440,11 +548,13 @@ ACTION trail::editdetails(name ballot_name, string title, string description, st
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.title = title;
         col.description = description;
-        col.ballot_info = ballot_info;
+        col.content = content;
     });
+
 }
 
 ACTION trail::togglebal(name ballot_name, name setting_name) {
+    
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -462,9 +572,11 @@ ACTION trail::togglebal(name ballot_name, name setting_name) {
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.settings[setting_name] = !bal.settings.at(setting_name);
     });
+
 }
 
-ACTION trail::editmaxopts(name ballot_name, uint8_t new_max_options) {
+ACTION trail::editminmax(name ballot_name, uint8_t new_min_options, uint8_t new_max_options) {
+    
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -474,16 +586,20 @@ ACTION trail::editmaxopts(name ballot_name, uint8_t new_max_options) {
 
     //validate
     check(bal.status == name("setup"), "ballot must be in setup mode to edit max options");
-    check(new_max_options > 0, "max options must be greater than zero");
+    check(new_min_options > 0 && new_max_options > 0, "min and max options must be greater than zero");
+    check(new_max_options >= new_min_options, "max must be greater than or equal to min");
     check(new_max_options <= bal.options.size(), "max options cannot be greater than number of options");
 
     //update ballot settings
     ballots.modify(bal, same_payer, [&](auto& col) {
+        col.min_options = new_min_options;
         col.max_options = new_max_options;
     });
+
 }
 
 ACTION trail::addoption(name ballot_name, name new_option_name) {
+    
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -496,11 +612,13 @@ ACTION trail::addoption(name ballot_name, name new_option_name) {
     check(bal.options.find(new_option_name) == bal.options.end(), "option is already in ballot");
 
     ballots.modify(bal, same_payer, [&](auto& col) {
-        col.options[new_option_name] = asset(0, bal.registry_symbol);
+        col.options[new_option_name] = asset(0, bal.treasury_symbol);
     });
+
 }
 
 ACTION trail::rmvoption(name ballot_name, name option_name) {
+    
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -519,9 +637,11 @@ ACTION trail::rmvoption(name ballot_name, name option_name) {
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.options.erase(opt_itr);
     });
+
 }
 
 ACTION trail::readyballot(name ballot_name, time_point_sec end_time) {
+    
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -536,12 +656,12 @@ ACTION trail::readyballot(name ballot_name, time_point_sec end_time) {
     config_singleton configs(get_self(), get_self().value);
     auto conf = configs.get();
 
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(bal.registry_symbol.code().raw(), "registry not found");
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(bal.treasury_symbol.code().raw(), "treasury not found");
 
-    //update open ballots on registry
-    registries.modify(reg, same_payer, [&](auto& col) {
+    //update open ballots on treasury
+    treasuries.modify(trs, same_payer, [&](auto& col) {
         col.open_ballots += 1;
     });
 
@@ -556,9 +676,11 @@ ACTION trail::readyballot(name ballot_name, time_point_sec end_time) {
         col.begin_time = now;
         col.end_time = end_time;
     });
+
 }
 
 ACTION trail::cancelballot(name ballot_name, string memo) {
+    
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -569,12 +691,12 @@ ACTION trail::cancelballot(name ballot_name, string memo) {
     //validate
     check(bal.status == name("voting"), "ballot must be in voting mode to cancel");
 
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(bal.registry_symbol.code().raw(), "registry not found");
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(bal.treasury_symbol.code().raw(), "treasury not found");
 
-    //update open ballots on registry
-    registries.modify(reg, same_payer, [&](auto& col) {
+    //update open ballots on treasury
+    treasuries.modify(trs, same_payer, [&](auto& col) {
         col.open_ballots -= 1;
     });
 
@@ -582,9 +704,11 @@ ACTION trail::cancelballot(name ballot_name, string memo) {
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.status = name("cancelled");
     });
+
 }
 
 ACTION trail::deleteballot(name ballot_name) {
+    
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -607,9 +731,11 @@ ACTION trail::deleteballot(name ballot_name) {
 
     //erase ballot
     ballots.erase(bal);
+
 }
 
 ACTION trail::postresults(name ballot_name, map<name, asset> light_results, uint32_t total_voters) {
+    
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -623,7 +749,7 @@ ACTION trail::postresults(name ballot_name, map<name, asset> light_results, uint
     check(bal.end_time < time_point_sec(current_time_point()), "must be past ballot end time to post");
 
     for (auto i = light_results.begin(); i != light_results.end(); i++) {
-        check(i->second.symbol == bal.registry_symbol, "result has incorrect symbol");
+        check(i->second.symbol == bal.treasury_symbol, "result has incorrect symbol");
     }
     
     //apply results to ballot
@@ -632,9 +758,11 @@ ACTION trail::postresults(name ballot_name, map<name, asset> light_results, uint
         col.total_voters = total_voters;
         col.cleaned_count = total_voters;
     });
+
 }
 
 ACTION trail::closeballot(name ballot_name, bool broadcast) {
+    
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -651,12 +779,12 @@ ACTION trail::closeballot(name ballot_name, bool broadcast) {
         col.status = name("closed");
     });
 
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(bal.registry_symbol.code().raw(), "registry not found");
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(bal.treasury_symbol.code().raw(), "treasury not found");
 
-    //update open ballots on registry
-    registries.modify(reg, same_payer, [&](auto& col) {
+    //update open ballots on treasury
+    treasuries.modify(trs, same_payer, [&](auto& col) {
         col.open_ballots -= 1;
     });
 
@@ -666,7 +794,7 @@ ACTION trail::closeballot(name ballot_name, bool broadcast) {
 
         //square root total votes on each option
         for (auto i = squared_options.begin(); i != squared_options.end(); i++) {
-            squared_options[i->first] = asset(sqrtl(i->second.amount), bal.registry_symbol);
+            squared_options[i->first] = asset(sqrtl(i->second.amount), bal.treasury_symbol);
         }
 
         //update vote counts
@@ -675,17 +803,19 @@ ACTION trail::closeballot(name ballot_name, bool broadcast) {
         });
     }
 
-    //if broadcast true, send bcastresults inline to self
+    //if broadcast true, send broadcast inline to self
     if (broadcast) {
-        action(permission_level{get_self(), name("active")}, get_self(), name("bcastresults"), make_tuple(
+        action(permission_level{get_self(), name("active")}, get_self(), name("broadcast"), make_tuple(
             ballot_name, //ballot_name
             bal.options, //final_results
             bal.total_voters //total_voters
         )).send();
     }
+
 }
 
-ACTION trail::bcastresults(name ballot_name, map<name, asset> final_results, uint32_t total_voters) {
+ACTION trail::broadcast(name ballot_name, map<name, asset> final_results, uint32_t total_voters) {
+    
     //authenticate
     //TODO: require_auth(permission_level{get_self(), name("postresults")});
     require_auth(get_self());
@@ -702,6 +832,7 @@ ACTION trail::bcastresults(name ballot_name, map<name, asset> final_results, uin
 
     //notify ballot publisher (for external contract processing)
     require_recipient(bal.publisher);
+
 }
 
 ACTION trail::archive(name ballot_name, time_point_sec archived_until) {
@@ -745,9 +876,11 @@ ACTION trail::archive(name ballot_name, time_point_sec archived_until) {
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.status = name("archived");
     });
+
 }
 
 ACTION trail::unarchive(name ballot_name, bool force) {
+    
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -775,30 +908,32 @@ ACTION trail::unarchive(name ballot_name, bool force) {
 
     //erase archival
     archivals.erase(arch);
+
 }
 
 //======================== voter actions ========================
 
-ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referrer) {
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
+ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referrer) {
+    
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");
 
     //open voters table, search for voter
     voters_table voters(get_self(), voter.value);
-    auto vtr_itr = voters.find(registry_symbol.code().raw());
+    auto vtr_itr = voters.find(treasury_symbol.code().raw());
 
     //validate
     check(is_account(voter), "voter account doesn't exist");
     check(vtr_itr == voters.end(), "voter already exists");
-    check(registry_symbol != TLOS_SYM, "cannot register as TLOS voter, use VOTE instead");
-    check(registry_symbol != TRAIL_SYM, "cannot register as TRAIL voter, call regworker() instead");
+    check(treasury_symbol != TLOS_SYM, "cannot register as TLOS voter, use VOTE instead");
+    check(treasury_symbol != TRAIL_SYM, "cannot register as TRAIL voter");
 
     //initialize
     name ram_payer = voter;
 
     //authenticate
-    switch (reg.access.value) {
+    switch (trs.access.value) {
         case (name("public").value):
             require_auth(voter);
             break;
@@ -809,13 +944,13 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
                 //authenticate
                 require_auth(ref);
 
-                //check referrer is registry manager
-                check(ref == reg.manager, "referrer must be registry manager");
+                //check referrer is treasury manager
+                check(ref == trs.manager, "referrer must be treasury manager");
 
                 //set referrer as ram payer
                 ram_payer = ref;
             } else {
-                require_auth(reg.manager);
+                require_auth(trs.manager);
             }
             break;
         case (name("invite").value):
@@ -830,60 +965,66 @@ ACTION trail::regvoter(name voter, symbol registry_symbol, optional<name> referr
                 //set referrer as ram payer
                 ram_payer = ref;
             } else {
-                require_auth(reg.manager);
+                require_auth(trs.manager);
             }
             break;
         case (name("membership").value):
             //inline sent from trailservice@membership
             require_auth(permission_level{get_self(), name("membership")});
             ram_payer = get_self();
-            //TODO: write membership payment features
+            //TODO: membership payment features
             break;
         default:
-            check(false, "invalid access method. contact registry manager.");
+            check(false, "invalid access method. contact treasury manager.");
     }
 
     //emplace new voter
     voters.emplace(ram_payer, [&](auto& col) {
-        col.liquid = asset(0, registry_symbol);
-        col.staked = asset(0, registry_symbol);
+        col.liquid = asset(0, treasury_symbol);
+        col.staked = asset(0, treasury_symbol);
+        col.delegated = asset(0, treasury_symbol);
+        col.delegated_to = name(0);
+        col.delegation_time = time_point_sec(current_time_point());
     });
 
-    //update registry
-    registries.modify(reg, same_payer, [&](auto& col) {
+    //update treasury
+    treasuries.modify(trs, same_payer, [&](auto& col) {
         col.voters += 1;
     });
 }
 
-ACTION trail::unregvoter(name voter, symbol registry_symbol) {
+ACTION trail::unregvoter(name voter, symbol treasury_symbol) {
+    
     //authenticate
     require_auth(voter);
 
     //open voters table, get account
     voters_table voters(get_self(), voter.value);
-    auto& vtr = voters.get(registry_symbol.code().raw(), "voter not found");
+    auto& vtr = voters.get(treasury_symbol.code().raw(), "voter not found");
 
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");
 
     //validate
-    check(vtr.liquid == asset(0, registry_symbol), "cannot unregister unless liquid is zero");
-    check(vtr.staked == asset(0, registry_symbol), "cannot unregister unless staked is zero");
+    check(vtr.liquid == asset(0, treasury_symbol), "cannot unregister unless liquid is zero");
+    check(vtr.staked == asset(0, treasury_symbol), "cannot unregister unless staked is zero");
 
-    //TODO: let voter unregister anyway by sending liquid and staked amount?
+    //TODO: let voter unregister anyway by sending liquid and staked amount to manager?
 
     //TODO: require voter to cleanup/unvote all existing vote receipts first?
 
-    registries.modify(reg, same_payer, [&](auto& col) {
-        col.voters -= uint32_t(1);
+    treasuries.modify(trs, same_payer, [&](auto& col) {
+        col.voters -= 1;
     });
 
     //erase account
     voters.erase(vtr);
+
 }
 
 ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
+    
     //authenticate
     require_auth(voter);
 
@@ -893,24 +1034,27 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
 
     //open voters table, get voter
     voters_table voters(get_self(), voter.value);
-    auto& vtr = voters.get(bal.registry_symbol.code().raw(), "voter not found");
+    auto& vtr = voters.get(bal.treasury_symbol.code().raw(), "voter not found");
 
-    //initialize acct
+    //initialize
     auto now = time_point_sec(current_time_point());
-    asset raw_vote_weight = asset(0, bal.registry_symbol);
+    asset raw_vote_weight = asset(0, bal.treasury_symbol);
     uint32_t new_voter = 1;
     map<name, asset> temp_bal_options = bal.options;
 
     if (bal.settings.at(name("votestake"))) { //use stake
         raw_vote_weight = vtr.staked;
-    } else { //use balance
+    } else { //use liquid
         raw_vote_weight = vtr.liquid;
     }
+
+    asset raw_delta = raw_vote_weight;
 
     //validate
     check(bal.status == name("voting"), "ballot status is must be in voting mode to cast vote");
     check(now >= bal.begin_time && now <= bal.end_time, "vote must occur between ballot begin and end times");
-    check(options.size() <= bal.max_options, "cannot vote for more than ballot's max options");
+    check(options.size() >= bal.min_options, "cannot vote for fewer than min options");
+    check(options.size() <= bal.max_options, "cannot vote for more than max options");
     check(raw_vote_weight.amount > 0, "must vote with a positive amount");
 
     //skip vote tracking if light ballot
@@ -918,15 +1062,16 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
         return;
     }
 
-    //open votereceipts table, search for existing vote receipt
-    votes_table votes(get_self(), voter.value);
-    auto v_itr = votes.find(ballot_name.value);
+    //open votes table, search for existing vote
+    votes_table votes(get_self(), ballot_name.value);
+    auto v_itr = votes.find(voter.value);
 
     //rollback if vote already exists
     if (v_itr != votes.end()) {
         
         //initialize
         auto v = *v_itr;
+        raw_delta -= v.raw_votes;
 
         //validate
         check(bal.settings.at(name("revotable")), "ballot is not revotable");
@@ -945,7 +1090,7 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     }
 
     //calculate new votes
-    auto new_votes = calc_vote_weights(bal.registry_symbol, bal.voting_method, options, raw_vote_weight);
+    auto new_votes = calc_vote_weights(bal.treasury_symbol, bal.voting_method, options, raw_vote_weight);
 
     //apply new votes
     for (auto i = new_votes.begin(); i != new_votes.end(); i++) {
@@ -961,24 +1106,25 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.options = temp_bal_options;
         col.total_voters += new_voter;
+        col.total_raw_weight += raw_delta;
     });
 
     //update existing votes, or emplace votes if new
     if (new_voter == 1) {
         votes.emplace(voter, [&](auto& col) {
-            col.ballot_name = ballot_name;
-            col.registry_symbol = bal.registry_symbol;
-            col.raw_vote_weight = raw_vote_weight;
+            col.voter = voter;
+            col.is_delegate = false;
+            col.raw_votes = raw_vote_weight;
             col.weighted_votes = new_votes;
-            col.expiration = bal.end_time;
+            col.vote_time = time_point_sec(current_time_point());
             col.worker = name(0);
-            col.rebalances = uint16_t(0);
-            col.rebalance_volume = asset(0, bal.registry_symbol);
+            col.rebalances = uint8_t(0);
+            col.rebalance_volume = asset(0, bal.treasury_symbol);
         });
     } else {
         //update votes
         votes.modify(v_itr, same_payer, [&](auto& col) {
-            col.raw_vote_weight = raw_vote_weight;
+            col.raw_votes = raw_vote_weight;
             col.weighted_votes = new_votes;
         });
     }
@@ -986,6 +1132,7 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
 }
 
 ACTION trail::unvoteall(name voter, name ballot_name) {
+    
     //authenticate
     require_auth(voter);
 
@@ -995,11 +1142,11 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
 
     //open voters table, get voter
     voters_table voters(get_self(), voter.value);
-    auto& vtr = voters.get(bal.registry_symbol.code().raw(), "voter not found");
+    auto& vtr = voters.get(bal.treasury_symbol.code().raw(), "voter not found");
 
     //open votes table, get vote
-    votes_table votes(get_self(), voter.value);
-    auto& v = votes.get(ballot_name.value, "vote not found");
+    votes_table votes(get_self(), ballot_name.value);
+    auto& v = votes.get(voter.value, "vote not found");
 
     //initialize
     map<name, asset> temp_bal_options = bal.options;
@@ -1028,21 +1175,23 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
 
     //clear all votes in map (preserves rebalance count)
     votes.modify(v, same_payer, [&](auto& col) {
+        col.raw_votes = asset(0, bal.treasury_symbol);
         col.weighted_votes.clear();
     });
     
 }
 
 ACTION trail::stake(name voter, asset quantity) {
+    
     //authenticate
     require_auth(voter);
 
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(quantity.symbol.code().raw(), "registry not found");
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(quantity.symbol.code().raw(), "treasury not found");
 
     //validate
-    check(reg.settings.at(name("stakeable")), "token is not stakeable");
+    check(trs.settings.at(name("stakeable")), "token is not stakeable");
     check(is_account(voter), "voter account doesn't exist");
     check(quantity.is_valid(), "invalid amount");
     check(quantity.amount > 0, "must stake positive amount");
@@ -1052,18 +1201,20 @@ ACTION trail::stake(name voter, asset quantity) {
 
     //add quantity to staked
     add_stake(voter, quantity);
+
 }
 
 ACTION trail::unstake(name voter, asset quantity) {
+    
     //authenticate
     require_auth(voter);
 
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(quantity.symbol.code().raw(), "registry not found");
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(quantity.symbol.code().raw(), "treasury not found");
 
     //validate
-    check(reg.settings.at(name("unstakeable")), "token is not unstakeable");
+    check(trs.settings.at(name("unstakeable")), "token is not unstakeable");
     check(is_account(voter), "voter account doesn't exist");
     check(quantity.is_valid(), "invalid amount");
     check(quantity.amount > 0, "must unstake positive amount");
@@ -1073,142 +1224,143 @@ ACTION trail::unstake(name voter, asset quantity) {
 
     //add quantity to liquid
     add_liquid(voter, quantity);
+
 }
 
 //======================== worker actions ========================
 
-ACTION trail::regworker(name worker_name) {
-    //authenticate
-    require_auth(worker_name);
-
+ACTION trail::forfeitwork(name worker_name, symbol treasury_symbol) {
     //open workers table, get worker
-    workers_table workers(get_self(), get_self().value);
-    auto wrk = workers.find(worker_name.value);
+    labors_table labors(get_self(), treasury_symbol.code().raw());
+    auto& lab = labors.get(worker_name.value, "labor not found");
 
-    //validate
-    check(wrk == workers.end(), "worker already registered");
+    //open labor buckets table, get workers bucket
+    laborbuckets_table laborbuckets(get_self(), treasury_symbol.code().raw());
+    auto& bucket = laborbuckets.get(name("workers").value, "workers bucket not found");
+
+    //authenticate
+    require_auth(lab.worker_name);
 
     //initialize
-    auto now = time_point_sec(current_time_point());
-    map<symbol, asset> new_rebalance_volume;
-    map<symbol, uint16_t> new_rebalance_count;
-    map<symbol, uint16_t> new_clean_count;
+    auto new_claimable_volume = bucket.claimable_volume;
+    auto new_claimable_events = bucket.claimable_events;
 
-    //register new worker
-    workers.emplace(worker_name, [&](auto& col) {
-        col.worker_name = worker_name;
-        col.standing = name("good");
-        col.last_payment = now;
-        col.rebalance_volume = new_rebalance_volume;
-        col.rebalance_count = new_rebalance_count;
-        col.clean_count = new_clean_count;
+    new_claimable_volume[name("rebalvolume")] -= lab.unclaimed_volume.at(name("rebalvolume"));
+    new_claimable_events[name("rebalcount")] -= lab.unclaimed_events.at(name("rebalcount"));
+    new_claimable_events[name("cleancount")] -= lab.unclaimed_events.at(name("cleancount"));
+
+    //update labor bucket
+    laborbuckets.modify(bucket, same_payer, [&](auto& col) {
+        col.claimable_volume = new_claimable_volume;
+        col.claimable_events = new_claimable_events;
     });
-
-    //open accounts table, search for account
-    accounts_table tlos_accounts(get_self(), worker_name.value);
-    auto acct = tlos_accounts.find(TLOS_SYM.code().raw());
-
-    //emplace new account if not exists
-    if (acct == tlos_accounts.end()) {
-        tlos_accounts.emplace(worker_name, [&](auto& col) {
-            col.balance = asset(0, TLOS_SYM);
-        });
-    }
-
-    //open voters table, search for TRAIL voter
-    voters_table trail_voters(get_self(), worker_name.value);
-    auto vtr = trail_voters.find(TRAIL_SYM.code().raw());
-
-    //emplace new TRAIL voter if not exists
-    if (vtr == trail_voters.end()) {
-        trail_voters.emplace(worker_name, [&](auto& col) {
-            col.liquid = asset(0, TRAIL_SYM);
-            col.staked = asset(0, TRAIL_SYM);
-        });
-    }
-
-}
-
-ACTION trail::unregworker(name worker_name) {
-    //open workers table, get worker
-    workers_table workers(get_self(), get_self().value);
-    auto& wrk = workers.get(worker_name.value, "worker not found");
-
-    //authenticate
-    require_auth(wrk.worker_name);
-
-    //validate
-    // no validations necessary
-
-    //NOTE: worker forfeits all current claim to rewards upon unregistration
 
     //erase worker
-    workers.erase(wrk);
+    labors.erase(lab);
 }
 
-ACTION trail::claimpayment(name worker_name, symbol registry_symbol) {
-    //open workers table, get worker
-    workers_table workers(get_self(), get_self().value);
-    auto& wrk = workers.get(worker_name.value);
+ACTION trail::claimpayment(name claimant, symbol treasury_symbol) {
+    //open labors table, get labor
+    labors_table labors(get_self(), treasury_symbol.code().raw());
+    auto& lab = labors.get(claimant.value, "work not found");
 
-    //open registries table, get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(registry_symbol.code().raw(), "registry not found");
+    //open labor buckets table, get bucket
+    laborbuckets_table laborbuckets(get_self(), treasury_symbol.code().raw());
+    auto& bucket = laborbuckets.get(name("workers").value, "workers bucket not found");
+
+    //open payrolls table, get worker payroll
+    payrolls_table payrolls(get_self(), treasury_symbol.code().raw());
+    auto& pr = payrolls.get(name("workers").value, "workers payroll not found");
 
     //authenticate
-    require_auth(wrk.worker_name);
+    require_auth(lab.worker_name);
 
     //initialize
-    asset total_tlos_payout = asset(0, TLOS_SYM);
-    asset total_trail_payout = asset(0, TRAIL_SYM);
-    auto now = time_point_sec(current_time_point()).sec_since_epoch();
+    uint32_t now = time_point_sec(current_time_point()).sec_since_epoch();
+    asset new_claimable_pay = pr.claimable_pay;
+    asset additional_pay = asset(0, pr.payroll_funds.symbol);
+    auto new_claimable_volume = bucket.claimable_volume;
+    auto new_claimable_events = bucket.claimable_events;
 
     //validate
-    check(wrk.last_payment.sec_since_epoch() + 86400 > now, "can only claim payment once per day");
-    check(wrk.standing == name("good"), "must be in good standing to claim payment");
+    check(lab.start_time.sec_since_epoch() + 86400 > now, "labor must mature for 1 day before claiming");
+    check(pr.payee == name("workers"), "payroll not for workers");
+
+    //advance payroll if needed
+    if (pr.last_claim_time.sec_since_epoch() + pr.period_length < now) {
+        uint32_t new_periods = (pr.last_claim_time.sec_since_epoch() - now) / pr.period_length;
+        additional_pay = new_periods * pr.per_period;
+        new_claimable_pay += additional_pay;
+
+        //ensure additional pay doesn't overdraw funds
+        if (pr.payroll_funds <= additional_pay) {
+            additional_pay = pr.payroll_funds;
+        }
+    }
 
     //diminish rate: 1% of payout per day without claiming
-    double reduced_by = ( (now - wrk.last_payment.sec_since_epoch() / 86400) - 1 ) / 100;
+    double reduced_by = ( (now - lab.start_time.sec_since_epoch() / 86400) - 1 ) / 100;
 
     //calculate worker payout
-    asset pay_bucket = reg.worker_funds;
-    asset payout = asset(0, TLOS_SYM);
+    asset payout = asset(0, pr.payroll_funds.symbol);
+    asset trail_payout = asset(0, TRAIL_SYM);
 
-    double vol_share = double(wrk.rebalance_volume.at(registry_symbol).amount) / double(reg.rebalanced_volume.amount);
-    double count_share = double(wrk.rebalance_count.at(registry_symbol)) / double(reg.rebalanced_count);
-    double clean_share = double(wrk.clean_count.at(registry_symbol)) / double(reg.cleaned_count);
+    double vol_share = double(lab.unclaimed_volume.at(name("rebalvolume")).amount) / 
+        double(bucket.claimable_volume.at(name("rebalvolume")).amount);
+
+    double count_share = double(lab.unclaimed_events.at(name("rebalcount"))) / 
+        double(bucket.claimable_events.at(name("rebalcount")));
+
+    double clean_share = double(lab.unclaimed_events.at(name("cleancount"))) / 
+        double(bucket.claimable_events.at(name("cleancount")));
 
     double total_share = (vol_share + count_share + clean_share) / double(3.0);
-    payout = asset(int64_t(pay_bucket.amount * total_share), TLOS_SYM);
+    payout = asset(int64_t(new_claimable_pay.amount * total_share), pr.payroll_funds.symbol);
+    
+    // trail_payout = ...
+
+    if (payout > new_claimable_pay) {
+        payout = new_claimable_pay;
+    }
 
     //validate
-    check(payout.amount > 0, "payout is zero. perform more work to increase payout share.");
-    check(payout <= pay_bucket, "payout is more than worker funds. contact registry manager.");
+    check(new_claimable_pay.amount > 0, "payroll is empty");
 
-    //update registry
-    registries.modify(reg, same_payer, [&](auto& col) {
-        col.worker_funds -= payout;
-        col.rebalanced_volume -= wrk.rebalance_volume.at(registry_symbol);
-        col.rebalanced_count -= wrk.rebalance_count.at(registry_symbol);
-        col.cleaned_count -= wrk.clean_count.at(registry_symbol);
+    new_claimable_pay -= payout;
+
+    new_claimable_volume[name("rebalvolume")] -= lab.unclaimed_volume.at(name("rebalvolume"));
+    new_claimable_events[name("rebalcount")] -= lab.unclaimed_events.at(name("rebalcount"));
+    new_claimable_events[name("cleancount")] -= lab.unclaimed_events.at(name("cleancount"));
+
+    //update labor bucket
+    laborbuckets.modify(bucket, same_payer, [&](auto& col) {
+        col.claimable_volume = new_claimable_volume;
+        col.claimable_events = new_claimable_events;
     });
 
-    //reset worker
-    workers.modify(wrk, same_payer, [&](auto& col) {
-        col.last_payment = time_point_sec(current_time_point());
-        col.rebalance_volume[registry_symbol] = asset(0, registry_symbol);
-        col.rebalance_count[registry_symbol] = uint16_t(0);
-        col.clean_count[registry_symbol] = uint16_t(0);
+    //erase labor
+    labors.erase(lab);
+
+    //update payroll
+    payrolls.modify(pr, same_payer, [&](auto& col) {
+        col.payroll_funds = pr.payroll_funds - additional_pay;
+        col.last_claim_time = time_point_sec(current_time_point());
+        col.claimable_pay = new_claimable_pay;
     });
 
     //open accounts table, get account
-    accounts_table tlos_accounts(get_self(), worker_name.value);
-    auto& tlos_acct = tlos_accounts.get(TLOS_SYM.code().raw(), "tlos account not found");
+    accounts_table accounts(get_self(), claimant.value);
+    auto acct = accounts.find(pr.payroll_funds.symbol.code().raw());
 
-    //update worker tlos balance
-    tlos_accounts.modify(tlos_acct, same_payer, [&](auto& col) {
-        col.balance += payout;
-    });
+    if (acct != accounts.end()) { //account found
+        accounts.modify(acct, same_payer, [&](auto& col) {
+            col.balance += payout;
+        });
+    } else {
+        accounts.emplace(claimant, [&](auto& col) {
+            col.balance = payout;
+        });
+    }
 
 }
 
@@ -1220,22 +1372,21 @@ ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
 
     //open voters table, get voter
     voters_table voters(get_self(), voter.value);
-    auto& vtr = voters.get(bal.registry_symbol.code().raw(), "voter not found");
+    auto& vtr = voters.get(bal.treasury_symbol.code().raw(), "voter not found");
 
     //open votes table, get vote
-    votes_table votes(get_self(), voter.value);
-    auto& v = votes.get(ballot_name.value, "vote not found");
+    votes_table votes(get_self(), ballot_name.value);
+    auto& v = votes.get(voter.value, "vote not found");
 
     //initialize
     auto now = time_point_sec(current_time_point());
-    asset raw_vote_weight = asset(0, v.registry_symbol);
+    asset raw_vote_weight = asset(0, bal.treasury_symbol);
     map<name, asset> new_bal_options = bal.options;
     vector<name> selections;
     name worker_name = name(0);
 
     //validate
-    check(now < v.expiration, "vote receipt has expired");
-    check(v.registry_symbol == bal.registry_symbol, "vote/ballot symbol mismatch");
+    check(now < bal.end_time, "vote has already expired");
 
     if (bal.settings.at(name("votestake"))) { //use stake
         raw_vote_weight = vtr.staked;
@@ -1252,13 +1403,13 @@ ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
     }
 
     //validate
-    check(raw_vote_weight != v.raw_vote_weight, "vote is already balanced");
+    check(raw_vote_weight != v.raw_votes, "vote is already balanced");
     check(selections.size() > 0, "cannot rebalance nonexistent votes");
     check(raw_vote_weight.amount > 0, "cannot vote with zero weight");
 
     //calculate new votes
-    auto new_votes = calc_vote_weights(bal.registry_symbol, bal.voting_method, selections, raw_vote_weight);
-    int64_t weight_delta = abs(v.raw_vote_weight.amount - raw_vote_weight.amount);
+    auto new_votes = calc_vote_weights(bal.treasury_symbol, bal.voting_method, selections, raw_vote_weight);
+    int64_t weight_delta = abs(v.raw_votes.amount - raw_vote_weight.amount);
 
     //apply new votes to ballot
     for (auto i = new_votes.begin(); i != new_votes.end(); i++) {
@@ -1268,6 +1419,7 @@ ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
     //update ballot
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.options = new_bal_options;
+        col.total_raw_weight += (raw_vote_weight - v.raw_votes);
     });
 
     //set worker info if applicable
@@ -1281,44 +1433,37 @@ ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
 
     //update vote
     votes.modify(v, same_payer, [&](auto& col) {
-        col.raw_vote_weight = raw_vote_weight;
+        col.raw_votes = raw_vote_weight;
         col.weighted_votes = new_votes;
         col.worker = worker_name;
         col.rebalances += 1;
-        col.rebalance_volume = asset(weight_delta, bal.registry_symbol);
+        col.rebalance_volume = asset(weight_delta, bal.treasury_symbol);
     });
 
 }
 
 ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
     //open votes table, get vote
-    votes_table votes(get_self(), voter.value);
-    auto& v = votes.get(ballot_name.value, "vote not found");
+    votes_table votes(get_self(), ballot_name.value);
+    auto& v = votes.get(voter.value, "vote not found");
 
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
 
-    //open registries table get registry
-    registries_table registries(get_self(), get_self().value);
-    auto& reg = registries.get(bal.registry_symbol.code().raw(), "registry not found"); 
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(bal.treasury_symbol.code().raw(), "treasury not found");
 
     //initialize
     auto now = time_point_sec(current_time_point());
 
     //validate
-    check(v.expiration < now, "vote hasn't expired");
+    check(bal.end_time < now, "vote hasn't expired");
     
     //update ballot
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.cleaned_count += 1;
-    });
-
-    //update registry
-    registries.modify(reg, same_payer, [&](auto& col) {
-        col.rebalanced_volume += v.rebalance_volume;
-        col.rebalanced_count += uint32_t(v.rebalances);
-        col.cleaned_count += uint32_t(1);
     });
 
     //log worker share if worker
@@ -1329,12 +1474,12 @@ ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
         require_auth(worker_name);
         
         //update cleanup worker
-        log_cleanup_work(worker_name, v.registry_symbol, 1);
+        log_cleanup_work(worker_name, bal.treasury_symbol, 1);
     }
 
-    //update rebalance worker
+    //log rebalance work from vote
     if (v.worker != name(0)) {
-        log_rebalance_work(v.worker, v.registry_symbol, v.rebalance_volume, v.rebalances);
+        log_rebalance_work(v.worker, bal.treasury_symbol, v.rebalance_volume, 1);
     }
 
     //erase expired vote
@@ -1375,17 +1520,17 @@ ACTION trail::withdraw(name voter, asset quantity) {
 //======================== committee actions ========================
 
 ACTION trail::regcommittee(name committee_name, string committee_title,
-    symbol registry_symbol, vector<name> initial_seats, name registree) {
+    symbol treasury_symbol, vector<name> initial_seats, name registree) {
     //authenticate
     require_auth(registree);
 
     //open committees table, search for committee
-    committees_table committees(get_self(), registry_symbol.code().raw());
+    committees_table committees(get_self(), treasury_symbol.code().raw());
     auto cmt = committees.find(committee_name.value);
 
     //open voters table, get voter
     voters_table voters(get_self(), registree.value);
-    auto& vtr = voters.get(registry_symbol.code().raw(), "voter not found");
+    auto& vtr = voters.get(treasury_symbol.code().raw(), "voter not found");
 
     //open configs singleton, get config
     config_singleton configs(get_self(), get_self().value);
@@ -1410,16 +1555,16 @@ ACTION trail::regcommittee(name committee_name, string committee_title,
     committees.emplace(registree, [&](auto& col) {
         col.committee_title = committee_title;
         col.committee_name = committee_name;
-        col.registry_symbol = registry_symbol;
+        col.treasury_symbol = treasury_symbol;
         col.seats = new_seats;
         col.updater_acct = registree;
         col.updater_auth = name("active");
     });
 }
 
-ACTION trail::addseat(name committee_name, symbol registry_symbol, name new_seat_name) {
+ACTION trail::addseat(name committee_name, symbol treasury_symbol, name new_seat_name) {
     //open committees table, get committee
-    committees_table committees(get_self(), registry_symbol.code().raw());
+    committees_table committees(get_self(), treasury_symbol.code().raw());
     auto& cmt = committees.get(committee_name.value, "committee not found");
     
     //authenticate
@@ -1434,9 +1579,9 @@ ACTION trail::addseat(name committee_name, symbol registry_symbol, name new_seat
     });
 }
 
-ACTION trail::removeseat(name committee_name, symbol registry_symbol, name seat_name) {
+ACTION trail::removeseat(name committee_name, symbol treasury_symbol, name seat_name) {
     //open committees table, get committee
-    committees_table committees(get_self(), registry_symbol.code().raw());
+    committees_table committees(get_self(), treasury_symbol.code().raw());
     auto& cmt = committees.get(committee_name.value, "committee not found");
     
     //authenticate
@@ -1451,9 +1596,9 @@ ACTION trail::removeseat(name committee_name, symbol registry_symbol, name seat_
     });
 }
 
-ACTION trail::assignseat(name committee_name, symbol registry_symbol, name seat_name, name seat_holder, string memo) {
+ACTION trail::assignseat(name committee_name, symbol treasury_symbol, name seat_name, name seat_holder, string memo) {
     //open committees table, get committee
-    committees_table committees(get_self(), registry_symbol.code().raw());
+    committees_table committees(get_self(), treasury_symbol.code().raw());
     auto& cmt = committees.get(committee_name.value, "committee not found");
     
     //authenticate
@@ -1468,9 +1613,9 @@ ACTION trail::assignseat(name committee_name, symbol registry_symbol, name seat_
     });
 }
 
-ACTION trail::setupdater(name committee_name, symbol registry_symbol, name updater_account, name updater_auth) {
+ACTION trail::setupdater(name committee_name, symbol treasury_symbol, name updater_account, name updater_auth) {
     //open committees table, get committee
-    committees_table committees(get_self(), registry_symbol.code().raw());
+    committees_table committees(get_self(), treasury_symbol.code().raw());
     auto& cmt = committees.get(committee_name.value, "committee not found");
     
     //authenticate
@@ -1483,9 +1628,9 @@ ACTION trail::setupdater(name committee_name, symbol registry_symbol, name updat
     });
 }
 
-ACTION trail::delcommittee(name committee_name, symbol registry_symbol, string memo) {
+ACTION trail::delcommittee(name committee_name, symbol treasury_symbol, string memo) {
     //open committees table, get committee
-    committees_table committees(get_self(), registry_symbol.code().raw());
+    committees_table committees(get_self(), treasury_symbol.code().raw());
     auto& cmt = committees.get(committee_name.value, "committee not found");
     
     //authenticate
@@ -1620,7 +1765,7 @@ bool trail::valid_voting_method(name voting_method) {
         case (name("quadratic").value):
             return true;
         case (name("ranked").value):
-            check(false, "ranked voitng method feature under development");
+            check(false, "ranked voting method feature under development");
             return true;
         default:
             return false;
@@ -1657,70 +1802,88 @@ void trail::require_fee(name account_name, asset fee) {
     });
 }
 
-void trail::log_rebalance_work(name worker, symbol registry_symbol, asset volume, uint16_t count) {
-    //open workers table, get worker
-    workers_table workers(get_self(), get_self().value);
-    auto w = workers.find(worker.value);
+void trail::log_rebalance_work(name worker, symbol treasury_symbol, asset volume, uint16_t count) {
+    //open labors table, get labor
+    labors_table labors(get_self(), treasury_symbol.code().raw());
+    auto l = labors.find(worker.value);
 
-    if (w != workers.end()) {
-
+    if (l != labors.end()) {
         //initialize
-        auto& wrk = *w;
+        auto& lab = *l;
 
-        if (wrk.rebalance_volume.find(registry_symbol) == wrk.rebalance_volume.end()) {
+        //update labor
+        labors.modify(lab, same_payer, [&](auto& col) {
+            col.unclaimed_volume[name("rebalvolume")] += volume;
+            col.unclaimed_events[name("rebalcount")] += count;
+        });
+    } else {
+        //initialize new maps
+        map<name, asset> new_unclaimed_volume;
+        map<name, uint32_t> new_unclaimed_events;
 
-            auto new_rebalance_volume = wrk.rebalance_volume;
-            new_rebalance_volume[registry_symbol] = volume;
+        //log work to new maps
+        new_unclaimed_volume[name("rebalvolume")] = volume;
+        new_unclaimed_events[name("rebalcount")] = count;
 
-            auto new_rebalance_count = wrk.rebalance_count;
-            new_rebalance_count[registry_symbol] = count;
-
-            workers.modify(wrk, same_payer, [&](auto& col) {
-                col.rebalance_volume = new_rebalance_volume;
-                col.rebalance_count = new_rebalance_count;
-            });
-
-        } else {
-
-            workers.modify(wrk, same_payer, [&](auto& col) {
-                col.rebalance_volume[registry_symbol] += volume;
-                col.rebalance_count[registry_symbol] += count;
-            });
-
-        }
-        
+        //emplace new labor
+        labors.emplace(worker, [&](auto& col){
+            col.worker_name = worker;
+            col.start_time = time_point_sec(current_time_point());
+            col.unclaimed_volume = new_unclaimed_volume;
+            col.unclaimed_events = new_unclaimed_events;
+        });
     }
+
+    //open labor buckets table, get labor bucket
+    laborbuckets_table laborbuckets(get_self(), treasury_symbol.code().raw());
+    auto& bucket = laborbuckets.get(name("workers").value, "workers labor bucket not found");
+
+    //add work to payroll log
+    laborbuckets.modify(bucket, same_payer, [&](auto& col) {
+        col.claimable_volume[name("rebalvolume")] += volume;
+        col.claimable_events[name("rebalcount")] += uint32_t(count);
+    });
     
 }
 
-void trail::log_cleanup_work(name worker, symbol registry_symbol, uint16_t count) {
-    //open workers table, get worker
-    workers_table workers(get_self(), get_self().value);
-    auto w = workers.find(worker.value);
+void trail::log_cleanup_work(name worker, symbol treasury_symbol, uint16_t count) {
+    //open labor table, get labor log
+    labors_table labors(get_self(), treasury_symbol.code().raw());
+    auto l = labors.find(worker.value);
 
-    if (w != workers.end()) {
-
+    if (l != labors.end()) {
         //initialize
-        auto& wrk = *w;
+        auto& lab = *l;
 
-        if (wrk.clean_count.find(registry_symbol) == wrk.clean_count.end()) {
+        //update labor
+        labors.modify(lab, same_payer, [&](auto& col) {
+            col.unclaimed_events[name("cleancount")] += count;
+        });
+    } else {
+        //initialize
+        map<name, asset> new_unclaimed_volume;
+        map<name, uint32_t> new_unclaimed_events;
 
-            auto new_clean_count = wrk.clean_count;
-            new_clean_count[registry_symbol] = count;
+        //log work to new maps
+        new_unclaimed_events[name("cleancount")] = count;
 
-            workers.modify(wrk, same_payer, [&](auto& col) {
-                col.clean_count = new_clean_count;
-            });
-
-        } else {
-
-            workers.modify(wrk, same_payer, [&](auto& col) {
-                col.clean_count[registry_symbol] += count;
-            });
-
-        }
-
+        //emplace new labor
+        labors.emplace(worker, [&](auto& col){
+            col.worker_name = worker;
+            col.start_time = time_point_sec(current_time_point());
+            col.unclaimed_volume = new_unclaimed_volume;
+            col.unclaimed_events = new_unclaimed_events;
+        });
     }
+
+    //open labor buckets table, get labor bucket
+    laborbuckets_table laborbuckets(get_self(), treasury_symbol.code().raw());
+    auto& bucket = laborbuckets.get(name("workers").value, "workers labor bucket not found");
+
+    //add work to payroll log
+    laborbuckets.modify(bucket, same_payer, [&](auto& col) {
+        col.claimable_events[name("cleancount")] += uint32_t(count);
+    });
 
 }
 
@@ -1745,18 +1908,18 @@ void trail::sync_external_account(name voter, symbol internal_symbol, symbol ext
     //subtract from VOTE stake
     if (vtr_itr != voters.end()) { //voter exists
 
-        //open registries table, search for registry
-        registries_table registries(get_self(), get_self().value);
-        auto reg_itr = registries.find(internal_symbol.code().raw());
+        //open treasuries table, search for treasury
+        treasuries_table treasuries(get_self(), get_self().value);
+        auto trs_itr = treasuries.find(internal_symbol.code().raw());
 
-        //check if registry exists (should always be true)
-        if (reg_itr != registries.end()) {
+        //check if treasury exists (should always be true)
+        if (trs_itr != treasuries.end()) {
             
             //calc delta
             asset delta = asset(tlos_stake.amount - vtr_itr->staked.amount, internal_symbol);
 
             //apply delta to supply
-            registries.modify(*reg_itr, same_payer, [&](auto& col) {
+            treasuries.modify(*trs_itr, same_payer, [&](auto& col) {
                 col.supply += asset(delta.amount, internal_symbol);
             });
 
@@ -1773,14 +1936,14 @@ void trail::sync_external_account(name voter, symbol internal_symbol, symbol ext
 
 }
 
-map<name, asset> trail::calc_vote_weights(symbol registry_symbol, name voting_method, 
+map<name, asset> trail::calc_vote_weights(symbol treasury_symbol, name voting_method, 
     vector<name> selections,  asset raw_vote_weight) {
     
     //initialize
     map<name, asset> vote_weights;
     int64_t effective_amount;
     int64_t vote_amount_per;
-    uint8_t sym_prec = registry_symbol.precision();
+    uint8_t sym_prec = treasury_symbol.precision();
     int8_t pos = 1;
 
     switch (voting_method.value) {
@@ -1804,7 +1967,7 @@ map<name, asset> trail::calc_vote_weights(symbol registry_symbol, name voting_me
             //NOTE: requires selections to always be in order
             for (name n : selections) {
                 effective_amount = raw_vote_weight.amount / pos;
-                vote_weights[n] = asset(effective_amount, registry_symbol);
+                vote_weights[n] = asset(effective_amount, treasury_symbol);
                 pos++;
             }
             return vote_weights;
@@ -1814,7 +1977,7 @@ map<name, asset> trail::calc_vote_weights(symbol registry_symbol, name voting_me
 
     //apply effective weight to vote mapping
     for (name n : selections) {
-        vote_weights[n] = asset(effective_amount, registry_symbol);
+        vote_weights[n] = asset(effective_amount, treasury_symbol);
     }
 
     return vote_weights;
