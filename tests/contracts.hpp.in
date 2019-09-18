@@ -1,0 +1,14 @@
+#pragma once
+#include <eosio/testing/tester.hpp>
+
+namespace trail {
+    namespace testing {
+        using namespace std;
+        using namespace eosio::testing;
+
+        struct contracts {
+            static vector<uint8_t> trail_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../contracts/trail/trail.wasm"); }
+            static vector<char> trail_abi() { return read_abi("${CMAKE_BINARY_DIR}/../contracts/trail/trail.abi"); }
+        };
+    }
+}
