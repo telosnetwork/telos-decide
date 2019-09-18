@@ -18,7 +18,7 @@ ACTION trail::setconfig(string trail_version, bool set_defaults) {
     if (set_defaults) {
         //set default fees
         new_fees[name("ballot")] = asset(300000, TLOS_SYM); //30 TLOS
-        new_fees[name("treasury")] = asset(5000000, TLOS_SYM); //500 TLOS
+        new_fees[name("treasury")] = asset(10000000, TLOS_SYM); //1000 TLOS
         new_fees[name("archival")] = asset(30000, TLOS_SYM); //3 TLOS (per day)
         new_fees[name("committee")] = asset(100000, TLOS_SYM); //100 TLOS
 

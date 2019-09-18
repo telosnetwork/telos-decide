@@ -8,13 +8,13 @@ A worker on the Trail Voting Platform is an account that watches for jobs and co
 
 ### What Kinds of Jobs are Available?
 
-In Trail v2.0.0 there are two kinds of jobs: rebalances and cleanups. 
+In Trail v2.0.0 there are two kinds of jobs: rebalances and cleanups. Additional job types will become available as new features are added to Trail.
 
 `Rebalance` jobs become available when voters cast votes on a ballot and then change their vote weight. This action prompts workers to recalculate that voter's weighted votes based on their new balance, and the worker is paid for performing this recalculation. Since a voter can participate on any number of different ballots, rebalance jobs become available on *every active vote by that voter* after a balance change.
 
 Note that if a voter changes their balance again, another rebalance job will be available that will overwrite the work done by the previous recalculation if performed by a different worker. This way workers must always stay vigilant, even after rebalancing a vote. Rebalance work is always tracked, but isn't credited until the vote is cleaned at the end of the voting period.
 
-`Cleanup` jobs become available after ballots close and the votes for that ballot need cleaning. Workers are paid for cleaning up the expired votes and returning the committed RAM back to the original voter.
+`Cleanup` jobs become available after ballots close and the votes for that ballot are no longer needed on-chain. Workers are paid for cleaning up the expired votes and returning the committed RAM back to the original voter.
 
 ## Getting Started
 
