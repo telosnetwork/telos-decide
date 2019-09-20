@@ -431,7 +431,6 @@ ACTION trail::addfunds(name from, symbol treasury_symbol, name payroll_name, ass
     payrolls.modify(pr, same_payer, [&](auto& col) {
         col.payroll_funds += quantity;
     });
-
 }
 
 ACTION trail::editpayrate(name payroll_name, symbol treasury_symbol, uint32_t period_length, asset per_period) {
@@ -815,7 +814,6 @@ ACTION trail::closeballot(name ballot_name, bool broadcast) {
 }
 
 ACTION trail::broadcast(name ballot_name, map<name, asset> final_results, uint32_t total_voters) {
-    
     //authenticate
     //TODO: require_auth(permission_level{get_self(), name("postresults")});
     require_auth(get_self());
@@ -832,7 +830,6 @@ ACTION trail::broadcast(name ballot_name, map<name, asset> final_results, uint32
 
     //notify ballot publisher (for external contract processing)
     require_recipient(bal.publisher);
-
 }
 
 ACTION trail::archive(name ballot_name, time_point_sec archived_until) {

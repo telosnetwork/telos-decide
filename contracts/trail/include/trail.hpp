@@ -28,9 +28,9 @@ public:
     ~trail();
 
     //reserved symbols
-    const symbol TLOS_SYM = symbol("TLOS", 4);
-    const symbol VOTE_SYM = symbol("VOTE", 4);
-    const symbol TRAIL_SYM = symbol("TRAIL", 0);
+    static constexpr symbol TLOS_SYM = symbol("TLOS", 4);
+    static constexpr symbol VOTE_SYM = symbol("VOTE", 4);
+    static constexpr symbol TRAIL_SYM = symbol("TRAIL", 0);
 
     //treasury settings: transferable, burnable, reclaimable, stakeable, unstakeable, maxmutable
 
