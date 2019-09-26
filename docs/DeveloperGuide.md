@@ -1,6 +1,6 @@
 # Trail Developer Guide
 
-In this Developer Guide, we will explore Trail's suite of platform services available to any prospective contract developer. We will follow an example throughout the guide to help establish the general flow and lifecycle of running a ballot and/or registry. The Trail Contract API will be introduced in this guide as certain sections become relevant to the task at hand. For a more straightforward breakdown of Trail's Contract API without the example fluff, see the [Trail Contract API](ContractAPI.md) document.
+In this Developer Guide, we will explore Trail's suite of platform services available to any prospective contract developer. We will follow an example throughout the guide to help establish the general flow and lifecycle of running a ballot and/or treasury. The Trail Contract API will be introduced in this guide as certain sections become relevant to the task at hand. For a more straightforward breakdown of Trail's Contract API without the example fluff, see the [Trail Contract API](ContractAPI.md) document.
 
 ## Understanding Trail's Role
 
@@ -14,7 +14,7 @@ For developers, this means they can leave the user registration, token managemen
 | --- | --- | --- |
 | Voting | Voter registration, token balances, voting, unvoting, staking, and unstaking. | Free |
 | Ballots | Ballot hosting, managing, and results broadcasting. | 35 TLOS per ballot |
-| Registries  | Registry creation, locking/unlocking, verbose settings, worker fund, token minting, transferring, reclaiming, and burning. | 250 TLOS per registry |
+| Treasuries  | Treasury creation, locking/unlocking, verbose settings, worker fund, token minting, transferring, reclaiming, and burning. | 250 TLOS per treasury |
 | Committees | Committee creation, management, security, and seat control. | 100 TLOS per committee |
 | Archival | Archive important ballots to prevent deletion. | 2 TLOS per day |
 | Workers | Worker registration, progress tracking, and profit incentives. | Free |
@@ -28,151 +28,10 @@ More information about each service can be found in the relevent documentation.
 
 For this Developer Guide we will also walk through building a simple external contract to act on ballot results after ballot closure. 
 
-In our contract, we will launch a new election ballot and then *contractually act* on the results broadcast by Trail's `bcastresults()` action. Upon hearing the broadcast, our contract will read the final results, determine the winning candidate, and then send an inline action back to Trail to update our committee with the election winner. This of course requires a registry, ballot, and committee to be set up on Trail beforehand, but we will walk though that in the setup guide below.
+In our contract, we will launch a new election ballot and then *contractually act* on the results broadcast by Trail's `bcastresults()` action. Upon hearing the broadcast, our contract will read the final results, determine the winning candidate, and then send an inline action back to Trail to update our committee with the election winner. This of course requires a treasury, ballot, and committee to be set up on Trail beforehand, but we will walk though that in the setup guide below.
 
 > Setup: [Example Setup Guide](../contracts/example/README.md)
 
 > Contract:
 [example.hpp](../contracts/example/include/example.hpp) / 
 [example.cpp](../contracts/example/src/example.cpp)
-
------
-
-## Registries
-
-...
-
-### Registry Creation
-
-...
-
-### Registry Management
-
-...
-
-### Registry Funding
-
-...
-
-## Ballots
-
-...
-
-### Ballot Creation
-
-...
-
-#### Ballot Statuses
-
-| Status | Description |
-| --- | --- |
-| setup | Ballot is being prepared. |
-| voting | Ballot is currently open for voting. |
-| closed | Ballot is closed and final results have been rendered. |
-| cancelled | Ballot was cancelled during voting, awaiting deletion. |
-| archived | Ballot is currently archived and can't be deleted. |
-
-### Voting Methods
-
-| Voting Method | Description | Raw Weight | Weighted Vote |
-| --- | --- | --- | -- |
-| 1acct1vote | Every voter gets 1 whole vote. Zero balances don't count. | 0.01 TEST | 1.00 TEST Each |
-| 1tokennvote | Raw weight is applied to each option selected. | 3.00 TEST | 3.00 TEST Each |
-| 1token1vote | Raw weight is split among all selections. | 3.00 TEST | 1.00 TEST Each |
-| 1tsquare1v | Raw weight is squared and split among selections. At ballot closure each option's total will be square-rooted | 3.00 TEST | 9.00 TEST Each |
-| quadratic | Raw weight is squared and split among selections. | 3.00 TEST | 9.00 Each |
-| ranked | Votes are cast in order of preference, with the weighted total divided by the option's position. | 3.00 TEST | #1 = 3.00 TEST, #2 = 1.50 TEST, ... |
-
-#### Ballot Settings
-
-| Setting | Description |
-| --- | --- |
-| lightballot | Marks as a light ballot if true. |
-| revotable | Allows revoting on the ballot if true. |
-| votestake | Reads voter's staked balance for casting votes if true. |
-
-### Ballot Management
-
-...
-
-### Ballot Closing
-
-...
-
-### Broadcasting Ballot Results
-
-...
-
-### Ballot Deletion
-
-...
-
-### Ballot Cancellation
-
-...
-
-### Archiving and Unarchiving
-
-...
-
------
-
-## Voters
-
-...
-
-### Voter Registration
-
-...
-
-### Casting Votes
-
-...
-
-### Unvoting
-
-...
-
-### Staking and Unstaking
-
-...
-
------
-
-## Workers
-
-...
-
-### Worker Registration
-
-...
-
-### Rebalancing Votes
-
-...
-
-### Cleaning Votes
-
-...
-
-### Claiming Worker Payout
-
-...
-
------
-
-## Committees
-
-...
-
-### Committee Creation
-
-...
-
-### Committee Management
-
-...
-
-### External Contract Hooks
-
-...
