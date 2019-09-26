@@ -640,7 +640,7 @@ ACTION trail::rmvoption(name ballot_name, name option_name) {
 
 }
 
-ACTION trail::readyballot(name ballot_name, time_point_sec end_time) {
+ACTION trail::openvoting(name ballot_name, time_point_sec end_time) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -761,7 +761,7 @@ ACTION trail::postresults(name ballot_name, map<name, asset> light_results, uint
 
 }
 
-ACTION trail::closeballot(name ballot_name, bool broadcast) {
+ACTION trail::closevoting(name ballot_name, bool broadcast) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
