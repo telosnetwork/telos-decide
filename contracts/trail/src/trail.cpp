@@ -982,6 +982,7 @@ ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referr
     voters.emplace(ram_payer, [&](auto& col) {
         col.liquid = asset(0, treasury_symbol);
         col.staked = asset(0, treasury_symbol);
+        col.staked_time = time_point_sec(current_time_point());
         col.delegated = asset(0, treasury_symbol);
         col.delegated_to = name(0);
         col.delegation_time = time_point_sec(current_time_point());
@@ -1718,6 +1719,7 @@ void trail::add_stake(name voter, asset quantity) {
     //add quantity to stake
     to_voters.modify(to_voter, same_payer, [&](auto& col) {
         col.staked += quantity;
+        col.staked_time = time_point_sec(current_time_point());
     });
 }
 
@@ -1732,6 +1734,7 @@ void trail::sub_stake(name voter, asset quantity) {
     //subtract quantity from stake
     from_voters.modify(from_voter, same_payer, [&](auto& col) {
         col.staked -= quantity;
+        col.staked_time = time_point_sec(current_time_point());
     });
 }
 
