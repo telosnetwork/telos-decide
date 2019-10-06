@@ -3,7 +3,8 @@
 //
 // @author Craig Branscom
 // @contract trail
-// @version v2.0.0-RFC2
+// @date October 6th, 2019
+// @version v2.0.0-RC2
 // @copyright see LICENSE.txt
 
 #pragma once
@@ -22,6 +23,8 @@ using namespace std;
 CONTRACT trail : public contract {
 
 public:
+
+    //TODO: add payment decay to claimpayment
 
     trail(name self, name code, datastream<const char*> ds);
 
