@@ -935,7 +935,12 @@ ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referr
     //authenticate
     switch (trs.access.value) {
         case (name("public").value):
-            require_auth(voter);
+            if (referrer) {
+                name ref = *referrer;
+                require_auth(ref);
+            } else {
+                require_auth(voter);
+            }
             break;
         case (name("private").value):
             if (referrer) {
@@ -1665,7 +1670,7 @@ void trail::catch_transfer(name from, name to, asset quantity, string memo) {
             return;
         } else if (memo == "deposit") {
 
-            //open accounts tbale, search for account
+            //open accounts table, search for account
             accounts_table accounts(get_self(), from.value);
             auto acct = accounts.find(TLOS_SYM.code().raw());
 
