@@ -1178,6 +1178,7 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.options = temp_bal_options;
         col.total_voters -= 1;
+        col.total_raw_weight -= v.raw_votes;
     });
 
     //clear all votes in map (preserves rebalance count)
@@ -1324,7 +1325,10 @@ ACTION trail::claimpayment(name claimant, symbol treasury_symbol) {
     double total_share = (vol_share + count_share + clean_share) / double(3.0);
     payout = asset(int64_t(new_claimable_pay.amount * total_share), pr.payroll_funds.symbol);
     
-    // trail_payout = ...
+    //TODO: reduce payout by percentage
+    // payout.amount = uint64_t(double(payout.amount) * reduced_by);
+
+    //TODO: calculate TRAIL payout
 
     if (payout > new_claimable_pay) {
         payout = new_claimable_pay;
