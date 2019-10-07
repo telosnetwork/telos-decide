@@ -938,6 +938,7 @@ ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referr
             if (referrer) {
                 name ref = *referrer;
                 require_auth(ref);
+                ram_payer = ref;
             } else {
                 require_auth(voter);
             }
