@@ -1541,7 +1541,7 @@ ACTION trail::regcommittee(name committee_name, string committee_title,
     check(committee_title.size() <= 256, "committee title has more than 256 bytes");
 
     //charge committee fee
-    require_fee(registree, conf.fees.at(name("committee")));
+    require_fee(registree, conf.fees.at(committee_n));
 
     for (name n : initial_seats) {
         check(new_seats.find(n) == new_seats.end(), "seat names must be unique");
@@ -1555,7 +1555,7 @@ ACTION trail::regcommittee(name committee_name, string committee_title,
         col.treasury_symbol = treasury_symbol;
         col.seats = new_seats;
         col.updater_acct = registree;
-        col.updater_auth = name("active");
+        col.updater_auth = active_permission;
     });
 }
 
@@ -1654,7 +1654,7 @@ void trail::catch_transfer(name from, name to, asset quantity, string memo) {
     name rec = get_first_receiver();
 
     //validate
-    if (rec == name("eosio.token") && from != get_self() && quantity.symbol == TLOS_SYM) {
+    if (rec == token_account && from != get_self() && quantity.symbol == TLOS_SYM) {
         
         //parse memo
         if (memo == std::string("skip")) { //allows transfers to trail without triggering reaction

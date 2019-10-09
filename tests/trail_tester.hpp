@@ -56,8 +56,46 @@ namespace trail {
             };
 
             trail_tester(setup_mode mode = setup_mode::full) {
+                create_accounts({ trail_name, testa, testb, testc });
+                
+                if(mode == setup_mode::none) return; 
 
+                set_code( trail_name, contracts::trail_wasm());
+                set_abi( trail_name, contracts::trail_abi().data() );
+                {
+                    const auto& accnt = control->db().get<account_object,by_name>( trail_name );
+                    abi_def abi;
+                    BOOST_REQUIRE_EQUAL(abi_serializer::to_abi(accnt.abi, abi), true);
+                    abi_ser.set_abi(abi, abi_serializer_max_time);
+                }
+
+                if(mode == setup_mode::basic) return; 
+
+                
+                if(mode == setup_mode::full) return; 
             }
+
+            //======================== helper actions =======================
+
+            template<typename T, typename U>
+            map<T, U> variant_to_map(fc::variant input) {
+                vector<fc::variant> variants = input.as<vector<fc::variant>>();
+                map<T, U> output;
+                for(const auto& v : variants) {
+                    output.emplace(v["key"].as<T>(), v["value"].as<U>());
+                }
+                return output;
+            }
+
+            template<typename T, typename U>
+            void validate_map(map<T, U> map_to_validate, T key, U validation_value) {
+                BOOST_REQUIRE_EQUAL(map_to_validate.count(key), 1);
+                auto itr = map_to_validate.find(key);
+                BOOST_REQUIRE_EQUAL(key, itr->first);
+                BOOST_REQUIRE_EQUAL(validation_value, itr->second);
+            }
+
+
             //======================== admin actions ========================
 
             //sets new config singleton

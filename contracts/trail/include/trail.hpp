@@ -32,6 +32,25 @@ public:
     static constexpr symbol VOTE_SYM = symbol("VOTE", 4);
     static constexpr symbol TRAIL_SYM = symbol("TRAIL", 0);
 
+    //reserved permission names
+    static constexpr name active_permission = "active"_n;
+
+    //reserved account names
+    static constexpr name token_account = "eosio.token"_n;
+
+    //reserved names
+    static constexpr name ballot_n = "ballot"_n;
+    static constexpr name worker_n = "worker"_n;
+    static constexpr name treasury_n = "treasury"_n;
+    static constexpr name archival_n = "archival"_n;
+    static constexpr name committee_n = "committee"_n;
+    static constexpr name proposal_n = "proposal"_n;
+    static constexpr name referendum_n = "referendum"_n;
+    static constexpr name election_n = "election"_n;
+    static constexpr name poll_n = "poll"_n;
+    static constexpr name leaderboard_n = "leaderboard"_n;
+
+
     //treasury settings: transferable, burnable, reclaimable, stakeable, unstakeable, maxmutable
 
     //treasury access: public, private, invite, membership?
