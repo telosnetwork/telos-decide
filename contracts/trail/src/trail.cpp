@@ -18,7 +18,7 @@ ACTION trail::setconfig(string trail_version, bool set_defaults) {
     if (set_defaults) {
         //set default fees
         new_fees[name("ballot")] = asset(300000, TLOS_SYM); //30 TLOS
-        new_fees[name("treasury")] = asset(5000000, TLOS_SYM); //500 TLOS
+        new_fees[name("treasury")] = asset(10000000, TLOS_SYM); //1000 TLOS
         new_fees[name("archival")] = asset(30000, TLOS_SYM); //3 TLOS (per day)
         new_fees[name("committee")] = asset(100000, TLOS_SYM); //100 TLOS
 
@@ -639,7 +639,7 @@ ACTION trail::rmvoption(name ballot_name, name option_name) {
 
 }
 
-ACTION trail::readyballot(name ballot_name, time_point_sec end_time) {
+ACTION trail::openvoting(name ballot_name, time_point_sec end_time) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -760,7 +760,7 @@ ACTION trail::postresults(name ballot_name, map<name, asset> light_results, uint
 
 }
 
-ACTION trail::closeballot(name ballot_name, bool broadcast) {
+ACTION trail::closevoting(name ballot_name, bool broadcast) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -932,7 +932,13 @@ ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referr
     //authenticate
     switch (trs.access.value) {
         case (name("public").value):
-            require_auth(voter);
+            if (referrer) {
+                name ref = *referrer;
+                require_auth(ref);
+                ram_payer = ref;
+            } else {
+                require_auth(voter);
+            }
             break;
         case (name("private").value):
             if (referrer) {
@@ -979,6 +985,7 @@ ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referr
     voters.emplace(ram_payer, [&](auto& col) {
         col.liquid = asset(0, treasury_symbol);
         col.staked = asset(0, treasury_symbol);
+        col.staked_time = time_point_sec(current_time_point());
         col.delegated = asset(0, treasury_symbol);
         col.delegated_to = name(0);
         col.delegation_time = time_point_sec(current_time_point());
@@ -1168,6 +1175,7 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.options = temp_bal_options;
         col.total_voters -= 1;
+        col.total_raw_weight -= v.raw_votes;
     });
 
     //clear all votes in map (preserves rebalance count)
@@ -1314,7 +1322,10 @@ ACTION trail::claimpayment(name claimant, symbol treasury_symbol) {
     double total_share = (vol_share + count_share + clean_share) / double(3.0);
     payout = asset(int64_t(new_claimable_pay.amount * total_share), pr.payroll_funds.symbol);
     
-    // trail_payout = ...
+    //TODO: reduce payout by percentage
+    // payout.amount = uint64_t(double(payout.amount) * reduced_by);
+
+    //TODO: calculate TRAIL payout
 
     if (payout > new_claimable_pay) {
         payout = new_claimable_pay;
@@ -1661,7 +1672,7 @@ void trail::catch_transfer(name from, name to, asset quantity, string memo) {
             return;
         } else if (memo == "deposit") {
 
-            //open accounts tbale, search for account
+            //open accounts table, search for account
             accounts_table accounts(get_self(), from.value);
             auto acct = accounts.find(TLOS_SYM.code().raw());
 
@@ -1715,6 +1726,7 @@ void trail::add_stake(name voter, asset quantity) {
     //add quantity to stake
     to_voters.modify(to_voter, same_payer, [&](auto& col) {
         col.staked += quantity;
+        col.staked_time = time_point_sec(current_time_point());
     });
 }
 
@@ -1729,6 +1741,7 @@ void trail::sub_stake(name voter, asset quantity) {
     //subtract quantity from stake
     from_voters.modify(from_voter, same_payer, [&](auto& col) {
         col.staked -= quantity;
+        col.staked_time = time_point_sec(current_time_point());
     });
 }
 

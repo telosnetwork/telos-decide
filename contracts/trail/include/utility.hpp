@@ -22,6 +22,7 @@ struct user_resources {
 };
 typedef eosio::multi_index<name("userres"), user_resources> user_resources_table;
 
+//defined in 
 asset get_staked_tlos(name owner) {
     user_resources_table userres(name("eosio"), owner.value);
     auto r = userres.find(owner.value);

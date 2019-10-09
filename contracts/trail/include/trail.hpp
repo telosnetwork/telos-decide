@@ -3,7 +3,8 @@
 //
 // @author Craig Branscom
 // @contract trail
-// @version v2.0.0-RFC2
+// @date October 6th, 2019
+// @version v2.0.0-RC2
 // @copyright see LICENSE.txt
 
 #pragma once
@@ -22,6 +23,8 @@ using namespace std;
 CONTRACT trail : public contract {
 
 public:
+
+    //TODO: add payment decay to claimpayment
 
     trail(name self, name code, datastream<const char*> ds);
 
@@ -53,7 +56,7 @@ public:
 
     //treasury settings: transferable, burnable, reclaimable, stakeable, unstakeable, maxmutable
 
-    //treasury access: public, private, invite, membership?
+    //treasury access: public, private, invite
 
     //ballot statuses: setup, voting, closed, cancelled, archived
 
@@ -108,7 +111,7 @@ public:
 
     //======================== payroll actions ========================
 
-    //adds to specified payroll
+    //adds tokens to specified payroll
     ACTION addfunds(name from, symbol treasury_symbol, name payroll_name, asset quantity);
 
     //edit pay rate
@@ -135,8 +138,8 @@ public:
     //removes an option from a ballot
     ACTION rmvoption(name ballot_name, name option_name);
 
-    //readies a ballot for voting
-    ACTION readyballot(name ballot_name, time_point_sec end_time);
+    //opens a ballot for voting
+    ACTION openvoting(name ballot_name, time_point_sec end_time);
 
     //cancels a ballot
     ACTION cancelballot(name ballot_name, string memo);
@@ -147,8 +150,8 @@ public:
     //posts results from a light ballot before closing
     ACTION postresults(name ballot_name, map<name, asset> light_results, uint32_t total_voters);
 
-    //closes a ballot and post final results
-    ACTION closeballot(name ballot_name, bool broadcast);
+    //closes voting on a ballot and post final results
+    ACTION closevoting(name ballot_name, bool broadcast);
 
     //broadcast ballot results
     ACTION broadcast(name ballot_name, map<name, asset> final_results, uint32_t total_voters);
@@ -184,17 +187,17 @@ public:
 
     //======================== worker actions ========================
 
-    //unregisters an existing worker
-    ACTION forfeitwork(name worker_name, symbol treasury_symbol);
-
-    //pays a worker
-    ACTION claimpayment(name worker_name, symbol treasury_symbol);
-
     //rebalance an unbalanced vote
     ACTION rebalance(name voter, name ballot_name, optional<name> worker);
 
     //cleans up an expired vote
     ACTION cleanupvote(name voter, name ballot_name, optional<name> worker);
+
+    //unregisters an existing worker
+    ACTION forfeitwork(name worker_name, symbol treasury_symbol);
+
+    //pays a worker
+    ACTION claimpayment(name worker_name, symbol treasury_symbol);
 
     //withdraws TLOS balance to eosio.token
     ACTION withdraw(name voter, asset quantity);
@@ -424,7 +427,9 @@ public:
     //ram: 
     TABLE voter {
         asset liquid;
+
         asset staked;
+        time_point_sec staked_time;
 
         asset delegated;
         name delegated_to;
@@ -432,7 +437,8 @@ public:
 
         uint64_t primary_key() const { return liquid.symbol.code().raw(); }
         EOSLIB_SERIALIZE(voter,
-            (liquid)(staked)
+            (liquid)
+            (staked)(staked_time)
             (delegated)(delegated_to)(delegation_time))
     };
     typedef multi_index<name("voters"), voter> voters_table;
