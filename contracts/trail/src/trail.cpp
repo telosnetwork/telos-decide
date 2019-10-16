@@ -33,13 +33,13 @@ ACTION trail::setconfig(string trail_version, bool set_defaults) {
     //build new configs
     config new_config = {
         trail_version, //trail_version
+        asset(0, TLOS_SYM),
         new_fees, //fees
         new_times //times
     };
 
     //set new config
     configs.set(new_config, get_self());
-
 }
 
 ACTION trail::updatefee(name fee_name, asset fee_amount) {
@@ -50,8 +50,9 @@ ACTION trail::updatefee(name fee_name, asset fee_amount) {
     //open configs singleton
     config_singleton configs(get_self(), get_self().value);
     auto conf = configs.get();
-
+    
     //validate
+    check(fee_amount.symbol == TLOS_SYM,  "fee symbol must be TLOS");
     check(fee_amount >= asset(0, TLOS_SYM), "fee amount must be a positive number");
 
     //initialize
@@ -101,6 +102,7 @@ ACTION trail::newtreasury(name manager, asset max_supply, name access) {
 
     //open configs singleton, get configs
     config_singleton configs(get_self(), get_self().value);
+    check(configs.exists(), "trailservice::setconfig must be called before treasurys can made emplaced");
     auto conf = configs.get();
 
     //validate
@@ -434,6 +436,7 @@ ACTION trail::addfunds(name from, symbol treasury_symbol, name payroll_name, ass
 }
 
 ACTION trail::editpayrate(name payroll_name, symbol treasury_symbol, uint32_t period_length, asset per_period) {
+    
     //open payrolls table, get payroll
     payrolls_table payrolls(get_self(), treasury_symbol.code().raw());
     auto& pr = payrolls.get(payroll_name.value, "payroll not found");
@@ -804,11 +807,8 @@ ACTION trail::closevoting(name ballot_name, bool broadcast) {
 
     //if broadcast true, send broadcast inline to self
     if (broadcast) {
-        action(permission_level{get_self(), name("active")}, get_self(), name("broadcast"), make_tuple(
-            ballot_name, //ballot_name
-            bal.options, //final_results
-            bal.total_voters //total_voters
-        )).send();
+        broadcast_action broadcast_act(get_self(), { get_self(), "active"_n });
+        broadcast_act.send(ballot_name, bal.options, bal.total_voters);
     }
 
 }
@@ -929,44 +929,41 @@ ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referr
     //initialize
     name ram_payer = voter;
 
+    if (referrer) {
+        check(is_account(*referrer), "referring account must already exist");
+    }
+
     //authenticate
     switch (trs.access.value) {
         case (name("public").value):
             if (referrer) {
-                name ref = *referrer;
-                require_auth(ref);
-                ram_payer = ref;
+                require_auth(*referrer);
+                ram_payer = *referrer;
             } else {
                 require_auth(voter);
             }
             break;
         case (name("private").value):
             if (referrer) {
-                name ref = *referrer;
-                
                 //authenticate
-                require_auth(ref);
-
+                require_auth(*referrer);
                 //check referrer is treasury manager
-                check(ref == trs.manager, "referrer must be treasury manager");
-
+                check(*referrer == trs.manager, "referrer must be treasury manager");
                 //set referrer as ram payer
-                ram_payer = ref;
+                ram_payer = *referrer;
             } else {
                 require_auth(trs.manager);
             }
             break;
         case (name("invite").value):
             if (referrer) {
-                name ref = *referrer;
-
                 //authenticate
-                require_auth(ref);
+                require_auth(*referrer);
 
                 //TODO: check referrer is a voter
 
                 //set referrer as ram payer
-                ram_payer = ref;
+                ram_payer = *referrer;
             } else {
                 require_auth(trs.manager);
             }
@@ -1514,15 +1511,18 @@ ACTION trail::withdraw(name voter, asset quantity) {
         col.balance -= quantity;
     });
 
+    config_singleton configs(get_self(), get_self().value);
+    auto config = configs.get();
+
+    config.total_deposits -= quantity;
+
+    configs.set(config, get_self());
+
     //transfer to eosio.token
     //inline trx requires trailservice@active to have trailservice@eosio.code
-    action(permission_level{get_self(), name("active")}, name("eosio.token"), name("transfer"), make_tuple(
-		get_self(), //from
-		voter, //to
-		quantity, //quantity
-        std::string("trailservice withdrawal") //memo
-	)).send();
-
+    //TODO: replace with action handler
+    token::transfer_action transfer_act("eosio.token"_n, { get_self(), "active"_n });
+    transfer_act.send(get_self(), voter, quantity, std::string("trailservice withdrawal"));
 }
 
 //======================== committee actions ========================
@@ -1668,27 +1668,38 @@ void trail::catch_transfer(name from, name to, asset quantity, string memo) {
     if (rec == token_account && from != get_self() && quantity.symbol == TLOS_SYM) {
         
         //parse memo
-        if (memo == std::string("skip")) { //allows transfers to trail without triggering reaction
+        if (memo == std::string("skip")) //skips emplacement if memo is skip
             return;
-        } else if (memo == "deposit") {
+        
+        //open accounts table, search for account
+        accounts_table accounts(get_self(), from.value);
+        auto acct = accounts.find(TLOS_SYM.code().raw());
 
-            //open accounts table, search for account
-            accounts_table accounts(get_self(), from.value);
-            auto acct = accounts.find(TLOS_SYM.code().raw());
-
-            //empalce account if not found, update if exists
-            if (acct == accounts.end()) { //no account
-                accounts.emplace(get_self(), [&](auto& col) {
-                    col.balance = quantity;
-                });
-            } else { //exists
-                accounts.modify(*acct, same_payer, [&](auto& col) {
-                    col.balance += quantity;
-                });
-            }
+        //emplace account if not found, update if exists
+        if (acct == accounts.end()) { //no account
+            accounts.emplace(get_self(), [&](auto& col) {
+                col.balance = quantity;
+            });
+        } else { //exists
+            accounts.modify(*acct, same_payer, [&](auto& col) {
+                col.balance += quantity;
+            });
         }
-    }
 
+        config_singleton configs(get_self(), get_self().value);
+        auto config = configs.get();
+
+        config.total_deposits += quantity;
+
+        configs.set(config, get_self());
+    } else if (rec == token_account && from == get_self() && quantity.symbol == TLOS_SYM) {
+        config_singleton configs(get_self(), get_self().value);
+        auto config = configs.get();
+
+        asset total_transferable = (token::get_balance("eosio.token"_n, get_self(), TLOS_SYM.code()) + quantity) - config.total_deposits;
+        
+        check(total_transferable >= quantity, "trail service lacks the liquid to make this transfer");
+    }
 }
 
 //========== utility methods ==========

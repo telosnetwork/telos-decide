@@ -21,7 +21,17 @@ namespace trail {
         class trail_tester : public tester {
         public:
             //ACCOUNT NAMEs
+            const name eosio_name = name("eosio");
+            const name token_name = name("eosio.token");
             const name trail_name = name("trailservice");
+            const name rex_name = name("eosio.rex");
+            const name ram_name = name("eosio.ram");
+            const name ramfee_name = name("eosio.ramfee");
+            const name stake_name = name("eosio.stake");
+            const name bpay_name = name("eosio.bpay");
+            const name vpay_name = name("eosio.vpay");
+            const name names_name = name("eosio.names");
+
             const name testa = name("testaccounta");
             const name testb = name("testaccountb"); 
             const name testc = name("testaccountc");
@@ -48,6 +58,10 @@ namespace trail {
 
             //ABI SERIALIZERs
             abi_serializer abi_ser;
+            abi_serializer token_abi_ser;
+            abi_serializer sys_abi_ser;
+
+            //======================== setup actions =======================
 
             enum class setup_mode {
                 none,
@@ -56,7 +70,24 @@ namespace trail {
             };
 
             trail_tester(setup_mode mode = setup_mode::full) {
-                create_accounts({ trail_name, testa, testb, testc });
+                create_accounts({ token_name, trail_name, rex_name, ram_name, ramfee_name, stake_name, bpay_name, vpay_name, names_name });
+                setup_token_contract();
+                setup_sys_contract();
+
+                asset ram_amount = asset::from_string("400.0000 TLOS");
+                asset liquid_amount = asset::from_string("10000.0000 TLOS");
+
+                create_account_with_resources(testa, eosio_name, ram_amount, false);
+                create_account_with_resources(testb, eosio_name, ram_amount, false);
+                create_account_with_resources(testc, eosio_name, ram_amount, false);
+                base_tester::transfer(eosio_name, testa, "10000.0000 TLOS", "initial funds", token_name);
+                base_tester::transfer(eosio_name, testb, "10000.0000 TLOS", "initial funds", token_name);
+                base_tester::transfer(eosio_name, testc, "10000.0000 TLOS", "initial funds", token_name);
+
+                BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, testa), liquid_amount);
+                BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, testb), liquid_amount);
+                BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, testc), liquid_amount);
+
                 
                 if(mode == setup_mode::none) return; 
 
@@ -68,11 +99,42 @@ namespace trail {
                     BOOST_REQUIRE_EQUAL(abi_serializer::to_abi(accnt.abi, abi), true);
                     abi_ser.set_abi(abi, abi_serializer_max_time);
                 }
-
+                produce_blocks();
+                
                 if(mode == setup_mode::basic) return; 
 
                 
                 if(mode == setup_mode::full) return; 
+            }
+
+            void setup_token_contract() {
+                set_code( token_name, contracts::token_wasm());
+                set_abi( token_name, contracts::token_abi().data() );
+                {
+                    const auto& accnt = control->db().get<account_object,by_name>( token_name );
+                    abi_def abi;
+                    BOOST_REQUIRE_EQUAL(abi_serializer::to_abi(accnt.abi, abi), true);
+                    token_abi_ser.set_abi(abi, abi_serializer_max_time);
+                }
+                produce_blocks();
+                create(eosio_name, asset::from_string("1000000000.0000 TLOS"));
+                issue(eosio_name, eosio_name, asset::from_string("1000000.0000 TLOS"), "");
+                open(rex_name, tlos_sym, rex_name);
+            }
+
+            void setup_sys_contract() {
+                set_code( eosio_name, contracts::sys_wasm());
+                set_abi( eosio_name, contracts::sys_abi().data() );
+                {
+                    const auto& accnt = control->db().get<account_object,by_name>( eosio_name );
+                    abi_def abi;
+                    BOOST_REQUIRE_EQUAL(abi_serializer::to_abi(accnt.abi, abi), true);
+                    sys_abi_ser.set_abi(abi, abi_serializer_max_time);
+                }
+                init(0, tlos_sym);
+                produce_blocks();
+                produce_block(fc::minutes(10));
+                produce_blocks();
             }
 
             //======================== helper actions =======================
@@ -95,6 +157,92 @@ namespace trail {
                 BOOST_REQUIRE_EQUAL(validation_value, itr->second);
             }
 
+            template<typename T, typename U>
+            vector<fc::variant> map_to_vector(map<T, U> input) {
+                vector<fc::variant> output;
+                for(auto i = input.begin(); i != input.end(); i++) {
+                    output.emplace_back(mvo()
+                        ("key", i->first)
+                        ("value", i->second)
+                    );
+                }
+                return output;
+            }
+
+            //======================== system/token actions ========================
+
+            transaction_trace_ptr create_account_with_resources( account_name a, account_name creator, asset ramfunds, bool multisig,
+                                                        asset net = asset::from_string("10.0000 TLOS"), asset cpu = asset::from_string("10.0000 TLOS") ) {
+                signed_transaction trx;
+                set_transaction_headers(trx);
+
+                authority owner_auth;
+                if (multisig) {
+                    // multisig between account's owner key and creators active permission
+                    owner_auth = authority(2, {key_weight{get_public_key( a, "owner" ), 1}}, {permission_level_weight{{creator, config::active_name}, 1}});
+                } else {
+                    owner_auth =  authority( get_public_key( a, "owner" ) );
+                }
+
+                trx.actions.emplace_back( vector<permission_level>{{creator,config::active_name}},
+                                            newaccount{
+                                            .creator  = creator,
+                                            .name     = a,
+                                            .owner    = owner_auth,
+                                            .active   = authority( get_public_key( a, "active" ) )
+                                            });
+
+                trx.actions.emplace_back( get_action( N(eosio), N(buyram), vector<permission_level>{{creator,config::active_name}},
+                                                        mvo()
+                                                        ("payer", creator)
+                                                        ("receiver", a)
+                                                        ("quant", ramfunds) )
+                                        );
+
+                trx.actions.emplace_back( get_action( N(eosio), N(delegatebw), vector<permission_level>{{creator,config::active_name}},
+                                                        mvo()
+                                                        ("from", creator)
+                                                        ("receiver", a)
+                                                        ("stake_net_quantity", net )
+                                                        ("stake_cpu_quantity", cpu )
+                                                        ("transfer", 0 )
+                                                    )
+                                            );
+
+                set_transaction_headers(trx);
+                trx.sign( get_private_key( creator, "active" ), control->get_chain_id()  );
+                return push_transaction( trx );
+            }
+
+            transaction_trace_ptr open(name owner, symbol symbol, name ram_payer) {
+                return push_action(token_name, name("open"), { owner }, mvo()
+                    ("owner", owner)
+                    ("symbol", symbol)
+                    ("ram_payer", ram_payer)
+                );
+            }
+
+            transaction_trace_ptr create( account_name issuer, asset maximum_supply ) {
+                return push_action(token_name, name("create"), { token_name }, mvo()
+                    ("issuer", issuer)
+                    ("maximum_supply", maximum_supply)
+                );
+            }
+
+            transaction_trace_ptr issue(name issuer, name to, asset quantity, string memo) {
+                return push_action(token_name, name("issue"), { issuer }, mvo()
+                    ("to", to)
+                    ("quantity", quantity)
+                    ("memo", memo)
+                );
+            }
+
+            transaction_trace_ptr init(uint32_t version, symbol core_symbol) {
+                return push_action(eosio_name, name("init"), { eosio_name }, mvo()
+                    ("version", version)
+                    ("core", core_symbol)
+                );
+            }
 
             //======================== admin actions ========================
 
@@ -529,14 +677,14 @@ namespace trail {
             //======================== voter actions ========================
 
             //registers a new voter
-            transaction_trace_ptr reg_voter(name voter, symbol treasury_symbol, std::optional<name> referrer) {
+            transaction_trace_ptr reg_voter(name voter, symbol treasury_symbol, fc::optional<name> referrer) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { voter, name("active") } };
                 trx.actions.emplace_back(get_action(trail_name, name("regvoter"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("treasury_symbol", treasury_symbol)
-                        ("referrer", *referrer)
+                        ("referrer", referrer)
                 ));
                 set_transaction_headers( trx );
                 trx.sign(get_private_key(voter, "active"), control->get_chain_id());

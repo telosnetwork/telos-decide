@@ -13,6 +13,8 @@
 #include <eosio/asset.hpp>
 #include <eosio/singleton.hpp>
 
+#include <eosio.token/eosio.token.hpp>
+
 #include "utility.hpp"
 
 #include <cmath>
@@ -52,8 +54,7 @@ public:
     static constexpr name election_n = "election"_n;
     static constexpr name poll_n = "poll"_n;
     static constexpr name leaderboard_n = "leaderboard"_n;
-
-
+    
     //treasury settings: transferable, burnable, reclaimable, stakeable, unstakeable, maxmutable
 
     //treasury access: public, private, invite
@@ -87,9 +88,11 @@ public:
 
     //mint new tokens to the recipient
     ACTION mint(name to, asset quantity, string memo);
+    using mint_action = action_wrapper<"mint"_n, &trail::mint>;
 
     //transfer tokens
     ACTION transfer(name from, name to, asset quantity, string memo);
+    using transfer_action = action_wrapper<"transfer"_n, &trail::transfer>;
 
     //burn tokens from manager balance
     ACTION burn(asset quantity, string memo);
@@ -155,6 +158,7 @@ public:
 
     //broadcast ballot results
     ACTION broadcast(name ballot_name, map<name, asset> final_results, uint32_t total_voters);
+    using broadcast_action = action_wrapper<"broadcast"_n, &trail::broadcast>;
 
     //archives a ballot for a fee
     ACTION archive(name ballot_name, time_point_sec archived_until);
@@ -282,6 +286,7 @@ public:
     //ram: 
     TABLE config {
         string trail_version;
+        asset total_deposits;
         map<name, asset> fees; //ballot, treasury, archival
         map<name, uint32_t> times; //balcooldown, minballength
     };

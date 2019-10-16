@@ -9,6 +9,12 @@ namespace trail {
         struct contracts {
             static vector<uint8_t> trail_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../contracts/trail/trail.wasm"); }
             static vector<char> trail_abi() { return read_abi("${CMAKE_BINARY_DIR}/../contracts/trail/trail.abi"); }
+
+            static vector<uint8_t> sys_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/contracts/eosio.system/eosio.system.wasm"); }
+            static vector<char> sys_abi() { return read_abi("${CMAKE_BINARY_DIR}/contracts/eosio.system/eosio.system.abi"); }
+
+            static vector<uint8_t> token_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/contracts/eosio.token/eosio.token.wasm"); }
+            static vector<char> token_abi() { return read_abi("${CMAKE_BINARY_DIR}/contracts/eosio.token/eosio.token.abi"); }
         };
     }
 }

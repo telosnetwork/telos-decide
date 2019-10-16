@@ -2,7 +2,8 @@ add_contract( trail trail ${CMAKE_CURRENT_SOURCE_DIR}/src/trail.cpp )
 
 target_include_directories( trail
    PUBLIC
-   ${CMAKE_CURRENT_SOURCE_DIR}/include )
+   ${CMAKE_CURRENT_SOURCE_DIR}/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../../eosio.contracts/contracts/eosio.token/include)
 
 set_target_properties( trail
    PROPERTIES
