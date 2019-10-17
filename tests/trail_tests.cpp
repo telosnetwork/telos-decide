@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
     } FC_LOG_AND_RETHROW()
 
-    BOOST_FIXTURE_TEST_CASE( treasury_setup, trail_tester ) try {
+    BOOST_FIXTURE_TEST_CASE( treasury_basics, trail_tester ) try {
         asset max_supply = asset::from_string("1000000 FART");
         
         //fails because setconfig must be called
@@ -152,8 +152,10 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         );
         produce_blocks();
 
-        base_tester::transfer(testa, trail_name, "1000.0000 TLOS", "", token_name);
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, testa), asset::from_string("1000.0000 TLOS"));
+        base_tester::transfer(testa, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(testb, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(testc, trail_name, "3000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, testa), asset::from_string("3000.0000 TLOS"));
         new_treasury(testa, max_supply, name("public"));
         
         //validate treasury structure
@@ -169,6 +171,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         validate_map(settings, name("unstakeable"), false);
 
         BOOST_REQUIRE_EQUAL(treasury["max_supply"].as<asset>(), max_supply);
+        BOOST_REQUIRE_EQUAL(treasury["supply"].as<asset>(), asset::from_string("0 FART"));
         BOOST_REQUIRE_EQUAL(treasury["access"].as<name>(), name("public"));
         BOOST_REQUIRE_EQUAL(treasury["manager"].as<name>(), testa);
         BOOST_REQUIRE_EQUAL(treasury["title"], "");
@@ -207,9 +210,162 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         //mint tokens
         mint(testa, testb, max_supply - asset::from_string("1 FART"), "init amount");
 
-        fc::variant voter = get_voter(testb, max_supply.get_symbol());
+        treasury = get_treasury(max_supply.get_symbol()).as<mvo>();
 
-        BOOST_REQUIRE_EQUAL(voter["liquid"].as<asset>(), max_supply - asset::from_string("1 FART"));
+        BOOST_REQUIRE_EQUAL(treasury["supply"].as<asset>(), max_supply - asset::from_string("1 FART"));
+
+        validate_voter(testb, max_supply.get_symbol(), mvo()
+            ("liquid", max_supply - asset::from_string("1 FART"))
+            ("staked", "0 FART")
+            ("staked_time", time_point_sec(get_current_time_point()))
+            ("delegated", "0 FART")
+            ("delegated_to", "")
+            ("delegation_time", time_point_sec(get_current_time_point()))
+        );
+
+        BOOST_REQUIRE_EXCEPTION(mint(testa, testb, asset::from_string("2 FART"), "an amount to go over max supply"),
+            eosio_assert_message_exception, eosio_assert_message_is( "minting would breach max supply" ) 
+        );
+
+        BOOST_REQUIRE_EXCEPTION(transfer(testb, testc, asset::from_string("1000 FART"), "should fail, testc isn't registered"), 
+            eosio_assert_message_exception, eosio_assert_message_is( "add_liquid: voter not found" ) 
+        );
+
+        produce_blocks();
+
+        reg_voter(testc, max_supply.get_symbol(), {});
+
+        validate_voter(testc, max_supply.get_symbol(), mvo()
+            ("liquid", asset::from_string("0 FART"))
+            ("staked", "0 FART")
+            ("staked_time", time_point_sec(get_current_time_point()))
+            ("delegated", "0 FART")
+            ("delegated_to", "")
+            ("delegation_time", time_point_sec(get_current_time_point()))
+        );
+
+        //transfer to testc should succeed now that the account is registered
+        transfer(testb, testc, asset::from_string("1000 FART"), "");
+
+        validate_voter(testc, max_supply.get_symbol(), mvo()
+            ("liquid", asset::from_string("1000 FART"))
+            ("staked", "0 FART")
+            ("staked_time", time_point_sec(get_current_time_point()))
+            ("delegated", "0 FART")
+            ("delegated_to", "")
+            ("delegation_time", time_point_sec(get_current_time_point()))
+        );
+        
+        //attempt to burn tokens the manage has not yet reclaimed, should fail because manager doesn't have a voter emplacement
+        BOOST_REQUIRE_EXCEPTION(burn(testa, asset::from_string("100 FART"), "should fail"), 
+            eosio_assert_message_exception, eosio_assert_message_is( "manager voter not found" ) 
+        );
+
+        //register testa to its own treasury
+        auto trace = reg_voter(testa, max_supply.get_symbol(), {});
+
+        validate_action_payer(trace, trail_name, name("regvoter"), testa);
+
+        validate_voter(testa, max_supply.get_symbol(), mvo()
+            ("liquid", asset::from_string("0 FART"))
+            ("staked", "0 FART")
+            ("staked_time", time_point_sec(get_current_time_point()))
+            ("delegated", "0 FART")
+            ("delegated_to", "")
+            ("delegation_time", time_point_sec(get_current_time_point()))
+        );
+
+        produce_blocks();
+
+        //attempt to burn again, should fail because manager doesn't possess the tokens
+        BOOST_REQUIRE_EXCEPTION(burn(testa, asset::from_string("100 FART"), "should fail"), 
+            eosio_assert_message_exception, eosio_assert_message_is( "burning would overdraw balance" ) 
+        );
+
+        //reclaim tokens from testb
+        reclaim(testa, testb, asset::from_string("100 FART"), "because you made me angry");
+        validate_voter(testa, max_supply.get_symbol(), mvo()
+            ("liquid", asset::from_string("100 FART"))
+            ("staked", "0 FART")
+            ("staked_time", time_point_sec(get_current_time_point()))
+            ("delegated", "0 FART")
+            ("delegated_to", "")
+            ("delegation_time", time_point_sec(get_current_time_point()))
+        );
+
+        BOOST_REQUIRE_EXCEPTION(burn(testa, asset::from_string("101 FART"), "should fail"), 
+            eosio_assert_message_exception, eosio_assert_message_is( "burning would overdraw balance" ) 
+        );
+
+        burn(testa, asset::from_string("100 FART"), "should pass");
+        validate_voter(testa, max_supply.get_symbol(), mvo()
+            ("liquid", asset::from_string("0 FART"))
+            ("staked", "0 FART")
+            ("staked_time", time_point_sec(get_current_time_point()))
+            ("delegated", "0 FART")
+            ("delegated_to", "")
+            ("delegation_time", time_point_sec(get_current_time_point()))
+        );
+
+        treasury = get_treasury(max_supply.get_symbol()).as<mvo>();
+
+        BOOST_REQUIRE_EQUAL(treasury["supply"].as<asset>(), max_supply - asset::from_string("1 FART") - asset::from_string("100 FART"));
+        asset new_max_supply = max_supply - asset::from_string("100 FART");
+        mutate_max(testa, new_max_supply, "");
+
+        treasury = get_treasury(max_supply.get_symbol()).as<mvo>();
+        BOOST_REQUIRE_EQUAL(treasury["max_supply"].as<asset>(), new_max_supply);
+
+        // change unlocker
+        set_unlocker(testa, max_supply.get_symbol(), testb, name("fart"));
+        treasury = get_treasury(max_supply.get_symbol()).as<mvo>();
+
+        BOOST_REQUIRE_EQUAL(treasury["unlock_acct"].as<name>(), testb);
+        BOOST_REQUIRE_EQUAL(treasury["unlock_auth"].as<name>(), name("fart"));
+
+        set_unlocker(testa, max_supply.get_symbol(), testa, name("active"));
+
+        // lock
+        lock(testa, max_supply.get_symbol());
+        treasury = get_treasury(max_supply.get_symbol()).as<mvo>();
+
+        BOOST_REQUIRE_EQUAL(treasury["locked"].as<bool>(), true);
+
+        // unlock
+        unlock(testa, max_supply.get_symbol());
+        treasury = get_treasury(max_supply.get_symbol()).as<mvo>();
+
+        BOOST_REQUIRE_EQUAL(treasury["locked"].as<bool>(), false);
+
+        //create a new treasury, register a voter with referrer, referrer should be manager, and should pay for ram
+        asset test_asset = asset::from_string("1000.000 TST");
+
+        new_treasury(testa, test_asset, name("private"));
+
+        //shouldn't be able to register voter for this treasury with a referrer who isn't the manager
+        BOOST_REQUIRE_EXCEPTION(reg_voter(testb, test_asset.get_symbol(), testc), 
+            eosio_assert_message_exception, eosio_assert_message_is( "referrer must be treasury manager" ) 
+        );
+
+        trace = reg_voter(testb, test_asset.get_symbol(), testa);
+
+        validate_action_payer(trace, trail_name, name("regvoter"), testa);
+
+        //attempt to create a new treasury with membership access, should fail
+        test_asset = asset::from_string("1000.00 TT");
+
+        BOOST_REQUIRE_EXCEPTION(new_treasury(testb, test_asset, name("membership")), 
+            eosio_assert_message_exception, eosio_assert_message_is( "membership access feature under development" ) 
+        );
+
+        //create treasury with invite access, validate payer
+        test_asset = asset::from_string("1000.0 T");
+
+        new_treasury(testc, test_asset, name("invite"));
+
+        trace = reg_voter(testa, test_asset.get_symbol(), testc);
+
+        validate_action_payer(trace, trail_name, name("regvoter"), testc);
 
     } FC_LOG_AND_RETHROW()
 BOOST_AUTO_TEST_SUITE_END()

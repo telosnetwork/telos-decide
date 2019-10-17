@@ -146,7 +146,7 @@ ACTION trail::newtreasury(name manager, asset max_supply, name access) {
         col.open_ballots = uint32_t(0);
         col.locked = false;
         col.unlock_acct = manager;
-        col.unlock_auth = name("active");
+        col.unlock_auth = active_permission;
         col.settings = initial_settings;
     });
 
@@ -807,7 +807,7 @@ ACTION trail::closevoting(name ballot_name, bool broadcast) {
 
     //if broadcast true, send broadcast inline to self
     if (broadcast) {
-        broadcast_action broadcast_act(get_self(), { get_self(), "active"_n });
+        broadcast_action broadcast_act(get_self(), { get_self(), active_permission });
         broadcast_act.send(ballot_name, bal.options, bal.total_voters);
     }
 
@@ -1521,7 +1521,7 @@ ACTION trail::withdraw(name voter, asset quantity) {
     //transfer to eosio.token
     //inline trx requires trailservice@active to have trailservice@eosio.code
     //TODO: replace with action handler
-    token::transfer_action transfer_act("eosio.token"_n, { get_self(), "active"_n });
+    token::transfer_action transfer_act("eosio.token"_n, { get_self(), active_permission });
     transfer_act.send(get_self(), voter, quantity, std::string("trailservice withdrawal"));
 }
 

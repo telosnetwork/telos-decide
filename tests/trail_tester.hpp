@@ -5,6 +5,8 @@
 #include <eosio/chain/resource_limits.hpp>
 #include <fstream>
 
+#include <boost/range/algorithm/find_if.hpp>
+
 #include "contracts.hpp"
 
 using namespace eosio::chain;
@@ -135,38 +137,6 @@ namespace trail {
                 produce_blocks();
                 produce_block(fc::minutes(10));
                 produce_blocks();
-            }
-
-            //======================== helper actions =======================
-
-            template<typename T, typename U>
-            map<T, U> variant_to_map(fc::variant input) {
-                vector<fc::variant> variants = input.as<vector<fc::variant>>();
-                map<T, U> output;
-                for(const auto& v : variants) {
-                    output.emplace(v["key"].as<T>(), v["value"].as<U>());
-                }
-                return output;
-            }
-
-            template<typename T, typename U>
-            void validate_map(map<T, U> map_to_validate, T key, U validation_value) {
-                BOOST_REQUIRE_EQUAL(map_to_validate.count(key), 1);
-                auto itr = map_to_validate.find(key);
-                BOOST_REQUIRE_EQUAL(key, itr->first);
-                BOOST_REQUIRE_EQUAL(validation_value, itr->second);
-            }
-
-            template<typename T, typename U>
-            vector<fc::variant> map_to_vector(map<T, U> input) {
-                vector<fc::variant> output;
-                for(auto i = input.begin(); i != input.end(); i++) {
-                    output.emplace_back(mvo()
-                        ("key", i->first)
-                        ("value", i->second)
-                    );
-                }
-                return output;
             }
 
             //======================== system/token actions ========================
@@ -679,7 +649,7 @@ namespace trail {
             //registers a new voter
             transaction_trace_ptr reg_voter(name voter, symbol treasury_symbol, fc::optional<name> referrer) {
                 signed_transaction trx;
-                vector<permission_level> permissions { { voter, name("active") } };
+                vector<permission_level> permissions { { (referrer) ? *referrer : voter, name("active") } };
                 trx.actions.emplace_back(get_action(trail_name, name("regvoter"), permissions, 
                     mvo()
                         ("voter", voter)
@@ -687,7 +657,7 @@ namespace trail {
                         ("referrer", referrer)
                 ));
                 set_transaction_headers( trx );
-                trx.sign(get_private_key(voter, "active"), control->get_chain_id());
+                trx.sign(get_private_key((referrer) ? *referrer : voter, "active"), control->get_chain_id());
                 return push_transaction( trx );
             }
 
@@ -999,6 +969,78 @@ namespace trail {
             fc::variant get_featured_ballot(symbol treasury_symbol, name ballot_name) {
                 vector<char> data = get_row_by_account(trail_name, treasury_symbol.to_symbol_code(), featured_tname, ballot_name);
                 return data.empty() ? fc::variant() : abi_ser.binary_to_variant("featured_ballot", data, abi_serializer_max_time);
+            }
+
+            //======================== helper actions =======================
+
+            template<typename T, typename U>
+            map<T, U> variant_to_map(fc::variant input) {
+                vector<fc::variant> variants = input.as<vector<fc::variant>>();
+                map<T, U> output;
+                for(const auto& v : variants) {
+                    output.emplace(v["key"].as<T>(), v["value"].as<U>());
+                }
+                return output;
+            }
+
+            template<typename T, typename U>
+            void validate_map(map<T, U> map_to_validate, T key, U validation_value) {
+                BOOST_REQUIRE_EQUAL(map_to_validate.count(key), 1);
+                auto itr = map_to_validate.find(key);
+                BOOST_REQUIRE_EQUAL(key, itr->first);
+                BOOST_REQUIRE_EQUAL(validation_value, itr->second);
+            }
+
+            template<typename T, typename U>
+            vector<fc::variant> map_to_vector(map<T, U> input) {
+                vector<fc::variant> output;
+                for(auto i = input.begin(); i != input.end(); i++) {
+                    output.emplace_back(mvo()
+                        ("key", i->first)
+                        ("value", i->second)
+                    );
+                }
+                return output;
+            }
+
+            void validate_voter(name voter, symbol treasury_symbol, fc::variant validation_info) {
+                fc::variant voter_info = get_voter(voter, treasury_symbol);
+                BOOST_REQUIRE_EQUAL(voter_info["liquid"].as<asset>(), validation_info["liquid"].as<asset>());
+                BOOST_REQUIRE_EQUAL(voter_info["staked"].as<asset>(), validation_info["staked"].as<asset>());
+                BOOST_REQUIRE_EQUAL(voter_info["staked_time"].as<string>(), validation_info["staked_time"].as<string>());
+                BOOST_REQUIRE_EQUAL(voter_info["delegated"].as<asset>(), validation_info["delegated"].as<asset>());
+                BOOST_REQUIRE_EQUAL(voter_info["delegated_to"].as<name>(), validation_info["delegated_to"].as<name>());
+                BOOST_REQUIRE_EQUAL(voter_info["delegation_time"].as<string>(), validation_info["delegation_time"].as<string>());
+            }
+
+            void validate_action_payer(transaction_trace_ptr trace, name account_name, name action_name, name payer) {
+                auto itr = find_if(trace->action_traces.begin(), trace->action_traces.begin(), [&](const auto& a_trace) {
+                    cout << "action name: " << a_trace.act.name << " action account: " << account_name << endl;
+                    return a_trace.act.name == action_name && a_trace.act.account == account_name;
+                });
+                BOOST_REQUIRE(itr != trace->action_traces.end());
+                BOOST_REQUIRE(validate_ram_payer(*itr, payer));
+            }
+
+            bool validate_ram_payer(action_trace trace, name payer) {
+                auto& deltas = trace.account_ram_deltas;
+                for(auto itr = deltas.begin(); itr != deltas.end(); itr++) {
+                    if(itr->account == payer) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            //======================== time helpers =======================
+
+            uint64_t get_current_time() {
+                return static_cast<uint64_t>( control->pending_block_time().time_since_epoch().count() );
+            }
+            
+            time_point get_current_time_point() {
+                const static time_point ct{ microseconds{ static_cast<int64_t>( get_current_time() ) } };
+                return ct;
             }
         };
 
