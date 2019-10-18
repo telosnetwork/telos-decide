@@ -1,5 +1,7 @@
 #include <trail.hpp>
 
+using namespace trailservice;
+
 //======================== ballot actions ========================
 
 ACTION trail::newballot(name ballot_name, name category, name publisher,  

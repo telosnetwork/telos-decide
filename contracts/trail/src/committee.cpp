@@ -1,5 +1,7 @@
 #include <trail.hpp>
 
+using namespace trailservice;
+
 //======================== committee actions ========================
 
 ACTION trail::regcommittee(name committee_name, string committee_title,

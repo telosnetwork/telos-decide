@@ -1,5 +1,7 @@
 #include <trail.hpp>
 
+using namespace trailservice;
+
 ACTION trail::newtreasury(name manager, asset max_supply, name access) {
     
     //authenticate

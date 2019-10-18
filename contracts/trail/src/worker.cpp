@@ -1,5 +1,7 @@
 #include <trail.hpp>
 
+using namespace trailservice;
+
 //======================== worker actions ========================
 
 ACTION trail::forfeitwork(name worker_name, symbol treasury_symbol) {

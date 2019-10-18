@@ -1,5 +1,7 @@
 #include <trail.hpp>
 
+using namespace trailservice;
+
 //======================== payroll actions ========================
 
 ACTION trail::addfunds(name from, symbol treasury_symbol, name payroll_name, asset quantity) {

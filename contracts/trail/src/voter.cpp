@@ -1,5 +1,7 @@
 #include <trail.hpp>
 
+using namespace trailservice;
+
 //======================== voter actions ========================
 
 ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referrer) {

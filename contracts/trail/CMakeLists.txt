@@ -1,6 +1,6 @@
 add_contract( trail trail 
    ${CMAKE_CURRENT_SOURCE_DIR}/src/ballot.cpp
-   ${CMAKE_CURRENT_SOURCE_DIR}/src/comittee.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/committee.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/src/payroll.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/src/trail.cpp
    ${CMAKE_CURRENT_SOURCE_DIR}/src/treasury.cpp
