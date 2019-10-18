@@ -180,6 +180,14 @@ ACTION trail::rmvoption(name ballot_name, name option_name) {
     //erase ballot option
     ballots.modify(bal, same_payer, [&](auto& col) {
         col.options.erase(opt_itr);
+
+        if (col.min_options > col.options.size()) {
+            col.min_options = col.options.size();
+        }
+
+        if (col.max_options > col.options.size()) {
+            col.max_options = col.options.size();
+        }
     });
 
 }

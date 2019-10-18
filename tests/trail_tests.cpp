@@ -505,6 +505,10 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         options_map = variant_to_map<name, asset>(ballot_info["options"]);
         BOOST_REQUIRE_EQUAL(options_map.count(new_option_name), 0);
 
+        //validate that min and max options were lowered the number options was less than their previous
+        BOOST_REQUIRE_EQUAL(ballot_info["min_options"].as<uint8_t>(), uint8_t(1));
+        BOOST_REQUIRE_EQUAL(ballot_info["max_options"].as<uint8_t>(), uint8_t(1));
+
         //TODO: validate if options changed, check with craig
 
         //togglebal settings
