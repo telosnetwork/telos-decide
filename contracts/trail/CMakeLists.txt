@@ -1,9 +1,19 @@
-add_contract( trail trail ${CMAKE_CURRENT_SOURCE_DIR}/src/trail.cpp )
+add_contract( trail trail 
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/ballot.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/comittee.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/payroll.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/trail.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/treasury.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/voter.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/worker.cpp
+)
 
 target_include_directories( trail
    PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/eosio.contracts/contracts/eosio.token/include)
+   ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/eosio.contracts/contracts/eosio.token/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/eosio.contracts/contracts/eosio.system/include
+)
 
 set_target_properties( trail
    PROPERTIES

@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         fc::variant config = get_config();
 
-        //check defaults are set correct
+        //check defaults are set correctly
         BOOST_REQUIRE_EQUAL(config["trail_version"], version);
         
         //fee validation
@@ -48,14 +48,15 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         validate_map(time_map, name("balcooldown"), uint32_t(432000));
 
-        validate_map(time_map, name("minballength"), uint32_t(60));
+        validate_map(time_map, name("minballength"), uint32_t(86400));
 
         
-        //change with with improper symbol
+        //change with improper symbol
         BOOST_REQUIRE_EXCEPTION(update_fee(name("archival"), asset::from_string("100.0000 TST")),
             eosio_assert_message_exception, eosio_assert_message_is( "fee symbol must be TLOS" ) 
         );
 
+        //change with a zero time
         BOOST_REQUIRE_EXCEPTION(update_time(name("balcooldown"), uint32_t(0)),
             eosio_assert_message_exception, eosio_assert_message_is( "length must be a positive number" ) 
         );
@@ -115,7 +116,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         //should fail because total_transferable < quantity in catch_transfer
         BOOST_REQUIRE_EXCEPTION(base_tester::transfer(trail_name, testa, "2.0000 TLOS", "transfer amount too large", token_name),
-            eosio_assert_message_exception, eosio_assert_message_is( "trail service lacks the liquid to make this transfer" ) 
+            eosio_assert_message_exception, eosio_assert_message_is( "trailservice lacks the liquid TLOS to make this transfer" ) 
         );
 
         //should succeed because it is less than transferable amount
@@ -123,7 +124,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         //should fail because total_transferable < quantity in catch_transfer
         BOOST_REQUIRE_EXCEPTION(base_tester::transfer(trail_name, testa, "1.0000 TLOS", "transfer amount too large", token_name),
-            eosio_assert_message_exception, eosio_assert_message_is( "trail service lacks the liquid to make this transfer" ) 
+            eosio_assert_message_exception, eosio_assert_message_is( "trailservice lacks the liquid TLOS to make this transfer" ) 
         );
         
         //testa should still able able to withdraw its deposit
@@ -141,8 +142,9 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         
         //fails because setconfig must be called
         BOOST_REQUIRE_EXCEPTION(new_treasury(testa, max_supply, name("public")),
-            eosio_assert_message_exception, eosio_assert_message_is( "trailservice::setconfig must be called before treasurys can made emplaced" ) 
+            eosio_assert_message_exception, eosio_assert_message_is( "trailservice::setconfig must be called before treasuries can be emplaced" ) 
         );
+
         //set config 
         set_config("v2.0.0-RC1", true);
 
@@ -368,4 +370,356 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         validate_action_payer(trace, trail_name, name("regvoter"), testc);
 
     } FC_LOG_AND_RETHROW()
+
+    BOOST_FIXTURE_TEST_CASE( ballot_basics, trail_tester ) try {
+        //setup treasury
+        set_config("v2.0.0-RC1", true);
+        asset max_supply = asset::from_string("1000000.00 GOO");
+        symbol treasury_symbol = max_supply.get_symbol();
+        name ballot_name = name("ballot1");
+        name valid_category = name("proposal");
+        name invalid_category = name("invalid");
+
+        name valid_voting_method = name("1acct1vote");
+        name invalid_voting_method = name("invalidvote");
+
+        name manager = name("manager");
+        name voter1 = testa, voter2 = testb, voter3 = testc;
+
+        create_account_with_resources(manager, eosio_name, asset::from_string("400.0000 TLOS"), false);
+        base_tester::transfer(eosio_name, manager, "10000.0000 TLOS", "initial funds", token_name);
+
+        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(manager, trail_name, "5000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
+        
+        new_treasury(manager, max_supply, name("public"));
+
+        reg_voter(voter1, treasury_symbol, {});
+        reg_voter(voter2, treasury_symbol, {});
+        reg_voter(voter3, treasury_symbol, {});
+
+        mint(manager, voter1, asset::from_string("1000.00 GOO"), "init amount");
+        mint(manager, voter2, asset::from_string("1000.00 GOO"), "init amount");
+        mint(manager, voter3, asset::from_string("1000.00 GOO"), "init amount");
+
+        BOOST_REQUIRE_EXCEPTION(new_ballot(ballot_name, invalid_category, voter1, treasury_symbol, valid_voting_method, {}), 
+            eosio_assert_message_exception, eosio_assert_message_is( "invalid category" ) 
+        );
+
+        BOOST_REQUIRE_EXCEPTION(new_ballot(ballot_name, valid_category, voter1, treasury_symbol, invalid_voting_method, {}), 
+            eosio_assert_message_exception, eosio_assert_message_is( "invalid voting method" ) 
+        );
+
+        new_ballot(ballot_name, valid_category, voter1, treasury_symbol, valid_voting_method, { name("jonanyname")});
+
+        //validate newly created ballot
+        fc::variant ballot_info = get_ballot(ballot_name);
+        BOOST_REQUIRE_EQUAL(ballot_info["ballot_name"].as<name>(), ballot_name);
+        BOOST_REQUIRE_EQUAL(ballot_info["category"].as<name>(), valid_category);
+        BOOST_REQUIRE_EQUAL(ballot_info["publisher"].as<name>(), voter1);
+        BOOST_REQUIRE_EQUAL(ballot_info["status"].as<name>(), name("setup"));
+        BOOST_REQUIRE_EQUAL(ballot_info["title"], "");
+        BOOST_REQUIRE_EQUAL(ballot_info["description"], "");
+        BOOST_REQUIRE_EQUAL(ballot_info["content"], "");
+        BOOST_REQUIRE_EQUAL(ballot_info["treasury_symbol"].as<symbol>(), treasury_symbol);
+        BOOST_REQUIRE_EQUAL(ballot_info["voting_method"].as<name>(), valid_voting_method);
+        BOOST_REQUIRE_EQUAL(ballot_info["min_options"].as<uint32_t>(), uint32_t(1));
+        BOOST_REQUIRE_EQUAL(ballot_info["min_options"].as<uint32_t>(), uint32_t(1));
+        BOOST_REQUIRE_EQUAL(ballot_info["total_voters"].as<uint32_t>(), uint32_t(0));
+        BOOST_REQUIRE_EQUAL(ballot_info["total_delegates"].as<uint32_t>(), uint32_t(0));
+        BOOST_REQUIRE_EQUAL(ballot_info["cleaned_count"].as<uint32_t>(), uint32_t(0));
+        BOOST_REQUIRE_EQUAL(ballot_info["begin_time"], "1970-01-01T00:00:00");
+        BOOST_REQUIRE_EQUAL(ballot_info["end_time"], "1970-01-01T00:00:00");
+        
+        map<name, asset> options_map = variant_to_map<name, asset>(ballot_info["options"]);
+        map<name, bool> settings_map = variant_to_map<name, bool>(ballot_info["settings"]);
+
+        validate_map(options_map, name("jonanyname"), asset::from_string("0.00 GOO"));
+
+        validate_map(settings_map, name("lightballot"), false);
+        validate_map(settings_map, name("revotable"), true);
+        validate_map(settings_map, name("votestake"), true);
+        validate_map(settings_map, name("writein"), false);
+
+        //edit ballot details and verify
+        string title = "The Title of My Ballot";
+        string description = "to determine the future of this country";
+        string content = "the content";
+        edit_details(voter1, ballot_name, title, description, content);
+        ballot_info = get_ballot(ballot_name);
+        BOOST_REQUIRE_EQUAL(ballot_info["title"], title);
+        BOOST_REQUIRE_EQUAL(ballot_info["description"], description);
+        BOOST_REQUIRE_EQUAL(ballot_info["content"], content);
+
+        //edit min max
+        
+        BOOST_REQUIRE_EXCEPTION(edit_min_max(voter1, ballot_name, 0, 0), 
+            eosio_assert_message_exception, eosio_assert_message_is( "min and max options must be greater than zero" ) 
+        );
+
+        BOOST_REQUIRE_EXCEPTION(edit_min_max(voter1, ballot_name, 2, 1), 
+            eosio_assert_message_exception, eosio_assert_message_is( "max must be greater than or equal to min" ) 
+        );
+
+        BOOST_REQUIRE_EXCEPTION(edit_min_max(voter1, ballot_name, 1, 2), 
+            eosio_assert_message_exception, eosio_assert_message_is( "max options cannot be greater than number of options" ) 
+        );
+        
+        produce_blocks();
+
+        //cant change max until another option is added
+        name new_option_name = name("everyman");
+        add_option(voter1, ballot_name, new_option_name);
+
+        ballot_info = get_ballot(ballot_name);
+        options_map = variant_to_map<name, asset>(ballot_info["options"]);
+
+        validate_map(options_map, new_option_name, asset::from_string("0.00 GOO"));
+
+        produce_blocks();
+
+        BOOST_REQUIRE_EXCEPTION(add_option(voter1, ballot_name, new_option_name), 
+            eosio_assert_message_exception, eosio_assert_message_is( "option is already in ballot" ) 
+        );
+
+        edit_min_max(voter1, ballot_name, 2, 2);
+
+        ballot_info = get_ballot(ballot_name);
+
+        BOOST_REQUIRE_EQUAL(ballot_info["min_options"].as<uint8_t>(), uint8_t(2));
+        BOOST_REQUIRE_EQUAL(ballot_info["max_options"].as<uint8_t>(), uint8_t(2));
+        
+        //remove option
+        BOOST_REQUIRE_EXCEPTION(rmv_option(voter1, ballot_name, name("unknown")), 
+            eosio_assert_message_exception, eosio_assert_message_is( "option not found" ) 
+        );
+
+        rmv_option(voter1, ballot_name, new_option_name);
+        ballot_info = get_ballot(ballot_name);
+        options_map = variant_to_map<name, asset>(ballot_info["options"]);
+        BOOST_REQUIRE_EQUAL(options_map.count(new_option_name), 0);
+
+        //TODO: validate if options changed, check with craig
+
+        //togglebal settings
+        BOOST_REQUIRE_EXCEPTION(toggle_bal(voter1, ballot_name, name("lightballo")), 
+            eosio_assert_message_exception, eosio_assert_message_is( "setting not found" ) 
+        );
+
+        toggle_bal(voter1, ballot_name, name("lightballot"));
+
+        settings_map = variant_to_map<name, bool>(get_ballot(ballot_name)["settings"]);
+
+        validate_map(settings_map, name("lightballot"), true);
+
+        produce_blocks();
+
+        toggle_bal(voter1, ballot_name, name("lightballot"));
+
+        settings_map = variant_to_map<name, bool>(get_ballot(ballot_name)["settings"]);
+
+        validate_map(settings_map, name("lightballot"), false);
+
+        //attempt to cancel before opening
+        BOOST_REQUIRE_EXCEPTION(cancel_ballot(voter1, ballot_name, "because nevermind"), 
+            eosio_assert_message_exception, eosio_assert_message_is( "ballot must be in voting mode to cancel" ) 
+        );
+
+        //TODO: attempt to delete ballot
+
+        //open for voting
+        BOOST_REQUIRE_EXCEPTION(open_voting(voter1, ballot_name, get_current_time_point_sec()), 
+            eosio_assert_message_exception, eosio_assert_message_is( "ballot must have at least 2 options" ) 
+        );
+
+        add_option(voter1, ballot_name, new_option_name);
+
+        BOOST_REQUIRE_EXCEPTION(open_voting(voter1, ballot_name, get_current_time_point_sec()), 
+            eosio_assert_message_exception, eosio_assert_message_is( "end time must be in the future" ) 
+        );
+
+        produce_blocks();
+
+        BOOST_REQUIRE_EXCEPTION(open_voting(voter1, ballot_name, get_current_time_point_sec() + uint32_t(10)), 
+            eosio_assert_message_exception, eosio_assert_message_is( "ballot must be open for minimum ballot length" ) 
+        );
+        
+        fc::variant config = get_config();
+        uint32_t min_bal_length = variant_to_map<name, uint32_t>(config["times"])[name("minballength")];
+
+        BOOST_REQUIRE_EXCEPTION(open_voting(voter1, ballot_name, get_current_time_point_sec() + min_bal_length - 1), 
+            eosio_assert_message_exception, eosio_assert_message_is( "ballot must be open for minimum ballot length" ) 
+        );
+
+        produce_blocks();
+
+        open_voting(voter1, ballot_name, get_current_time_point_sec() + min_bal_length + 10);
+
+        ballot_info = get_ballot(ballot_name);
+        BOOST_REQUIRE_EQUAL(ballot_info["status"].as<name>(), name("voting"));
+
+        // NOTE: these validation fail intermittently. There seems to be a difference between on chain time functions and these functions
+        // BOOST_REQUIRE_EQUAL(ballot_info["begin_time"], (time_point_sec(get_current_time_point())).to_iso_string());
+        // BOOST_REQUIRE_EQUAL(ballot_info["end_time"], (time_point_sec(get_current_time_point()) + min_bal_length).to_iso_string());
+
+
+        //then cancel
+        fc::variant treasury_info = get_treasury(treasury_symbol);
+        BOOST_REQUIRE_EQUAL(treasury_info["open_ballots"].as<uint32_t>(), uint32_t(1));
+
+        cancel_ballot(voter1, ballot_name, "because nevermind");
+        ballot_info = get_ballot(ballot_name);
+        BOOST_REQUIRE_EQUAL(ballot_info["status"].as<name>(), name("cancelled"));
+
+        treasury_info = get_treasury(treasury_symbol);
+        BOOST_REQUIRE_EQUAL(treasury_info["open_ballots"].as<uint32_t>(), uint32_t(0));
+        
+        //then delete
+        BOOST_REQUIRE_EXCEPTION(delete_ballot(voter1, ballot_name), 
+            eosio_assert_message_exception, eosio_assert_message_is( "cannot delete until 5 days past ballot's end time" ) 
+        );
+
+        produce_blocks();
+        produce_block(fc::days(10));
+        produce_blocks();
+
+        delete_ballot(voter1, ballot_name);
+        ballot_info = get_ballot(ballot_name);
+        BOOST_REQUIRE(ballot_info.is_null());
+
+    } FC_LOG_AND_RETHROW()
+
+    BOOST_FIXTURE_TEST_CASE( ballot_setup_restrictions, trail_tester ) try {
+        set_config("v2.0.0-RC1", true);
+        asset max_supply = asset::from_string("1000000.00 GOO");
+        symbol treasury_symbol = max_supply.get_symbol();
+        name ballot_name = name("ballot1");
+        name category = name("proposal");
+        name voting_method = name("1acct1vote");
+
+        name manager = name("manager");
+        name voter1 = testa, voter2 = testb, voter3 = testc;
+
+        create_account_with_resources(manager, eosio_name, asset::from_string("400.0000 TLOS"), false);
+        base_tester::transfer(eosio_name, manager, "10000.0000 TLOS", "initial funds", token_name);
+
+        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(manager, trail_name, "5000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
+        
+        new_treasury(manager, max_supply, name("public"));
+
+        reg_voter(voter1, treasury_symbol, {});
+        reg_voter(voter2, treasury_symbol, {});
+        reg_voter(voter3, treasury_symbol, {});
+
+        mint(manager, voter1, asset::from_string("1000.00 GOO"), "init amount");
+        mint(manager, voter2, asset::from_string("1000.00 GOO"), "init amount");
+        mint(manager, voter3, asset::from_string("1000.00 GOO"), "init amount");
+
+        new_ballot(ballot_name, category, voter1, treasury_symbol, voting_method, { name("option1"), name("option2") });
+
+        fc::variant config = get_config();
+        uint32_t min_bal_length = variant_to_map<name, uint32_t>(config["times"])[name("minballength")];
+
+        open_voting(voter1, ballot_name, get_current_time_point_sec() + min_bal_length + 10);
+        
+        BOOST_REQUIRE_EXCEPTION(edit_details(voter1, ballot_name, "new title", "new description", "new content"), 
+            eosio_assert_message_exception, eosio_assert_message_is( "ballot must be in setup mode to edit details" ) 
+        );
+
+        BOOST_REQUIRE_EXCEPTION(toggle_bal(voter1, ballot_name, name("lightballot")), 
+            eosio_assert_message_exception, eosio_assert_message_is( "ballot must be in setup mode to toggle settings" ) 
+        );
+
+        BOOST_REQUIRE_EXCEPTION(edit_min_max(voter1, ballot_name, 2, 2), 
+            eosio_assert_message_exception, eosio_assert_message_is( "ballot must be in setup mode to edit max options" ) 
+        );
+
+        BOOST_REQUIRE_EXCEPTION(rmv_option(voter1, ballot_name, name("options2")), 
+            eosio_assert_message_exception, eosio_assert_message_is( "ballot must be in setup mode to remove options" ) 
+        );
+
+        BOOST_REQUIRE_EXCEPTION(add_option(voter1, ballot_name, name("options3")), 
+            eosio_assert_message_exception, eosio_assert_message_is( "ballot must be in setup mode to add options" ) 
+        );
+    } FC_LOG_AND_RETHROW()
+
+    BOOST_FIXTURE_TEST_CASE( committee_basics, trail_tester ) try {
+        set_config("v2.0.0-RC1", true);
+        asset max_supply = asset::from_string("1000000.00 GOO");
+        symbol treasury_symbol = max_supply.get_symbol();
+        name ballot_name = name("ballot1");
+        name category = name("proposal");
+        name one_account_one_vote = name("1acct1vote");
+        name one_token_n_vote = name("1tokennvote");
+        name one_token_one_vote = name("1token1vote");
+        name one_token_square_one_vote = name("1tsquare1v");
+        name quadratic = name("quadratic");
+
+        name manager = name("manager");
+        name voter1 = testa, voter2 = testb, voter3 = testc;
+
+        create_account_with_resources(manager, eosio_name, asset::from_string("400.0000 TLOS"), false);
+        base_tester::transfer(eosio_name, manager, "10000.0000 TLOS", "initial funds", token_name);
+
+        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(manager, trail_name, "5000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
+        
+        new_treasury(manager, max_supply, name("public"));
+
+        reg_voter(voter1, treasury_symbol, {});
+        reg_voter(voter2, treasury_symbol, {});
+        reg_voter(voter3, treasury_symbol, {});
+
+        mint(manager, voter1, asset::from_string("1000.00 GOO"), "init amount");
+        mint(manager, voter2, asset::from_string("1000.00 GOO"), "init amount");
+        mint(manager, voter3, asset::from_string("1000.00 GOO"), "init amount");
+
+        new_ballot(one_account_one_vote, category, voter1, treasury_symbol, one_account_one_vote, { name("option1"), name("option2") });
+        new_ballot(one_token_n_vote, category, voter1, treasury_symbol, one_token_n_vote, { name("option1"), name("option2") });
+        new_ballot(one_token_one_vote, category, voter1, treasury_symbol, one_token_one_vote, { name("option1"), name("option2") });
+        new_ballot(one_token_square_one_vote, category, voter1, treasury_symbol, one_token_square_one_vote, { name("option1"), name("option2") });
+        new_ballot(quadratic, category, voter1, treasury_symbol, quadratic, { name("option1"), name("option2") });
+        
+        
+    } FC_LOG_AND_RETHROW()
+
+    BOOST_FIXTURE_TEST_CASE( worker_basics, trail_tester ) try {
+        // test committee actions
+    } FC_LOG_AND_RETHROW()
+
+    BOOST_FIXTURE_TEST_CASE( payroll_basics, trail_tester ) try {
+        // test payroll actions
+    } FC_LOG_AND_RETHROW()
+
+    BOOST_FIXTURE_TEST_CASE( voting_methods, trail_tester ) try {
+        //vote on a ballot with each voting_method: maybe another test
+    } FC_LOG_AND_RETHROW()
+
+    BOOST_FIXTURE_TEST_CASE( full_flow, trail_tester ) try {
+        //run through a common use case for trail
+
+        //postresults
+
+        //broadcast
+    } FC_LOG_AND_RETHROW()
+    
 BOOST_AUTO_TEST_SUITE_END()

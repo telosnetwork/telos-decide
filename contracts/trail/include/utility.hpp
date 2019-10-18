@@ -2,25 +2,19 @@
 // 
 // @author Craig Branscom
 
+#pragma once
+
 #include <eosio/eosio.hpp>
 #include <eosio/asset.hpp>
+#include <eosio.system/eosio.system.hpp>
 
 using namespace std;
 using namespace eosio;
 
 //TODO: add get_staked_rex()
 
-//defined in eosio.system.hpp
-struct user_resources {
-    name owner;
-    asset net_weight;
-    asset cpu_weight;
-    int64_t ram_bytes = 0;
-
-    uint64_t primary_key()const { return owner.value; }
-    EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes) )
-};
-typedef eosio::multi_index<name("userres"), user_resources> user_resources_table;
+using user_resources = eosiosystem::user_resources;
+using user_resources_table = eosiosystem::user_resources_table;
 
 //defined in 
 asset get_staked_tlos(name owner) {

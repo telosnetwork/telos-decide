@@ -450,6 +450,7 @@ namespace trail {
                         ("ballot_name", ballot_name)
                         ("category", category)
                         ("publisher", publisher)
+                        ("treasury_symbol", treasury_symbol)
                         ("voting_method", voting_method)
                         ("initial_options", initial_options)
                 ));
@@ -532,10 +533,10 @@ namespace trail {
             }
 
             //readies a ballot for voting
-            transaction_trace_ptr ready_ballot(name publisher, name ballot_name, time_point_sec end_time) {
+            transaction_trace_ptr open_voting(name publisher, name ballot_name, time_point_sec end_time) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("readyballot"), permissions, 
+                trx.actions.emplace_back(get_action(trail_name, name("openvoting"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("end_time", end_time)
@@ -1041,6 +1042,10 @@ namespace trail {
             time_point get_current_time_point() {
                 const static time_point ct{ microseconds{ static_cast<int64_t>( get_current_time() ) } };
                 return ct;
+            }
+
+            time_point_sec get_current_time_point_sec() {
+                return time_point_sec(get_current_time_point());
             }
         };
 

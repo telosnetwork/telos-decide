@@ -15,8 +15,6 @@
 
 #include <eosio.token/eosio.token.hpp>
 
-#include "utility.hpp"
-
 #include <cmath>
 
 using namespace eosio;
