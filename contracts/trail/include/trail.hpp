@@ -63,6 +63,9 @@ public:
     //create a new treasury
     ACTION newtreasury(name manager, asset max_supply, name access);
 
+    //edits treasury title, description, icon
+    ACTION edittrsinfo(symbol treasury_symbol, string title, string description, string icon);
+
     //toggle a treasury setting
     ACTION toggle(symbol treasury_symbol, name setting_name);
 

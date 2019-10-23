@@ -188,6 +188,25 @@ ACTION trail::newtreasury(name manager, asset max_supply, name access) {
 
 }
 
+ACTION trail::edittrsinfo(symbol treasury_symbol, string title, string description, string icon) {
+    //open treasuries table, get treasury
+    treasuries_table treasuries(get_self(), get_self().value);
+    auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");
+
+    //authenticate
+    require_auth(trs.manager);
+
+    //validate
+    check(!trs.locked, "treasury is locked");
+
+    //update title, description, and icon
+    treasuries.modify(trs, same_payer, [&](auto& col) {
+        col.title = title;
+        col.description = description;
+        col.icon = icon;
+    });
+}
+
 ACTION trail::toggle(symbol treasury_symbol, name setting_name) {
     
     //open treasuries table, get treasury
