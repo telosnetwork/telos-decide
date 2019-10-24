@@ -423,11 +423,11 @@ map<name, asset> trail::calc_vote_weights(symbol treasury_symbol, name voting_me
             effective_amount = raw_vote_weight.amount / selections.size();
             break;
         case (name("1tsquare1v").value):
-            effective_amount = sqrtl(raw_vote_weight.amount);
-            break;
-        case (name("quadratic").value):
             vote_amount_per = raw_vote_weight.amount / selections.size();
             effective_amount = vote_amount_per * vote_amount_per;
+            break;
+        case (name("quadratic").value):
+            effective_amount = sqrtl(raw_vote_weight.amount);
             break;
         case (name("ranked").value):
             //NOTE: requires selections to always be in order
