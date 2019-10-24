@@ -5,6 +5,7 @@ using namespace trailservice;
 //======================== committee actions ========================
 
 ACTION trail::regcommittee(name committee_name, string committee_title,
+
     symbol treasury_symbol, vector<name> initial_seats, name registree) {
     //authenticate
     require_auth(registree);
@@ -45,9 +46,11 @@ ACTION trail::regcommittee(name committee_name, string committee_title,
         col.updater_acct = registree;
         col.updater_auth = active_permission;
     });
+
 }
 
 ACTION trail::addseat(name committee_name, symbol treasury_symbol, name new_seat_name) {
+
     //open committees table, get committee
     committees_table committees(get_self(), treasury_symbol.code().raw());
     auto& cmt = committees.get(committee_name.value, "committee not found");
@@ -62,9 +65,11 @@ ACTION trail::addseat(name committee_name, symbol treasury_symbol, name new_seat
     committees.modify(cmt, same_payer, [&](auto& col) {
         col.seats[new_seat_name] = name(0);
     });
+
 }
 
 ACTION trail::removeseat(name committee_name, symbol treasury_symbol, name seat_name) {
+
     //open committees table, get committee
     committees_table committees(get_self(), treasury_symbol.code().raw());
     auto& cmt = committees.get(committee_name.value, "committee not found");
@@ -79,9 +84,11 @@ ACTION trail::removeseat(name committee_name, symbol treasury_symbol, name seat_
     committees.modify(cmt, same_payer, [&](auto& col) {
         col.seats.erase(seat_name);
     });
+
 }
 
 ACTION trail::assignseat(name committee_name, symbol treasury_symbol, name seat_name, name seat_holder, string memo) {
+
     //open committees table, get committee
     committees_table committees(get_self(), treasury_symbol.code().raw());
     auto& cmt = committees.get(committee_name.value, "committee not found");
@@ -96,24 +103,29 @@ ACTION trail::assignseat(name committee_name, symbol treasury_symbol, name seat_
     committees.modify(cmt, same_payer, [&](auto& col) {
         col.seats[seat_name] = seat_holder;
     });
+
 }
 
 ACTION trail::setupdater(name committee_name, symbol treasury_symbol, name updater_account, name updater_auth) {
+
     //open committees table, get committee
     committees_table committees(get_self(), treasury_symbol.code().raw());
     auto& cmt = committees.get(committee_name.value, "committee not found");
     
     //authenticate
     require_auth(permission_level{cmt.updater_acct, cmt.updater_auth});
+    require_auth(permission_level{updater_account, updater_auth});
 
     //set new committee updater account and updater auth
-    committees.modify(cmt, same_payer, [&](auto& col) {
+    committees.modify(cmt, updater_account, [&](auto& col) {
         col.updater_acct = updater_account;
         col.updater_auth = updater_auth;
     });
+
 }
 
 ACTION trail::delcommittee(name committee_name, symbol treasury_symbol, string memo) {
+
     //open committees table, get committee
     committees_table committees(get_self(), treasury_symbol.code().raw());
     auto& cmt = committees.get(committee_name.value, "committee not found");
@@ -123,4 +135,5 @@ ACTION trail::delcommittee(name committee_name, symbol treasury_symbol, string m
 
     //erase committee
     committees.erase(cmt);
+
 }

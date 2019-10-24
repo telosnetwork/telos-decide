@@ -172,6 +172,9 @@ ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
         raw_vote_weight = vtr.liquid;
     }
 
+    check(raw_vote_weight != v.raw_votes, "vote is already balanced");
+    check(raw_vote_weight.amount > 0, "cannot vote with zero weight");
+
     //rollback old vote
     for (auto i = v.weighted_votes.begin(); i != v.weighted_votes.end(); i++) {
         new_bal_options[i->first] -= i->second;
@@ -181,9 +184,7 @@ ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
     }
 
     //validate
-    check(raw_vote_weight != v.raw_votes, "vote is already balanced");
     check(selections.size() > 0, "cannot rebalance nonexistent votes");
-    check(raw_vote_weight.amount > 0, "cannot vote with zero weight");
 
     //calculate new votes
     auto new_votes = calc_vote_weights(bal.treasury_symbol, bal.voting_method, selections, raw_vote_weight);
@@ -202,11 +203,8 @@ ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
 
     //set worker info if applicable
     if (worker) {
-        //initialize
-        worker_name = *worker;
-
         //authenticate
-        require_auth(worker_name);
+        require_auth(*worker);
     }
 
     //update vote
@@ -246,13 +244,11 @@ ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
 
     //log worker share if worker
     if (worker) {
-        name worker_name = *worker;
-
         //authenticate
-        require_auth(worker_name);
+        require_auth(*worker);
         
         //update cleanup worker
-        log_cleanup_work(worker_name, bal.treasury_symbol, 1);
+        log_cleanup_work(*worker, bal.treasury_symbol, 1);
     }
 
     //log rebalance work from vote
@@ -265,35 +261,87 @@ ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
     
 }
 
-ACTION trail::withdraw(name voter, asset quantity) {
-    
-    //authenticate
-    require_auth(voter);
-    
-    //open accounts table, get account
-    accounts_table tlos_accounts(get_self(), voter.value);
-    auto& acct = tlos_accounts.get(TLOS_SYM.code().raw(), "account not found");
+void trail::log_rebalance_work(name worker, symbol treasury_symbol, asset volume, uint16_t count) {
+    //open labors table, get labor
+    labors_table labors(get_self(), treasury_symbol.code().raw());
+    auto l = labors.find(worker.value);
 
-    //validate
-    check(quantity.symbol == TLOS_SYM, "can only withdraw TLOS");
-    check(acct.balance >= quantity, "insufficient balance");
-    check(quantity > asset(0, TLOS_SYM), "must withdraw a positive amount");
+    if (l != labors.end()) {
+        //initialize
+        auto& lab = *l;
 
-    //update balances
-    tlos_accounts.modify(acct, same_payer, [&](auto& col) {
-        col.balance -= quantity;
+        //update labor
+        labors.modify(lab, same_payer, [&](auto& col) {
+            col.unclaimed_volume[name("rebalvolume")] += volume;
+            col.unclaimed_events[name("rebalcount")] += count;
+        });
+    } else {
+        //initialize new maps
+        map<name, asset> new_unclaimed_volume;
+        map<name, uint32_t> new_unclaimed_events;
+
+        //log work to new maps
+        new_unclaimed_volume[name("rebalvolume")] = volume;
+        new_unclaimed_events[name("rebalcount")] = count;
+
+        //emplace new labor
+        labors.emplace(worker, [&](auto& col){
+            col.worker_name = worker;
+            col.start_time = time_point_sec(current_time_point());
+            col.unclaimed_volume = new_unclaimed_volume;
+            col.unclaimed_events = new_unclaimed_events;
+        });
+    }
+
+    //open labor buckets table, get labor bucket
+    laborbuckets_table laborbuckets(get_self(), treasury_symbol.code().raw());
+    auto& bucket = laborbuckets.get(name("workers").value, "workers labor bucket not found");
+
+    //add work to payroll log
+    laborbuckets.modify(bucket, same_payer, [&](auto& col) {
+        col.claimable_volume[name("rebalvolume")] += volume;
+        col.claimable_events[name("rebalcount")] += uint32_t(count);
+    });
+    
+}
+
+void trail::log_cleanup_work(name worker, symbol treasury_symbol, uint16_t count) {
+    //open labor table, get labor log
+    labors_table labors(get_self(), treasury_symbol.code().raw());
+    auto l = labors.find(worker.value);
+
+    if (l != labors.end()) {
+        //initialize
+        auto& lab = *l;
+
+        //update labor
+        labors.modify(lab, same_payer, [&](auto& col) {
+            col.unclaimed_events[name("cleancount")] += count;
+        });
+    } else {
+        //initialize
+        map<name, asset> new_unclaimed_volume;
+        map<name, uint32_t> new_unclaimed_events;
+
+        //log work to new maps
+        new_unclaimed_events[name("cleancount")] = count;
+
+        //emplace new labor
+        labors.emplace(worker, [&](auto& col){
+            col.worker_name = worker;
+            col.start_time = time_point_sec(current_time_point());
+            col.unclaimed_volume = new_unclaimed_volume;
+            col.unclaimed_events = new_unclaimed_events;
+        });
+    }
+
+    //open labor buckets table, get labor bucket
+    laborbuckets_table laborbuckets(get_self(), treasury_symbol.code().raw());
+    auto& bucket = laborbuckets.get(name("workers").value, "workers labor bucket not found");
+
+    //add work to payroll log
+    laborbuckets.modify(bucket, same_payer, [&](auto& col) {
+        col.claimable_events[name("cleancount")] += uint32_t(count);
     });
 
-    config_singleton configs(get_self(), get_self().value);
-    auto config = configs.get();
-
-    config.total_deposits -= quantity;
-
-    configs.set(config, get_self());
-
-    //transfer to eosio.token
-    //inline trx requires trailservice@active to have trailservice@eosio.code
-    //TODO: replace with action handler
-    token::transfer_action transfer_act("eosio.token"_n, { get_self(), active_permission });
-    transfer_act.send(get_self(), voter, quantity, std::string("trailservice withdrawal"));
 }

@@ -20,7 +20,7 @@
 using namespace eosio;
 using namespace std;
 
-namespace trailservice { 
+namespace trailservice {
     CONTRACT trail : public contract {
 
     public:

@@ -86,6 +86,10 @@ ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referr
     treasuries.modify(trs, same_payer, [&](auto& col) {
         col.voters += 1;
     });
+
+    if(treasury_symbol == VOTE_SYM) {
+        sync_external_account(voter, VOTE_SYM, TLOS_SYM);
+    }
 }
 
 ACTION trail::unregvoter(name voter, symbol treasury_symbol) {

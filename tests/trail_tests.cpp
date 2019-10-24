@@ -666,6 +666,166 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         symbol treasury_symbol = max_supply.get_symbol();
         name ballot_name = name("ballot1");
         name category = name("proposal");
+
+        name manager = name("manager");
+        name voter1 = testa, voter2 = testb, voter3 = testc;
+
+        create_account_with_resources(manager, eosio_name, asset::from_string("400.0000 TLOS"), false);
+        base_tester::transfer(eosio_name, manager, "10000.0000 TLOS", "initial funds", token_name);
+
+        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(manager, trail_name, "5000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
+        
+        new_treasury(manager, max_supply, name("public"));
+        toggle(manager, treasury_symbol, name("stakeable"));
+
+        reg_voter(voter1, treasury_symbol, {});
+        reg_voter(voter2, treasury_symbol, {});
+        reg_voter(voter3, treasury_symbol, {});
+
+        name committee_name = name("tf");
+
+        name seat1 = name("seat1"), seat2 = name("seat2"), seat3 = name("seat3"), seat4 = name("seat4");
+
+        reg_committee(committee_name, "Telos Foundation", treasury_symbol, { 
+            seat1,
+            seat2
+        }, voter1);
+
+        fc::variant committee_info = get_committee(treasury_symbol, committee_name);
+        map<name, name> seat_map = variant_to_map<name, name>(committee_info["seats"]);
+
+        name updater = name("updater");
+
+        create_account_with_resources(updater, eosio_name, asset::from_string("400.0000 TLOS"), false);
+
+        BOOST_REQUIRE_EQUAL(seat_map.count(seat1), 1);
+        BOOST_REQUIRE_EQUAL(seat_map[seat1], name(""));
+
+        BOOST_REQUIRE_EQUAL(seat_map.count(seat2), 1);
+        BOOST_REQUIRE_EQUAL(seat_map[seat2], name(""));
+
+        set_updater({ { updater, name("active") }, { voter1, name("active") } }, committee_name, treasury_symbol, updater, name("active"));
+
+        committee_info = get_committee(treasury_symbol, committee_name);
+
+        BOOST_REQUIRE_EQUAL(committee_info["committee_title"], "Telos Foundation");
+        BOOST_REQUIRE_EQUAL(committee_info["committee_name"].as<name>(), committee_name);
+
+        BOOST_REQUIRE_EQUAL(committee_info["updater_acct"].as<name>(), updater);
+        BOOST_REQUIRE_EQUAL(committee_info["updater_auth"].as<name>(), name("active"));
+
+        add_seat(updater, committee_name, treasury_symbol, seat3);
+
+        committee_info = get_committee(treasury_symbol, committee_name);
+        seat_map = variant_to_map<name, name>(committee_info["seats"]);
+
+        BOOST_REQUIRE_EQUAL(seat_map.count(seat3), 1);
+        BOOST_REQUIRE_EQUAL(seat_map[seat3], name(""));
+
+        add_seat(updater, committee_name, treasury_symbol, seat4);
+        committee_info = get_committee(treasury_symbol, committee_name);
+        seat_map = variant_to_map<name, name>(committee_info["seats"]);
+
+        BOOST_REQUIRE_EQUAL(seat_map.count(seat4), 1);
+        BOOST_REQUIRE_EQUAL(seat_map[seat4], name(""));
+
+        remove_seat(updater, committee_name, treasury_symbol, seat4);
+
+        committee_info = get_committee(treasury_symbol, committee_name);
+        seat_map = variant_to_map<name, name>(committee_info["seats"]);
+
+        BOOST_REQUIRE_EQUAL(seat_map.count(seat4), 0);
+
+        assign_seat(updater, committee_name, treasury_symbol, seat1, voter1, "setting seat1");
+        assign_seat(updater, committee_name, treasury_symbol, seat2, voter2, "setting seat2");
+        assign_seat(updater, committee_name, treasury_symbol, seat3, voter3, "setting seat3");
+
+        committee_info = get_committee(treasury_symbol, committee_name);
+        seat_map = variant_to_map<name, name>(committee_info["seats"]);
+
+        BOOST_REQUIRE_EQUAL(seat_map[seat1], voter1);
+        BOOST_REQUIRE_EQUAL(seat_map[seat2], voter2);
+        BOOST_REQUIRE_EQUAL(seat_map[seat3], voter3);
+        
+        del_committee(updater, committee_name, treasury_symbol, "damn the TF!");
+
+        BOOST_REQUIRE(get_committee(treasury_symbol, committee_name).is_null());
+
+    } FC_LOG_AND_RETHROW()
+
+    BOOST_FIXTURE_TEST_CASE( vote_symbol_staking, trail_tester ) try {
+        // setup treasury
+        set_config("v2.0.0-RC1", true);
+        asset max_supply = asset::from_string("1000000000.0000 VOTE");
+        symbol treasury_symbol = max_supply.get_symbol();
+        name ballot_name = name("ballot1");
+        name category = name("proposal");
+
+        name voting_method = name("1acct1vote");
+
+        name voter1 = testa, voter2 = testb, voter3 = testc;
+
+        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(eosio_name, trail_name, "10000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, eosio_name), asset::from_string("10000.0000 TLOS"));
+        
+        new_treasury(eosio_name, max_supply, name("public"));
+
+        reg_voter(voter1, treasury_symbol, { });
+
+        //check that cpu + net quantity = total staked in trail
+        fc::variant user_resource_info = get_user_res(voter1);
+        asset current_stake = user_resource_info["net_weight"].as<asset>() + user_resource_info["cpu_weight"].as<asset>();
+        int64_t staked_weight_amount = current_stake.get_amount();
+
+        fc::variant voter_info = get_voter(voter1, treasury_symbol);
+
+        BOOST_REQUIRE_EQUAL(voter_info["staked"].as<asset>().get_amount(), staked_weight_amount);
+        
+        //delegate_bw validate old system stake increased and that staked in trail increases.
+        asset stake_delta = asset::from_string("40.0000 TLOS");
+        delegate_bw(voter1, voter1, stake_delta, stake_delta, false);
+        user_resource_info = get_user_res(voter1);
+
+        //current stake = initial + 2 * stake_delta
+        BOOST_REQUIRE_EQUAL(staked_weight_amount + (stake_delta + stake_delta).get_amount(), 
+            (user_resource_info["net_weight"].as<asset>() + user_resource_info["cpu_weight"].as<asset>()).get_amount());
+        
+        voter_info = get_voter(voter1, treasury_symbol);
+        staked_weight_amount = (user_resource_info["net_weight"].as<asset>() + user_resource_info["cpu_weight"].as<asset>()).get_amount();
+        BOOST_REQUIRE_EQUAL(voter_info["staked"].as<asset>().get_amount(), staked_weight_amount);
+
+        undelegate_bw(voter1, voter1, stake_delta, stake_delta);
+        user_resource_info = get_user_res(voter1);
+        current_stake = user_resource_info["net_weight"].as<asset>() + user_resource_info["cpu_weight"].as<asset>();
+        BOOST_REQUIRE_EQUAL(staked_weight_amount - (stake_delta + stake_delta).get_amount(), current_stake.get_amount());
+
+        staked_weight_amount = staked_weight_amount - (stake_delta + stake_delta).get_amount();
+
+        voter_info = get_voter(voter1, treasury_symbol);
+
+        BOOST_REQUIRE_EQUAL(voter_info["staked"].as<asset>().get_amount(), staked_weight_amount);
+    } FC_LOG_AND_RETHROW()
+
+    BOOST_FIXTURE_TEST_CASE( voting_methods, trail_tester ) try {
+        set_config("v2.0.0-RC1", true);
+        asset max_supply = asset::from_string("1000000.00 GOO");
+        symbol treasury_symbol = max_supply.get_symbol();
+        name ballot_name = name("ballot1");
+        name category = name("proposal");
+
         name one_account_one_vote = name("1acct1vote");
         name one_token_n_vote = name("1tokennvote");
         name one_token_one_vote = name("1token1vote");
@@ -688,6 +848,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
         
         new_treasury(manager, max_supply, name("public"));
+        toggle(manager, treasury_symbol, name("stakeable"));
 
         reg_voter(voter1, treasury_symbol, {});
         reg_voter(voter2, treasury_symbol, {});
@@ -696,26 +857,145 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         mint(manager, voter1, asset::from_string("1000.00 GOO"), "init amount");
         mint(manager, voter2, asset::from_string("1000.00 GOO"), "init amount");
         mint(manager, voter3, asset::from_string("1000.00 GOO"), "init amount");
+        
+        BOOST_REQUIRE_EQUAL(get_voter(voter1, treasury_symbol)["liquid"].as<asset>(), asset::from_string("1000.00 GOO"));
+        BOOST_REQUIRE_EQUAL(get_voter(voter2, treasury_symbol)["liquid"].as<asset>(), asset::from_string("1000.00 GOO"));
+        BOOST_REQUIRE_EQUAL(get_voter(voter3, treasury_symbol)["liquid"].as<asset>(), asset::from_string("1000.00 GOO"));
+        
+        stake(voter1, asset::from_string("1000.00 GOO"));
+        stake(voter2, asset::from_string("1000.00 GOO"));
+        stake(voter3, asset::from_string("1000.00 GOO"));
 
-        new_ballot(one_account_one_vote, category, voter1, treasury_symbol, one_account_one_vote, { name("option1"), name("option2") });
-        new_ballot(one_token_n_vote, category, voter1, treasury_symbol, one_token_n_vote, { name("option1"), name("option2") });
-        new_ballot(one_token_one_vote, category, voter1, treasury_symbol, one_token_one_vote, { name("option1"), name("option2") });
-        new_ballot(one_token_square_one_vote, category, voter1, treasury_symbol, one_token_square_one_vote, { name("option1"), name("option2") });
-        new_ballot(quadratic, category, voter1, treasury_symbol, quadratic, { name("option1"), name("option2") });
+        asset raw_vote_weight = get_voter(voter1, treasury_symbol)["staked"].as<asset>();
+
+        BOOST_REQUIRE_EQUAL(get_voter(voter1, treasury_symbol)["staked"].as<asset>(), asset::from_string("1000.00 GOO"));
+        BOOST_REQUIRE_EQUAL(get_voter(voter2, treasury_symbol)["staked"].as<asset>(), asset::from_string("1000.00 GOO"));
+        BOOST_REQUIRE_EQUAL(get_voter(voter3, treasury_symbol)["staked"].as<asset>(), asset::from_string("1000.00 GOO"));
+
+        name option1 = name("option1");
+        name option2 = name("option2");
+
+        //create a ballot for each voting method
+        new_ballot(one_account_one_vote, category, voter1, treasury_symbol, one_account_one_vote, { option1, option2 });
+        edit_min_max(voter1, one_account_one_vote, 2, 2);
+
+        new_ballot(one_token_n_vote, category, voter1, treasury_symbol, one_token_n_vote, { option1, option2 });
+        edit_min_max(voter1, one_token_n_vote, 2, 2);
+
+        new_ballot(one_token_one_vote, category, voter1, treasury_symbol, one_token_one_vote, { option1, option2 });
+        edit_min_max(voter1, one_token_one_vote, 2, 2);
+
+        new_ballot(one_token_square_one_vote, category, voter1, treasury_symbol, one_token_square_one_vote, { option1, option2 });
+        edit_min_max(voter1, one_token_square_one_vote, 2, 2);
+
+        new_ballot(quadratic, category, voter1, treasury_symbol, quadratic, { option1, option2 });
+        edit_min_max(voter1, quadratic, 2, 2);
+
+        //one_account_one_vote weight testing
+        open_voting(voter1, one_account_one_vote, get_current_time_point_sec() + 86400);
+        produce_blocks();
+
+        cast_vote(voter1, one_account_one_vote, { option1, option2 });
+        fc::variant ballot_info = get_ballot(one_account_one_vote);
+        map<name, asset> option_map = variant_to_map<name, asset>(ballot_info["options"]);
+
+        //validate asset quantity per option
+        //vote weight should be equal to 1 whole token undivided
+        BOOST_REQUIRE_EQUAL(option_map[option1], one_acct_one_vote_calc(raw_vote_weight, treasury_symbol));
+        BOOST_REQUIRE_EQUAL(option_map[option2], one_acct_one_vote_calc(raw_vote_weight, treasury_symbol));
+
+        fc::variant vote_info = get_vote(one_account_one_vote, voter1);
+        option_map = variant_to_map<name, asset>(vote_info["weighted_votes"]);
+        BOOST_REQUIRE_EQUAL(option_map[option1], one_acct_one_vote_calc(raw_vote_weight, treasury_symbol));
+        BOOST_REQUIRE_EQUAL(option_map[option2], one_acct_one_vote_calc(raw_vote_weight, treasury_symbol));
         
-        
+
+        //one_account_n_votes testing
+        open_voting(voter1, one_token_n_vote, get_current_time_point_sec() + 86401);
+        produce_blocks();
+
+        cast_vote(voter1, one_token_n_vote, { option1, option2 });
+        ballot_info = get_ballot(one_token_n_vote);
+        option_map = variant_to_map<name, asset>(ballot_info["options"]);
+
+
+        //validate asset quantity per option
+        //vote weight should be equal to 1000.00 GOO per option, undivided
+        BOOST_REQUIRE_EQUAL(option_map[option1], one_token_n_vote_calc(raw_vote_weight, treasury_symbol));
+        BOOST_REQUIRE_EQUAL(option_map[option2], one_token_n_vote_calc(raw_vote_weight, treasury_symbol));
+
+        vote_info = get_vote(one_token_n_vote, voter1);
+        option_map = variant_to_map<name, asset>(vote_info["weighted_votes"]);
+        BOOST_REQUIRE_EQUAL(option_map[option1], one_token_n_vote_calc(raw_vote_weight, treasury_symbol));
+        BOOST_REQUIRE_EQUAL(option_map[option2], one_token_n_vote_calc(raw_vote_weight, treasury_symbol));
+
+
+
+        //one_token_one_vote testing
+        open_voting(voter1, one_token_one_vote, get_current_time_point_sec() + 86401);
+        produce_blocks();
+
+        cast_vote(voter1, one_token_one_vote, { option1, option2 });
+        ballot_info = get_ballot(one_token_one_vote);
+        option_map = variant_to_map<name, asset>(ballot_info["options"]);
+
+        //validate asset quantity per option
+        //vote weight should be equal to 1000.00 GOO per option, undivided
+        BOOST_REQUIRE_EQUAL(option_map[option1], one_token_one_vote_calc(raw_vote_weight, treasury_symbol, 2));
+        BOOST_REQUIRE_EQUAL(option_map[option2], one_token_one_vote_calc(raw_vote_weight, treasury_symbol, 2));
+
+        vote_info = get_vote(one_token_one_vote, voter1);
+        option_map = variant_to_map<name, asset>(vote_info["weighted_votes"]);
+        BOOST_REQUIRE_EQUAL(option_map[option1], one_token_one_vote_calc(raw_vote_weight, treasury_symbol, 2));
+        BOOST_REQUIRE_EQUAL(option_map[option2], one_token_one_vote_calc(raw_vote_weight, treasury_symbol, 2));
+
+
+
+        //one_token_square_one_vote testing
+        //TODO: this voting method isn't implemented correctly
+        // open_voting(voter1, one_token_square_one_vote, get_current_time_point_sec() + 86401);
+        // produce_blocks();
+
+        // cast_vote(voter1, one_token_square_one_vote, { option1, option2 });
+        // ballot_info = get_ballot(one_token_square_one_vote);
+        // option_map = variant_to_map<name, asset>(ballot_info["options"]);
+
+        // //validate asset quantity per option
+        // //vote weight should be equal to 1000.00 GOO per option, undivided
+        // BOOST_REQUIRE_EQUAL(option_map[option1], asset::from_string("500.00 GOO"));
+        // BOOST_REQUIRE_EQUAL(option_map[option2], asset::from_string("500.00 GOO"));
+
+        // vote_info = get_vote(one_token_square_one_vote, voter1);
+        // option_map = variant_to_map<name, asset>(vote_info["weighted_votes"]);
+        // BOOST_REQUIRE_EQUAL(option_map[option1], asset::from_string("500.00 GOO"));
+        // BOOST_REQUIRE_EQUAL(option_map[option2], asset::from_string("500.00 GOO"));
+
+
+        //quadratic testing
+        open_voting(voter1, quadratic, get_current_time_point_sec() + 86400 + 10);
+        produce_blocks();
+
+        cast_vote(voter1, quadratic, { option1, option2 });
+        ballot_info = get_ballot(quadratic);
+        option_map = variant_to_map<name, asset>(ballot_info["options"]);
+
+        //validate asset quantity per option
+        //vote weight should be equal to 1000.00 GOO per option, undivided
+        BOOST_REQUIRE_EQUAL(option_map[option1], quadratic_calc(raw_vote_weight, treasury_symbol, 2));
+        BOOST_REQUIRE_EQUAL(option_map[option2], quadratic_calc(raw_vote_weight, treasury_symbol, 2));
+
+        vote_info = get_vote(quadratic, voter1);
+        option_map = variant_to_map<name, asset>(vote_info["weighted_votes"]);
+        BOOST_REQUIRE_EQUAL(option_map[option1], quadratic_calc(raw_vote_weight, treasury_symbol, 2));
+        BOOST_REQUIRE_EQUAL(option_map[option2], quadratic_calc(raw_vote_weight, treasury_symbol, 2));
     } FC_LOG_AND_RETHROW()
 
     BOOST_FIXTURE_TEST_CASE( worker_basics, trail_tester ) try {
-        // test committee actions
+        // test payroll actions
     } FC_LOG_AND_RETHROW()
 
     BOOST_FIXTURE_TEST_CASE( payroll_basics, trail_tester ) try {
         // test payroll actions
-    } FC_LOG_AND_RETHROW()
-
-    BOOST_FIXTURE_TEST_CASE( voting_methods, trail_tester ) try {
-        //vote on a ballot with each voting_method: maybe another test
     } FC_LOG_AND_RETHROW()
 
     BOOST_FIXTURE_TEST_CASE( full_flow, trail_tester ) try {

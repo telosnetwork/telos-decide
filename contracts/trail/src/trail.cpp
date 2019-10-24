@@ -92,6 +92,39 @@ ACTION trail::updatetime(name time_name, uint32_t length) {
 
 }
 
+ACTION trail::withdraw(name voter, asset quantity) {
+    
+    //authenticate
+    require_auth(voter);
+    
+    //open accounts table, get account
+    accounts_table tlos_accounts(get_self(), voter.value);
+    auto& acct = tlos_accounts.get(TLOS_SYM.code().raw(), "account not found");
+
+    //validate
+    check(quantity.symbol == TLOS_SYM, "can only withdraw TLOS");
+    check(acct.balance >= quantity, "insufficient balance");
+    check(quantity > asset(0, TLOS_SYM), "must withdraw a positive amount");
+
+    //update balances
+    tlos_accounts.modify(acct, same_payer, [&](auto& col) {
+        col.balance -= quantity;
+    });
+
+    config_singleton configs(get_self(), get_self().value);
+    auto config = configs.get();
+
+    config.total_deposits -= quantity;
+
+    configs.set(config, get_self());
+
+    //transfer to eosio.token
+    //inline trx requires trailservice@active to have trailservice@eosio.code
+    //TODO: replace with action handler
+    token::transfer_action transfer_act("eosio.token"_n, { get_self(), active_permission });
+    transfer_act.send(get_self(), voter, quantity, std::string("trailservice withdrawal"));
+}
+
 //========== notification methods ==========
 
 void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {
@@ -262,95 +295,17 @@ void trail::require_fee(name account_name, asset fee) {
     //validate
     check(tlos_acct.balance >= fee, "insufficient funds to cover fee");
 
+    config_singleton configs(get_self(), get_self().value);
+    auto config = configs.get();
+
+    config.total_deposits -= fee;
+
+    configs.set(config, get_self());
+
     //charge fee
     tlos_accounts.modify(tlos_acct, same_payer, [&](auto& col) {
         col.balance -= fee;
     });
-}
-
-void trail::log_rebalance_work(name worker, symbol treasury_symbol, asset volume, uint16_t count) {
-    //open labors table, get labor
-    labors_table labors(get_self(), treasury_symbol.code().raw());
-    auto l = labors.find(worker.value);
-
-    if (l != labors.end()) {
-        //initialize
-        auto& lab = *l;
-
-        //update labor
-        labors.modify(lab, same_payer, [&](auto& col) {
-            col.unclaimed_volume[name("rebalvolume")] += volume;
-            col.unclaimed_events[name("rebalcount")] += count;
-        });
-    } else {
-        //initialize new maps
-        map<name, asset> new_unclaimed_volume;
-        map<name, uint32_t> new_unclaimed_events;
-
-        //log work to new maps
-        new_unclaimed_volume[name("rebalvolume")] = volume;
-        new_unclaimed_events[name("rebalcount")] = count;
-
-        //emplace new labor
-        labors.emplace(worker, [&](auto& col){
-            col.worker_name = worker;
-            col.start_time = time_point_sec(current_time_point());
-            col.unclaimed_volume = new_unclaimed_volume;
-            col.unclaimed_events = new_unclaimed_events;
-        });
-    }
-
-    //open labor buckets table, get labor bucket
-    laborbuckets_table laborbuckets(get_self(), treasury_symbol.code().raw());
-    auto& bucket = laborbuckets.get(name("workers").value, "workers labor bucket not found");
-
-    //add work to payroll log
-    laborbuckets.modify(bucket, same_payer, [&](auto& col) {
-        col.claimable_volume[name("rebalvolume")] += volume;
-        col.claimable_events[name("rebalcount")] += uint32_t(count);
-    });
-    
-}
-
-void trail::log_cleanup_work(name worker, symbol treasury_symbol, uint16_t count) {
-    //open labor table, get labor log
-    labors_table labors(get_self(), treasury_symbol.code().raw());
-    auto l = labors.find(worker.value);
-
-    if (l != labors.end()) {
-        //initialize
-        auto& lab = *l;
-
-        //update labor
-        labors.modify(lab, same_payer, [&](auto& col) {
-            col.unclaimed_events[name("cleancount")] += count;
-        });
-    } else {
-        //initialize
-        map<name, asset> new_unclaimed_volume;
-        map<name, uint32_t> new_unclaimed_events;
-
-        //log work to new maps
-        new_unclaimed_events[name("cleancount")] = count;
-
-        //emplace new labor
-        labors.emplace(worker, [&](auto& col){
-            col.worker_name = worker;
-            col.start_time = time_point_sec(current_time_point());
-            col.unclaimed_volume = new_unclaimed_volume;
-            col.unclaimed_events = new_unclaimed_events;
-        });
-    }
-
-    //open labor buckets table, get labor bucket
-    laborbuckets_table laborbuckets(get_self(), treasury_symbol.code().raw());
-    auto& bucket = laborbuckets.get(name("workers").value, "workers labor bucket not found");
-
-    //add work to payroll log
-    laborbuckets.modify(bucket, same_payer, [&](auto& col) {
-        col.claimable_events[name("cleancount")] += uint32_t(count);
-    });
-
 }
 
 void trail::sync_external_account(name voter, symbol internal_symbol, symbol external_symbol) {
@@ -379,19 +334,16 @@ void trail::sync_external_account(name voter, symbol internal_symbol, symbol ext
         auto trs_itr = treasuries.find(internal_symbol.code().raw());
 
         //check if treasury exists (should always be true)
-        if (trs_itr != treasuries.end()) {
-            
-            //calc delta
-            asset delta = asset(tlos_stake.amount - vtr_itr->staked.amount, internal_symbol);
-
-            //apply delta to supply
-            treasuries.modify(*trs_itr, same_payer, [&](auto& col) {
-                col.supply += asset(delta.amount, internal_symbol);
-            });
-
-        } else {
+        if (trs_itr == treasuries.end())
             return;
-        }
+            
+        //calc delta
+        asset delta = asset(tlos_stake.amount - vtr_itr->staked.amount, internal_symbol);
+
+        //apply delta to supply
+        treasuries.modify(*trs_itr, same_payer, [&](auto& col) {
+            col.supply += asset(delta.amount, internal_symbol);
+        });
 
         //mirror tlos_stake to internal_symbol stake
         voters.modify(*vtr_itr, same_payer, [&](auto& col) {
@@ -399,7 +351,6 @@ void trail::sync_external_account(name voter, symbol internal_symbol, symbol ext
         });
 
     }
-
 }
 
 map<name, asset> trail::calc_vote_weights(symbol treasury_symbol, name voting_method, 

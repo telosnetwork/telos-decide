@@ -137,6 +137,7 @@ namespace trail {
                 produce_blocks();
                 produce_block(fc::minutes(10));
                 produce_blocks();
+                produce_blocks(1000);
             }
 
             //======================== system/token actions ========================
@@ -182,6 +183,25 @@ namespace trail {
                 set_transaction_headers(trx);
                 trx.sign( get_private_key( creator, "active" ), control->get_chain_id()  );
                 return push_transaction( trx );
+            }
+
+            transaction_trace_ptr delegate_bw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {
+                return push_action(eosio_name, name("delegatebw"), { from }, mvo()
+                    ("from", from)
+                    ("receiver", receiver)
+                    ("stake_net_quantity", stake_net_quantity)
+                    ("stake_cpu_quantity", stake_cpu_quantity)
+                    ("transfer", transfer)
+                );
+            }
+
+            transaction_trace_ptr undelegate_bw(name from, name receiver, asset unstake_net_quantity, asset unstake_cpu_quantity) {
+                return push_action(eosio_name, name("undelegatebw"), { from }, mvo()
+                    ("from", from)
+                    ("receiver", receiver)
+                    ("unstake_net_quantity", unstake_net_quantity)
+                    ("unstake_cpu_quantity", unstake_cpu_quantity)
+                );
             }
 
             transaction_trace_ptr open(name owner, symbol symbol, name ram_payer) {
@@ -818,7 +838,7 @@ namespace trail {
 
                 signed_transaction trx;
                 vector<permission_level> permissions { { registree, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("regcomittee"), permissions, 
+                trx.actions.emplace_back(get_action(trail_name, name("regcommittee"), permissions, 
                     mvo()
                         ("committee_name", committee_name)
                         ("committee_title", committee_title)
@@ -854,7 +874,7 @@ namespace trail {
                     mvo()
                         ("committee_name", committee_name)
                         ("treasury_symbol", treasury_symbol)
-                        ("new_seat_name", seat_name)
+                        ("seat_name", seat_name)
                 ));
                 set_transaction_headers( trx );
                 trx.sign(get_private_key(authorizer, "active"), control->get_chain_id());
@@ -869,7 +889,7 @@ namespace trail {
                     mvo()
                         ("committee_name", committee_name)
                         ("treasury_symbol", treasury_symbol)
-                        ("new_seat_name", seat_name)
+                        ("seat_name", seat_name)
                         ("seat_holder", seat_holder)
                         ("memo", memo)
                 ));
@@ -879,9 +899,8 @@ namespace trail {
             }
 
             //sets updater account and auth
-            transaction_trace_ptr set_updater(name authorizer, name committee_name, symbol treasury_symbol, name updater_account, name updater_auth) {
+            transaction_trace_ptr set_updater(vector<permission_level> permissions, name committee_name, symbol treasury_symbol, name updater_account, name updater_auth) {
                 signed_transaction trx;
-                vector<permission_level> permissions { { authorizer, name("active") } };
                 trx.actions.emplace_back(get_action(trail_name, name("setupdater"), permissions, 
                     mvo()
                         ("committee_name", committee_name)
@@ -890,7 +909,10 @@ namespace trail {
                         ("updater_auth", updater_auth)
                 ));
                 set_transaction_headers( trx );
-                trx.sign(get_private_key(authorizer, "active"), control->get_chain_id());
+                for(const auto& permission : permissions) {
+                    trx.sign(get_private_key(permission.actor, "active"), control->get_chain_id());
+                }
+                
                 return push_transaction( trx );
             }
 
@@ -959,7 +981,7 @@ namespace trail {
 
             fc::variant get_committee(symbol treasury_symbol, name commitee_name) {
                 vector<char> data = get_row_by_account(trail_name, treasury_symbol.to_symbol_code(), committees_tname, commitee_name);
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("comittee", data, abi_serializer_max_time);
+                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("committee", data, abi_serializer_max_time);
             }
 
             fc::variant get_archival(name ballot_name) {
@@ -970,6 +992,13 @@ namespace trail {
             fc::variant get_featured_ballot(symbol treasury_symbol, name ballot_name) {
                 vector<char> data = get_row_by_account(trail_name, treasury_symbol.to_symbol_code(), featured_tname, ballot_name);
                 return data.empty() ? fc::variant() : abi_ser.binary_to_variant("featured_ballot", data, abi_serializer_max_time);
+            }
+
+            //======================== system getters =======================
+
+            fc::variant get_user_res(name account) {
+                vector<char> data = get_row_by_account(eosio_name, account, name("userres"), account);
+                return data.empty() ? fc::variant() : sys_abi_ser.binary_to_variant("user_resources", data, abi_serializer_max_time);
             }
 
             //======================== helper actions =======================
@@ -1031,6 +1060,29 @@ namespace trail {
                     }
                 }
                 return false;
+            }
+
+            //======================== voting calculations =======================
+
+            asset one_acct_one_vote_calc(asset raw_weight, symbol treasury_symbol) {
+                return asset(int64_t(pow(10, log10(treasury_symbol.precision()))), treasury_symbol);
+            }
+
+            asset one_token_n_vote_calc(asset raw_weight, symbol treasury_symbol) {
+                return asset(raw_weight.get_amount(), treasury_symbol);
+            }
+
+            asset one_token_one_vote_calc(asset raw_weight, symbol treasury_symbol, uint8_t selections) {
+                return asset(uint64_t(raw_weight.get_amount() / selections), treasury_symbol);
+            } 
+
+            asset one_t_square_one_vote_calc(asset raw_weight, symbol treasury_symbol) {
+                return raw_weight;
+            }
+
+            asset quadratic_calc(asset raw_weight, symbol treasury_symbol, uint8_t selections) {
+                uint64_t vote_amount_per = raw_weight.get_amount() / selections;
+                return asset(vote_amount_per * vote_amount_per, treasury_symbol);
             }
 
             //======================== time helpers =======================
