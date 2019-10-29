@@ -316,6 +316,7 @@ void trail::sync_external_account(name voter, symbol internal_symbol, symbol ext
     //check external symbol is TLOS, if not then return
     if (external_symbol == TLOS_SYM) {
         tlos_stake = get_staked_tlos(voter);
+        tlos_stake += get_tlos_in_rex(voter);
         check(internal_symbol == VOTE_SYM, "internal symbol must be VOTE for external TLOS");
     } else {
         check(false, "syncing external accounts is under development");
@@ -374,11 +375,11 @@ map<name, asset> trail::calc_vote_weights(symbol treasury_symbol, name voting_me
             effective_amount = raw_vote_weight.amount / selections.size();
             break;
         case (name("1tsquare1v").value):
-            effective_amount = sqrtl(raw_vote_weight.amount);
-            break;
-        case (name("quadratic").value):
             vote_amount_per = raw_vote_weight.amount / selections.size();
             effective_amount = vote_amount_per * vote_amount_per;
+            break;
+        case (name("quadratic").value):
+            effective_amount = sqrtl(raw_vote_weight.amount);
             break;
         case (name("ranked").value):
             //NOTE: requires selections to always be in order
