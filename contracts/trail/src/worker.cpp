@@ -173,7 +173,6 @@ ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
     }
 
     check(raw_vote_weight != v.raw_votes, "vote is already balanced");
-    check(raw_vote_weight.amount > 0, "cannot vote with zero weight");
 
     //rollback old vote
     for (auto i = v.weighted_votes.begin(); i != v.weighted_votes.end(); i++) {
@@ -205,6 +204,7 @@ ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
     if (worker) {
         //authenticate
         require_auth(*worker);
+        worker_name = *worker;
     }
 
     //update vote
@@ -265,13 +265,13 @@ void trail::log_rebalance_work(name worker, symbol treasury_symbol, asset volume
     //open labors table, get labor
     labors_table labors(get_self(), treasury_symbol.code().raw());
     auto l = labors.find(worker.value);
-
     if (l != labors.end()) {
-        //initialize
-        auto& lab = *l;
-
         //update labor
-        labors.modify(lab, same_payer, [&](auto& col) {
+        labors.modify(*l, same_payer, [&](auto& col) {
+            // NOTE: default asset contructor, constructs invalid asset, must initialize before using += operator
+            if (!col.unclaimed_volume[name("rebalvolume")].is_valid())
+                col.unclaimed_volume[name("rebalvolume")] = asset(0, treasury_symbol);
+
             col.unclaimed_volume[name("rebalvolume")] += volume;
             col.unclaimed_events[name("rebalcount")] += count;
         });

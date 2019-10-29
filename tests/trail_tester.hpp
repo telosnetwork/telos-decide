@@ -612,7 +612,7 @@ namespace trail {
             transaction_trace_ptr close_ballot(name publisher, name ballot_name, bool broadcast) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("closeballot"), permissions, 
+                trx.actions.emplace_back(get_action(trail_name, name("closevoting"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("broadcast", broadcast)
@@ -787,14 +787,14 @@ namespace trail {
             }
 
             //rebalance an unbalanced vote
-            transaction_trace_ptr rebalance(name authorizer, name voter, name ballot_name, std::optional<name> worker) {
+            transaction_trace_ptr rebalance(name authorizer, name voter, name ballot_name, fc::optional<name> worker) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { authorizer, name("active") } };
                 trx.actions.emplace_back(get_action(trail_name, name("rebalance"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("ballot_name", ballot_name)
-                        ("worker", *worker)
+                        ("worker", worker)
                 ));
                 set_transaction_headers( trx );
                 trx.sign(get_private_key(authorizer, "active"), control->get_chain_id());
@@ -802,14 +802,14 @@ namespace trail {
             }
 
             //cleans up an expired vote
-            transaction_trace_ptr cleanup_vote(name authorizer, name voter, name ballot_name, std::optional<name> worker) {
+            transaction_trace_ptr cleanup_vote(name authorizer, name voter, name ballot_name, fc::optional<name> worker) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { authorizer, name("active") } };
                 trx.actions.emplace_back(get_action(trail_name, name("cleanupvote"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("ballot_name", ballot_name)
-                        ("worker", *worker)
+                        ("worker", worker)
                 ));
                 set_transaction_headers( trx );
                 trx.sign(get_private_key(authorizer, "active"), control->get_chain_id());
@@ -1060,6 +1060,10 @@ namespace trail {
                     }
                 }
                 return false;
+            }
+
+            asset tlos_to_vote(asset tlos_asset) {
+                return asset(tlos_asset.get_amount(), vote_sym);
             }
 
             //======================== voting calculations =======================

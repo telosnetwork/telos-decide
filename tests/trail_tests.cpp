@@ -509,8 +509,6 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         BOOST_REQUIRE_EQUAL(ballot_info["min_options"].as<uint8_t>(), uint8_t(1));
         BOOST_REQUIRE_EQUAL(ballot_info["max_options"].as<uint8_t>(), uint8_t(1));
 
-        //TODO: validate if options changed, check with craig
-
         //togglebal settings
         BOOST_REQUIRE_EXCEPTION(toggle_bal(voter1, ballot_name, name("lightballo")), 
             eosio_assert_message_exception, eosio_assert_message_is( "setting not found" ) 
@@ -534,8 +532,6 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         BOOST_REQUIRE_EXCEPTION(cancel_ballot(voter1, ballot_name, "because nevermind"), 
             eosio_assert_message_exception, eosio_assert_message_is( "ballot must be in voting mode to cancel" ) 
         );
-
-        //TODO: attempt to delete ballot
 
         //open for voting
         BOOST_REQUIRE_EXCEPTION(open_voting(voter1, ballot_name, get_current_time_point_sec()), 
@@ -794,6 +790,8 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         BOOST_REQUIRE_EQUAL(voter_info["staked"].as<asset>().get_amount(), staked_weight_amount);
         
+        //TODO: test with rex stake
+
         //delegate_bw validate old system stake increased and that staked in trail increases.
         asset stake_delta = asset::from_string("40.0000 TLOS");
         delegate_bw(voter1, voter1, stake_delta, stake_delta, false);
@@ -991,19 +989,134 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
     } FC_LOG_AND_RETHROW()
 
     BOOST_FIXTURE_TEST_CASE( worker_basics, trail_tester ) try {
-        // test payroll actions
+        // setup treasury
+        set_config("v2.0.0-RC1", true);
+        asset max_supply = asset::from_string("1000000000.0000 VOTE");
+        symbol treasury_symbol = max_supply.get_symbol();
+        name ballot_name = name("ballot1");
+        name category = name("proposal");
+        name option1 = name("option1"), option2 = name("option2");
+
+        name voting_method = name("1tokennvote");
+
+        name voter1 = testa, voter2 = testb, voter3 = testc, worker = name("worker");
+
+        create_account_with_resources(worker, eosio_name, asset::from_string("1000.0000 TLOS"), false);
+
+        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(eosio_name, trail_name, "10000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, eosio_name), asset::from_string("10000.0000 TLOS"));
+        
+        new_treasury(eosio_name, max_supply, name("public"));
+
+        reg_voter(voter1, treasury_symbol, { });
+
+        //check that cpu + net quantity = total staked in trail
+        fc::variant user_resource_info = get_user_res(voter1);
+        asset current_stake = user_resource_info["net_weight"].as<asset>() + user_resource_info["cpu_weight"].as<asset>();
+
+        BOOST_REQUIRE_EQUAL(get_voter(voter1, treasury_symbol)["staked"].as<asset>(), tlos_to_vote(current_stake));
+        
+        asset stake_delta = asset::from_string("40.0000 TLOS");
+        asset initial_stake = asset::from_string("20.0000 TLOS");
+
+        //open ballot
+        new_ballot(ballot_name, category, voter1, treasury_symbol, voting_method, { option1, option2 });
+        edit_min_max(voter1, ballot_name, 2, 2);
+        open_voting(voter1, ballot_name, get_current_time_point_sec() + 86410);
+        BOOST_REQUIRE(!get_ballot(ballot_name).is_null());
+
+        cast_vote(voter1, ballot_name, { option1, option2 });
+
+        //checking initial voting quantity
+        fc::variant ballot_info = get_ballot(ballot_name);
+        map<name, asset> option_map = variant_to_map<name, asset>(ballot_info["options"]);
+        BOOST_REQUIRE_EQUAL(option_map[option1], tlos_to_vote(initial_stake));
+        BOOST_REQUIRE_EQUAL(option_map[option2], tlos_to_vote(initial_stake));
+
+        BOOST_REQUIRE_EXCEPTION(rebalance(worker, voter1, ballot_name, { worker }),
+            eosio_assert_message_exception, eosio_assert_message_is( "vote is already balanced" ) 
+        );
+
+        //change stake in both trail and eosio
+        delegate_bw(voter1, voter1, stake_delta, stake_delta, false);
+
+        //ballot quantities should be unchanged, requires rebalance
+        ballot_info = get_ballot(ballot_name);
+        option_map = variant_to_map<name, asset>(ballot_info["options"]);
+        BOOST_REQUIRE_EQUAL(option_map[option1], tlos_to_vote(initial_stake));
+        BOOST_REQUIRE_EQUAL(option_map[option2], tlos_to_vote(initial_stake));
+
+        //vote quantities should be unchanged
+        option_map = variant_to_map<name, asset>(get_vote(ballot_name, voter1)["weighted_votes"]);
+        BOOST_REQUIRE_EQUAL(option_map[option1], tlos_to_vote(initial_stake));
+        BOOST_REQUIRE_EQUAL(option_map[option2], tlos_to_vote(initial_stake));
+
+        //validate that user stake and voter stake has changed
+        user_resource_info = get_user_res(voter1);
+        current_stake = user_resource_info["net_weight"].as<asset>() + user_resource_info["cpu_weight"].as<asset>();
+        BOOST_REQUIRE_EQUAL(current_stake, stake_delta + stake_delta + initial_stake);
+
+        BOOST_REQUIRE_EQUAL(get_voter(voter1, treasury_symbol)["staked"].as<asset>(), tlos_to_vote(initial_stake + stake_delta + stake_delta));
+
+        //worker labor emplacement should be null, no work has been done
+        BOOST_REQUIRE(get_labor(treasury_symbol, worker).is_null());
+
+        //rebalance votes and validate new quantity matches new stake
+        rebalance(worker, voter1, ballot_name, { worker });
+        produce_blocks();
+
+        //ballot quantities should be updated to current stake in VOTE
+        ballot_info = get_ballot(ballot_name);
+        option_map = variant_to_map<name, asset>(ballot_info["options"]);
+        BOOST_REQUIRE_EQUAL(option_map[option1], tlos_to_vote(current_stake));
+        BOOST_REQUIRE_EQUAL(option_map[option2], tlos_to_vote(current_stake));
+
+        //vote quantities should be changed to current stake in VOTE
+        option_map = variant_to_map<name, asset>(get_vote(ballot_name, voter1)["weighted_votes"]);
+        BOOST_REQUIRE_EQUAL(option_map[option1], tlos_to_vote(current_stake));
+        BOOST_REQUIRE_EQUAL(option_map[option2], tlos_to_vote(current_stake));
+
+        //get labor, should still be null, because rebalances are logged at the same time as cleaning
+        BOOST_REQUIRE(get_labor(treasury_symbol, worker).is_null());
+        BOOST_REQUIRE_EXCEPTION(rebalance(worker, voter1, ballot_name, { worker }),
+            eosio_assert_message_exception, eosio_assert_message_is( "vote is already balanced" )
+        );
+
+        //end voting, kill del ballot, clean old votes, validate
+        produce_block(fc::seconds(86420));
+        produce_blocks();
+
+        close_ballot(voter1, ballot_name, true);
+
+        //claim payment for work done
+        cleanup_vote(worker, voter1, ballot_name, worker);
+
+        BOOST_REQUIRE(get_vote(ballot_name, voter1).is_null());
+
+        fc::variant labor_info = get_labor(treasury_symbol, worker);
+        BOOST_REQUIRE_EQUAL(labor_info["worker_name"].as<name>(), worker);
+
+        map<name, asset> unclaimed_volume = variant_to_map<name, asset>(labor_info["unclaimed_volume"]);
+        BOOST_REQUIRE_EQUAL(unclaimed_volume[name("rebalvolume")], tlos_to_vote(stake_delta + stake_delta));
+
+        map<name, uint32_t> unclaimed_events = variant_to_map<name, uint32_t>(labor_info["unclaimed_events"]);
+        BOOST_REQUIRE_EQUAL(unclaimed_events[name("cleancount")], 1);
+        BOOST_REQUIRE_EQUAL(unclaimed_events[name("rebalcount")], 1);
+
+        //TODO: create a payroll
+        //TODO: skip some time
+        //TODO: pre calculate payout
+        //TODO: claim labor for moneys
     } FC_LOG_AND_RETHROW()
 
-    BOOST_FIXTURE_TEST_CASE( payroll_basics, trail_tester ) try {
-        // test payroll actions
-    } FC_LOG_AND_RETHROW()
-
-    BOOST_FIXTURE_TEST_CASE( full_flow, trail_tester ) try {
-        //run through a common use case for trail
-
-        //postresults
-
-        //broadcast
+    BOOST_FIXTURE_TEST_CASE( existing_worker_forfeit, trail_tester ) try {
+        //create new ballot, open, vote, change stake, end, close, forfeitwork
     } FC_LOG_AND_RETHROW()
     
 BOOST_AUTO_TEST_SUITE_END()
