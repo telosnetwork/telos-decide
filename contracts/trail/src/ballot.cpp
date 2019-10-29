@@ -341,6 +341,7 @@ ACTION trail::closevoting(name ballot_name, bool broadcast) {
     });
 
     //perform 1tokensquare1v final sqrt()
+    //NOTE: lightballots will already have sqrt() applied
     if (bal.voting_method == name("1tsquare1v") && !bal.settings.at(name("lightballot"))) {
         map<name, asset> squared_options = bal.options;
 
