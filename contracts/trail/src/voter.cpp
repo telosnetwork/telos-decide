@@ -326,3 +326,50 @@ ACTION trail::unstake(name voter, asset quantity) {
     add_liquid(voter, quantity);
 
 }
+
+map<name, asset> trail::calc_vote_weights(symbol treasury_symbol, name voting_method, 
+    vector<name> selections,  asset raw_vote_weight) {
+    
+    //initialize
+    map<name, asset> vote_weights;
+    int64_t effective_amount;
+    int64_t vote_amount_per;
+    uint8_t sym_prec = treasury_symbol.precision();
+    int8_t pos = 1;
+
+    switch (voting_method.value) {
+        case (name("1acct1vote").value):
+            effective_amount = int64_t(pow(10, sym_prec));
+            break;
+        case (name("1tokennvote").value):
+            effective_amount = raw_vote_weight.amount;
+            break;
+        case (name("1token1vote").value):
+            effective_amount = raw_vote_weight.amount / selections.size();
+            break;
+        case (name("1tsquare1v").value):
+            vote_amount_per = raw_vote_weight.amount / selections.size();
+            effective_amount = vote_amount_per * vote_amount_per;
+            break;
+        case (name("quadratic").value):
+            effective_amount = sqrtl(raw_vote_weight.amount);
+            break;
+        case (name("ranked").value):
+            //NOTE: requires selections to always be in order
+            for (name n : selections) {
+                effective_amount = raw_vote_weight.amount / pos;
+                vote_weights[n] = asset(effective_amount, treasury_symbol);
+                pos++;
+            }
+            return vote_weights;
+        default:
+            check(false, "calc_vote_weights: invalid voting method");
+    }
+
+    //apply effective weight to vote mapping
+    for (name n : selections) {
+        vote_weights[n] = asset(effective_amount, treasury_symbol);
+    }
+
+    return vote_weights;
+}

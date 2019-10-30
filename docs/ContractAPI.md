@@ -64,6 +64,24 @@ Required Fee: `1000 TLOS`
 cleos push action trailservice newtreasury '["youraccount", "2,TEST", "public"]' -p manager
 ```
 
+### ACTION `edittrsinfo()`
+
+Edits the title, description, and icon of a treasury.
+
+- symbol `treasury_symbol`: the treasury to change.
+
+- string `title`: the new title.
+
+- string `description`: the new description.
+
+- string `content`: the new content
+
+Required Authority: `manager`
+
+```
+cleos push action trailservice edittrsinfo '["2,TEST", "New Title", "New Desc", "New Icon"]' -p manager
+```
+
 ### ACTION `toggle()`
 
 Toggles a treasury setting on and off.

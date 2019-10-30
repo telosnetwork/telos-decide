@@ -14,6 +14,9 @@ ACTION trail::forfeitwork(name worker_name, symbol treasury_symbol) {
     auto& bucket = laborbuckets.get(name("workers").value, "workers bucket not found");
 
     //authenticate
+    
+    //wrap get_self(), allows trails to erase old work no matter what
+
     require_auth(lab.worker_name);
 
     //initialize
@@ -47,8 +50,8 @@ ACTION trail::claimpayment(name claimant, symbol treasury_symbol) {
     payrolls_table payrolls(get_self(), treasury_symbol.code().raw());
     auto& pr = payrolls.get(name("workers").value, "workers payroll not found");
 
-    //authenticate
-    require_auth(lab.worker_name);
+    config_singleton configs(get_self(), get_self().value);
+    auto conf = configs.get();
 
     //initialize
     uint32_t now = time_point_sec(current_time_point()).sec_since_epoch();
@@ -57,43 +60,56 @@ ACTION trail::claimpayment(name claimant, symbol treasury_symbol) {
     auto new_claimable_volume = bucket.claimable_volume;
     auto new_claimable_events = bucket.claimable_events;
 
+    //authenticate
+    if(now < lab.start_time.sec_since_epoch() + conf.times.at(name("forfeittime"))) {
+        require_auth(lab.worker_name);
+    }
+
     //validate
-    check(lab.start_time.sec_since_epoch() + 86400 > now, "labor must mature for 1 day before claiming");
+    check(lab.start_time.sec_since_epoch() + 86400 < now, "labor must mature for 1 day before claiming");
     check(pr.payee == name("workers"), "payroll not for workers");
 
     //advance payroll if needed
     if (pr.last_claim_time.sec_since_epoch() + pr.period_length < now) {
-        uint32_t new_periods = (pr.last_claim_time.sec_since_epoch() - now) / pr.period_length;
+        uint32_t new_periods = (now - pr.last_claim_time.sec_since_epoch()) / pr.period_length;
         additional_pay = new_periods * pr.per_period;
-        new_claimable_pay += additional_pay;
-
+        
         //ensure additional pay doesn't overdraw funds
         if (pr.payroll_funds <= additional_pay) {
             additional_pay = pr.payroll_funds;
         }
+
+        new_claimable_pay += additional_pay;
     }
 
     //diminish rate: 1% of payout per day without claiming
-    double reduced_by = ( (now - lab.start_time.sec_since_epoch() / 86400) - 1 ) / 100;
+    double reduced_by = ( ( ( now - lab.start_time.sec_since_epoch() ) / 86400) - 1 ) / double(100);
 
     //calculate worker payout
     asset payout = asset(0, pr.payroll_funds.symbol);
     asset trail_payout = asset(0, TRAIL_SYM);
 
+    // the percentage of total volume rebalanced by this labor
     double vol_share = double(lab.unclaimed_volume.at(name("rebalvolume")).amount) / 
         double(bucket.claimable_volume.at(name("rebalvolume")).amount);
 
+    // the percentage of total rebalances performed by this labor
     double count_share = double(lab.unclaimed_events.at(name("rebalcount"))) / 
         double(bucket.claimable_events.at(name("rebalcount")));
 
+    // the percentage of total cleanings performed by this ths labor
     double clean_share = double(lab.unclaimed_events.at(name("cleancount"))) / 
         double(bucket.claimable_events.at(name("cleancount")));
 
+
+    // the average percentage
     double total_share = (vol_share + count_share + clean_share) / double(3.0);
     payout = asset(int64_t(new_claimable_pay.amount * total_share), pr.payroll_funds.symbol);
     
-    //TODO: reduce payout by percentage
-    // payout.amount = uint64_t(double(payout.amount) * reduced_by);
+    //reduce payout by n percent
+    if(reduced_by > 0) {
+        payout.amount = uint64_t(double(payout.amount) * (double(1.0) - reduced_by));
+    }
 
     //TODO: calculate TRAIL payout
 
@@ -118,6 +134,10 @@ ACTION trail::claimpayment(name claimant, symbol treasury_symbol) {
 
     //erase labor
     labors.erase(lab);
+
+    if(reduced_by >= double(1.0)) {
+        return;
+    }
 
     //update payroll
     payrolls.modify(pr, same_payer, [&](auto& col) {
@@ -244,9 +264,6 @@ ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
 
     //log worker share if worker
     if (worker) {
-        //authenticate
-        require_auth(*worker);
-        
         //update cleanup worker
         log_cleanup_work(*worker, bal.treasury_symbol, 1);
     }
@@ -285,7 +302,7 @@ void trail::log_rebalance_work(name worker, symbol treasury_symbol, asset volume
         new_unclaimed_events[name("rebalcount")] = count;
 
         //emplace new labor
-        labors.emplace(worker, [&](auto& col){
+        labors.emplace(get_self(), [&](auto& col){
             col.worker_name = worker;
             col.start_time = time_point_sec(current_time_point());
             col.unclaimed_volume = new_unclaimed_volume;
@@ -306,16 +323,15 @@ void trail::log_rebalance_work(name worker, symbol treasury_symbol, asset volume
 }
 
 void trail::log_cleanup_work(name worker, symbol treasury_symbol, uint16_t count) {
+    //authenticate
+    require_auth(worker);
     //open labor table, get labor log
     labors_table labors(get_self(), treasury_symbol.code().raw());
     auto l = labors.find(worker.value);
 
     if (l != labors.end()) {
-        //initialize
-        auto& lab = *l;
-
         //update labor
-        labors.modify(lab, same_payer, [&](auto& col) {
+        labors.modify(*l, worker, [&](auto& col) {
             col.unclaimed_events[name("cleancount")] += count;
         });
     } else {

@@ -83,6 +83,9 @@ namespace trailservice {
         ACTION newtreasury(name manager, asset max_supply, name access);
         using newtreasury_action = action_wrapper<"newtreasury"_n, &trail::newtreasury>;
 
+        ACTION edittrsinfo(symbol treasury_symbol, string title, string description, string icon);
+        using edittrsinfo_action = action_wrapper<"edittrsinfo"_n, &trail::edittrsinfo>;
+
         //toggle a treasury setting
         ACTION toggle(symbol treasury_symbol, name setting_name);
         using toggle_action = action_wrapper<"toggle"_n, &trail::toggle>;
@@ -122,10 +125,10 @@ namespace trailservice {
         //======================== payroll actions ========================
 
         //adds tokens to specified payroll
-        ACTION addfunds(name from, symbol treasury_symbol, name payroll_name, asset quantity);
+        ACTION addfunds(name from, symbol treasury_symbol, asset quantity);
 
         //edit pay rate
-        ACTION editpayrate(name payroll_name, symbol treasury_symbol, uint32_t period_length, asset per_period);
+        ACTION editpayrate(symbol treasury_symbol, uint32_t period_length, asset per_period);
 
         //======================== ballot actions ========================
 

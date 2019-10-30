@@ -19,6 +19,8 @@ using namespace std;
 using namespace trail::testing;
 using mvo = fc::mutable_variant_object;
 
+//TODO: go through and fix invalid time calculations
+
 BOOST_AUTO_TEST_SUITE(trail_tests)
 
     BOOST_FIXTURE_TEST_CASE( configuration_setting, trail_tester ) try {
@@ -369,6 +371,42 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         validate_action_payer(trace, trail_name, name("regvoter"), testc);
 
+        edit_trs_info(testa, max_supply.get_symbol(), "new title", "new description", "new icon");
+
+        treasury = get_treasury(max_supply.get_symbol());
+
+        BOOST_REQUIRE_EQUAL(treasury["title"], "new title");
+        BOOST_REQUIRE_EQUAL(treasury["description"], "new description");
+        BOOST_REQUIRE_EQUAL(treasury["icon"], "new icon");
+
+        fc::variant payroll = get_payroll(max_supply.get_symbol(), name("workers"));
+        fc::variant labor_bucket_info = get_labor_bucket(max_supply.get_symbol(), name("workers"));
+
+        BOOST_REQUIRE(!payroll.is_null());
+        BOOST_REQUIRE_EQUAL(payroll["payroll_funds"].as<asset>(), asset(0, tlos_sym));
+        BOOST_REQUIRE_EQUAL(payroll["payroll_name"].as<name>(), name("workers"));
+        BOOST_REQUIRE_EQUAL(payroll["period_length"].as<uint32_t>(), 604800);
+        BOOST_REQUIRE_EQUAL(payroll["per_period"].as<asset>(), asset(10, tlos_sym));
+        BOOST_REQUIRE_EQUAL(payroll["claimable_pay"].as<asset>(), asset(0, tlos_sym));
+        BOOST_REQUIRE_EQUAL(payroll["payee"].as<name>(), name("workers"));
+
+
+        BOOST_REQUIRE(!labor_bucket_info.is_null());
+        BOOST_REQUIRE_EQUAL(labor_bucket_info["payroll_name"].as<name>(), name("workers"));
+        map<name, asset> claimable_volume = variant_to_map<name, asset>(labor_bucket_info["claimable_volume"]);
+        BOOST_REQUIRE_EQUAL(claimable_volume[name("rebalvolume")], asset(0, max_supply.get_symbol()));
+
+        map<name, uint32_t> claimable_events = variant_to_map<name, uint32_t>(labor_bucket_info["claimable_events"]);
+        BOOST_REQUIRE_EQUAL(claimable_events[name("rebalcount")], 0);
+        BOOST_REQUIRE_EQUAL(claimable_events[name("cleancount")], 0);
+
+        BOOST_REQUIRE_EXCEPTION(add_funds(eosio_name, eosio_name, max_supply.get_symbol(), name("workers"), asset::from_string("200.0000 GOO")), 
+            eosio_assert_message_exception, eosio_assert_message_is( "only TLOS allowed in payrolls" ) 
+        );
+
+        BOOST_REQUIRE_EXCEPTION(edit_pay_rate(testa, name("workers"), max_supply.get_symbol(), 86400, asset::from_string("400.0000 GOO")),
+            eosio_assert_message_exception, eosio_assert_message_is( "only TLOS allowed in payrolls" ) 
+        );
     } FC_LOG_AND_RETHROW()
 
     BOOST_FIXTURE_TEST_CASE( ballot_basics, trail_tester ) try {
@@ -951,22 +989,22 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         //one_token_square_one_vote testing
         //TODO: this voting method isn't implemented correctly
-        // open_voting(voter1, one_token_square_one_vote, get_current_time_point_sec() + 86401);
-        // produce_blocks();
+        open_voting(voter1, one_token_square_one_vote, get_current_time_point_sec() + 86410);
+        produce_blocks();
 
-        // cast_vote(voter1, one_token_square_one_vote, { option1, option2 });
-        // ballot_info = get_ballot(one_token_square_one_vote);
-        // option_map = variant_to_map<name, asset>(ballot_info["options"]);
+        cast_vote(voter1, one_token_square_one_vote, { option1, option2 });
+        ballot_info = get_ballot(one_token_square_one_vote);
+        option_map = variant_to_map<name, asset>(ballot_info["options"]);
 
-        // //validate asset quantity per option
-        // //vote weight should be equal to 1000.00 GOO per option, undivided
-        // BOOST_REQUIRE_EQUAL(option_map[option1], asset::from_string("500.00 GOO"));
-        // BOOST_REQUIRE_EQUAL(option_map[option2], asset::from_string("500.00 GOO"));
+        //validate asset quantity per option
+        //vote weight should be equal to 1000.00 GOO per option, undivided
+        BOOST_REQUIRE_EQUAL(option_map[option1], one_t_square_one_vote_calc(raw_vote_weight, treasury_symbol, 2));
+        BOOST_REQUIRE_EQUAL(option_map[option2], one_t_square_one_vote_calc(raw_vote_weight, treasury_symbol, 2));
 
-        // vote_info = get_vote(one_token_square_one_vote, voter1);
-        // option_map = variant_to_map<name, asset>(vote_info["weighted_votes"]);
-        // BOOST_REQUIRE_EQUAL(option_map[option1], asset::from_string("500.00 GOO"));
-        // BOOST_REQUIRE_EQUAL(option_map[option2], asset::from_string("500.00 GOO"));
+        vote_info = get_vote(one_token_square_one_vote, voter1);
+        option_map = variant_to_map<name, asset>(vote_info["weighted_votes"]);
+        BOOST_REQUIRE_EQUAL(option_map[option1], one_t_square_one_vote_calc(raw_vote_weight, treasury_symbol, 2));
+        BOOST_REQUIRE_EQUAL(option_map[option2], one_t_square_one_vote_calc(raw_vote_weight, treasury_symbol, 2));
 
 
         //quadratic testing
@@ -979,13 +1017,13 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         //validate asset quantity per option
         //vote weight should be equal to 1000.00 GOO per option, undivided
-        BOOST_REQUIRE_EQUAL(option_map[option1], quadratic_calc(raw_vote_weight, treasury_symbol, 2));
-        BOOST_REQUIRE_EQUAL(option_map[option2], quadratic_calc(raw_vote_weight, treasury_symbol, 2));
+        BOOST_REQUIRE_EQUAL(option_map[option1], quadratic_calc(raw_vote_weight, treasury_symbol));
+        BOOST_REQUIRE_EQUAL(option_map[option2], quadratic_calc(raw_vote_weight, treasury_symbol));
 
         vote_info = get_vote(quadratic, voter1);
         option_map = variant_to_map<name, asset>(vote_info["weighted_votes"]);
-        BOOST_REQUIRE_EQUAL(option_map[option1], quadratic_calc(raw_vote_weight, treasury_symbol, 2));
-        BOOST_REQUIRE_EQUAL(option_map[option2], quadratic_calc(raw_vote_weight, treasury_symbol, 2));
+        BOOST_REQUIRE_EQUAL(option_map[option1], quadratic_calc(raw_vote_weight, treasury_symbol));
+        BOOST_REQUIRE_EQUAL(option_map[option2], quadratic_calc(raw_vote_weight, treasury_symbol));
     } FC_LOG_AND_RETHROW()
 
     BOOST_FIXTURE_TEST_CASE( worker_basics, trail_tester ) try {
@@ -1071,6 +1109,8 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         rebalance(worker, voter1, ballot_name, { worker });
         produce_blocks();
 
+        // TODO: check labor_bucket validation
+
         //ballot quantities should be updated to current stake in VOTE
         ballot_info = get_ballot(ballot_name);
         option_map = variant_to_map<name, asset>(ballot_info["options"]);
@@ -1109,14 +1149,123 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         BOOST_REQUIRE_EQUAL(unclaimed_events[name("cleancount")], 1);
         BOOST_REQUIRE_EQUAL(unclaimed_events[name("rebalcount")], 1);
 
-        //TODO: create a payroll
-        //TODO: skip some time
-        //TODO: pre calculate payout
-        //TODO: claim labor for moneys
-    } FC_LOG_AND_RETHROW()
+        add_funds(eosio_name, eosio_name, treasury_symbol, name("workers"), asset::from_string("1000.0000 TLOS"));
+        edit_pay_rate(eosio_name, name("workers"), treasury_symbol, 86400, asset::from_string("500.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(get_payroll(treasury_symbol, name("workers"))["payroll_funds"].as<asset>(), asset::from_string("1000.0000 TLOS"));
 
-    BOOST_FIXTURE_TEST_CASE( existing_worker_forfeit, trail_tester ) try {
-        //create new ballot, open, vote, change stake, end, close, forfeitwork
+        produce_blocks();
+
+        auto vote_cast_rebalance = [&](name voter, asset delta, name worker, symbol treasury_symbol, 
+            name ballot_name, vector<name> options, bool redelegate = true, fc::optional<name> referrer = {}) {
+            if(get_voter(voter,treasury_symbol).is_null()) {
+                reg_voter(voter, treasury_symbol, {});
+            }
+
+            cast_vote(voter, ballot_name, options);
+
+            if(redelegate) {
+                delegate_bw(voter, voter, delta, delta, false);
+
+                rebalance(worker, voter, ballot_name, { worker });
+            }
+        };
+        
+        name worker1 = name("worker1"), worker2 = name("worker2"), worker3 = name("worker3");
+        name voter4 = name("voter4"), voter5 = name("votera"), voter6 = name("voterb");
+        ballot_name = name("ballot12");
+        
+        create_accounts_with_resources({ worker1, worker2, worker3, voter4, voter5, voter6 });
+        base_tester::transfer(eosio_name, voter4, "10000.0000 TLOS", "", token_name);
+        base_tester::transfer(eosio_name, voter5, "10000.0000 TLOS", "", token_name);
+        base_tester::transfer(eosio_name, voter6, "10000.0000 TLOS", "", token_name);
+        
+        new_ballot(ballot_name, category, voter1, treasury_symbol, voting_method, { option1, option2 });
+        edit_min_max(voter1, ballot_name, 1, 2);
+        open_voting(voter1, ballot_name, get_current_time_point_sec() + 86401);
+
+        vote_cast_rebalance(voter1, asset::from_string("10.0000 TLOS"), worker, treasury_symbol, ballot_name, { option1, option2 });
+        vote_cast_rebalance(voter2, asset::from_string("10.0000 TLOS"), worker, treasury_symbol, ballot_name, { option1 });
+
+        produce_blocks();
+
+        vote_cast_rebalance(voter3, asset::from_string("10.0000 TLOS"), worker1, treasury_symbol, ballot_name, { option1, option2 });
+        vote_cast_rebalance(voter4, asset::from_string("10.0000 TLOS"), worker1, treasury_symbol, ballot_name, { option1 });
+
+        produce_blocks();
+
+        vote_cast_rebalance(voter5, asset::from_string("15.0000 TLOS"), worker2, treasury_symbol, ballot_name, { option1 });
+
+        produce_blocks();
+
+        vote_cast_rebalance(voter6, asset::from_string("10.0000 TLOS"), worker3, treasury_symbol, ballot_name, { option1 });
+
+        produce_blocks();
+        produce_block(fc::seconds(86401));
+        produce_blocks();
+
+        cleanup_vote(worker, voter1, ballot_name, { worker });
+        cleanup_vote(worker, voter2, ballot_name, { worker });
+
+        cleanup_vote(worker1, voter3, ballot_name, { worker1 });
+        cleanup_vote(worker1, voter4, ballot_name, { worker1 });
+
+        //TODO: voter5 was rebalanced by worker2, but worker1 cleans vote validate counts for each worker
+        cleanup_vote(worker1, voter5, ballot_name, { worker1 });
+
+        cleanup_vote(worker3, voter6, ballot_name, { worker3 });
+
+        produce_blocks();
+        produce_block(fc::days(2));
+        produce_blocks();
+
+
+        fc::variant bucket = get_labor_bucket(treasury_symbol, name("workers"));
+        fc::variant payroll = get_payroll(treasury_symbol, name("workers"));
+        fc::variant labor = get_labor(treasury_symbol, worker);
+
+        // cout << "bucket: " << bucket << endl << endl;
+        // cout << "payroll: " << payroll << endl << endl;
+        // cout << "labor: " << labor << endl << endl;
+
+        auto claim_validate = [&](const auto& worker) {
+            asset worker_init_balance = base_tester::get_currency_balance(trail_name, tlos_sym, worker);
+            cout << "initial balance: " << worker_init_balance << endl;
+
+            asset pay_out = get_worker_claim(worker, treasury_symbol);
+            cout << "pay_out balance: " << pay_out << endl;
+
+            claim_payment(worker, treasury_symbol);
+            BOOST_REQUIRE(get_labor(treasury_symbol, worker).is_null());
+
+            asset current_balance = base_tester::get_currency_balance(trail_name, tlos_sym, worker);
+            cout << "current balance: " << current_balance << endl;
+
+            BOOST_REQUIRE_EQUAL(current_balance, worker_init_balance + pay_out);
+        };
+
+        auto forfeit_validate = [&](const auto& worker) {
+            asset worker_init_balance = base_tester::get_currency_balance(trail_name, tlos_sym, worker);
+            cout << "initial balance: " << worker_init_balance << endl;
+
+            asset pay_out = get_worker_claim(worker, treasury_symbol);
+            cout << "pay_out balance: " << pay_out << endl;
+
+            forfeit_work(worker, treasury_symbol);
+            BOOST_REQUIRE(get_labor(treasury_symbol, worker).is_null());
+
+            asset current_balance = base_tester::get_currency_balance(trail_name, tlos_sym, worker);
+            cout << "current balance: " << current_balance << endl;
+
+            BOOST_REQUIRE_EQUAL(current_balance, worker_init_balance);
+        };
+
+        claim_validate(worker);
+        claim_validate(worker1);
+        claim_validate(worker2);
+        forfeit_validate(worker3);
+
+        // TODO: validate labor_bucket post clean_up and rebalence, bucket should have 0s for counts and rebalance volume
+
     } FC_LOG_AND_RETHROW()
     
 BOOST_AUTO_TEST_SUITE_END()

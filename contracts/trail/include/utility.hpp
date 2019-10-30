@@ -11,8 +11,6 @@
 using namespace std;
 using namespace eosio;
 
-//TODO: add get_staked_rex()
-
 using user_resources = eosiosystem::user_resources;
 using user_resources_table = eosiosystem::user_resources_table;
 using rex_bal_table = eosiosystem::rex_balance_table;
@@ -39,7 +37,7 @@ asset get_tlos_in_rex(name owner) {
     int64_t amount = 0;
 
     if (rb != rexbals.end()) {
-        amount = rb->vote_stake.value;
+        amount = rb->vote_stake.amount;
     }
 
     return asset(amount, symbol("TLOS", 4));
