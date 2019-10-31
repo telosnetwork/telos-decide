@@ -10,25 +10,29 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 * `Advanced Voting Methods`
 
-    The Trail Voting Platform boasts an extensive set of voting methods and customization options. Voting Methods available include: `1acct1vote`, `1tokennvote`, `1token1vote`, `1tsquare1v`, `quadratic`, and `ranked`. For more information on the different voting methods and how they are used see the `Voting Methods` section of the [Trail Developer Guide](docs/DeveloperGuide.md).
+    The Trail Voting Platform boasts an extensive set of voting methods and customization options. Voting Methods available include: `1acct1vote`, `1tokennvote`, `1token1vote`, `1tsquare1v`, and `quadratic`. For more information on the different voting methods and how they are used see the `Voting Methods` section of the [Trail Developer Guide](docs/DeveloperGuide.md).
 
-* `Custom Token Registries`
+* `Custom Token Treasuries`
 
-    Any user on the Telos Blockchain Network may create a custom token registry that automatically inherits Trail's entire suite of voting services. These registries can also be customized to allow or disallow specific behaviors like transferring, burning, staking, or reclaiming of tokens.
+    Any user on the Telos Blockchain Network may create a custom token treasury that automatically inherits Trail's entire suite of voting services. These registries can also be customized to allow or disallow specific behaviors like transferring, burning, staking, or reclaiming of tokens.
 
 * `Committee Management Tools`
 
-    Trail offers a suite of committee creation and management tools that are available as a free service to any active token registry and its voters. Developers can also hook their external smart contracts into Trail's committee tools to enable complete on-chain management of committees and their members.
+    Trail offers a suite of committee creation and management tools that are available to any active token treasury and its voters. Developers can also hook their external smart contracts into Trail's committee tools to enable complete on-chain management of committees and their members.
 
 * `Traceable Vote Integrity`
 
-    Trail has implemented a custom rebalance system that detects changes to a user's balances and allows workers to recalculate vote weights. Future updates will allow for optional identity services to futher enhance voting and platform features.
+    Trail's custom rebalance system allows workers to recalculate vote weights when a voter's token balance changes. Workers who perform this service are eligible for payment rewards in proportion to the amount of work they have performed compared to all other workers in the treasury. Future updates will allow for optional identity services to futher enhance voting and platform features.
+
+* `Integrated Payroll System`
+
+    All treasuries created on the platform have access to Trail's payroll system, allowing managers to continuously fund operations within their own treasury. Multiple payrolls can be created under a single treasury, each with their own bucket of funds that are released to designated recipients at a customizable rate.
 
 * `Optional Light Ballots`
 
-    Light ballots disable the on-chain vote tracking portion of the voting process - this allows for developers to track votes in an off-chain database that is built by an [Iris](https://github.com/CALEOS/iris-client) or [Demux](https://github.com/EOSIO/demux-js) style service instead. 
+    Light ballots disable the on-chain vote tracking portion of the voting process - this allows for developers to track votes in an off-chain database that is built by an [Iris](https://github.com/CALEOS/iris-client), [Demux](https://github.com/EOSIO/demux-js), or Spectrum style service instead. 
     
-    This option enables Trail to power vastly more voting services by saving RAM costs for both the platform and voters, while at the same time retaining the complete traceability and auditability benefits offered by the blockchain.
+    This option enables Trail to power vastly more voting services by saving RAM costs for both the platform and voters, while at the same time retaining the complete traceability and auditability benefits offered by the Telos blockchain.
 
 * `Profitable Worker Services`
 
@@ -38,15 +42,15 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 | Name | Description |
 | --- | --- |
-| [Developer Guide](docs/DeveloperGuide.md) | Complete breakdown of Trail features and how developers can integrate Trail into their projects. |
-| [Voter Guide](docs/VoterGuide.md) | Describes how to become a voter and how voting works. |
-| [Registry Guide](docs/RegistryGuide.md) | Describes how to create and manage Trail Registries. |
-| [Worker Guide](docs/WorkerGuide.md) | Describes how to become a worker and the types of jobs available for workers to perform. |
+| [Developer Guide](docs/DeveloperGuide.md) | Breakdown of Trail features for developers interfacing with Trail. |
+| [Voter Guide](docs/VoterGuide.md) | How to become a voter and how voting works. |
+| [Treasury Guide](docs/TreasuryGuide.md) | How to create and manage Trail Treasuries. |
+| [Worker Guide](docs/WorkerGuide.md) | How to become a worker and the types of jobs available for workers to perform. |
 | [Contract API](docs/ContractAPI.md) | Full Action and Table Breakdown. |
 
 ## Join the Firewatch
 
-The Firewatch is a league of voters and developers dedicated to running a secure and optimized voting platform. Firewatch workers may claim a portion of Trail profits porportional to their recent contributions, and may also be eligible for platform-wide leaderboard rewards.
+The Firewatch is a league of voters and developers dedicated to running a secure and optimized voting platform. Firewatch workers may claim a portion of Trail profits proportional to their recent contributions, and may also be eligible for platform-wide leaderboard rewards.
 
 ## The TRAIL Token
 
@@ -54,7 +58,7 @@ Trail has a platform specific token that is only obtainable by performing variou
 
 Proposed Use Cases:
 
-- Burn in exchange for free Registry Creation, Ballot Listing, or Committee Registration.
+- Burn in exchange for free Treasury Creation, Ballot Listing, or Committee Registration.
 - Burn in exchange for extension on Payment Claim deadlines.
 - Burn in exchange for listing on Featured table.
 
@@ -71,6 +75,8 @@ Proposed Use Cases:
 
 - Example Guides
 - External Contract Examples
+- Delegates, Delegate Voting
+- External Token Mirroring
 
 ### Q1 2020
 
@@ -79,7 +85,6 @@ Proposed Use Cases:
 
 ### Down Yonder
 
-- Delegates, Delegate Voting
 - Optional Identity Services
 
 ## References

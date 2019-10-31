@@ -1,6 +1,6 @@
 # Trail Voter Guide
 
-In this guide we will explore all the different interactions a voter can do on the Trail Voting Platform. 
+In this guide we will explore all the different interactions available to voters on the Trail Voting Platform. 
 
 ## Getting Started
 
@@ -8,26 +8,25 @@ To get started as a Trail Voter follow the steps below.
 
 ### Voter Registration
 
-The first step to becoming a voter is voter registration. Successful registration will open a zero-balance account for the new voter, allowing them to cast votes and interact with any future or existing ballot launched by the registry.
+The first step to becoming a voter is voter registration. Successful registration will open a zero-balance account for the new voter, allowing them to obtain tokens and cast votes and interact with any future or existing ballot launched by the treasury.
 
-1. **Find a Registry to Join**
+1. **Find a Treasury to Join**
 
-Finding a Registry to join is easy - just browse the registry table and get the registry symbol.
+Finding a Treasury to join is easy - just browse the treasury table and get the treasury symbol.
 
 2. **Consider the Access Method**
 
-Some registries are not open to the public and are instead only available based on an invite from a referrer. Typically the referrer must already be a voter for that registry, but more tightly controleld ballots may require an invite from the registry manager.
+Some treasuries are not open to the public and are instead only available based on an invite from a referrer. Typically the referrer must already be a voter for that treasury, but more tightly controlled `private` ballots require an invite from the treasury manager.
 
 | Access Method | Description |
 | --- | --- |
 | Public | Open to everyone |
 | Private | Requires referral by manager |
 | Invite | Requires referral by voter |
-| Membership | Requires payment to manager |
 
 3. **Call `regvoter()`**
 
-Once a suitable registry has been found, the voter (or the referrer) must call the `regvoter()` action on the Trail contract and supply the following arguments:
+Once a suitable treasury has been found, the voter (or the referrer) must call the `regvoter()` action on the Trail contract and supply the following arguments:
 
 - Voter
 
@@ -35,9 +34,9 @@ Once a suitable registry has been found, the voter (or the referrer) must call t
 
     EX: `testaccounta` or `craig.tf`
 
-- Registry Symbol
+- Treasury Symbol
 
-    This is the symbol of the registry to join. Registry symbols are expressed as the token's precision (i.e. the number of decimal places it has) followed by the ticker symbol of the registry token.
+    This is the symbol of the treasury to join. Treasury symbols are expressed as the token's precision (i.e. the number of decimal places it has) followed by the ticker symbol of the treasury token.
 
     EX: `2,TEST` or `4,VOTE`
 
@@ -53,7 +52,7 @@ After successful registration, the voter is allowed to begin casting votes on ba
 
 1. **Obtain Tokens**
 
-Once a voter is registered they must obtain tokens in order to cast a vote. The method for acquiring tokens will vary based on the registry and project, but in general tokens can be acquired through a purchase, as a gift from another voter, or through the registry manager directly.
+Once a voter is registered they must obtain tokens in order to cast a vote. The method for acquiring tokens will vary based on the treasury and project, but in general tokens can be acquired through a purchase, as a gift from another voter, or through the treasury manager directly.
 
 2. **Find an Open Ballot**
 
@@ -87,7 +86,7 @@ Sometimes voters want to retract previously submitted votes. Note that unvoting 
 
 ### Staking and Unstaking
 
-Certain registries will allow or disallow staking of it's tokens. If staking is allowed, vote weights will be pulled from the voter's staked amount instead of liquid when casting votes. 
+Certain treasuries will allow or disallow staking of it's tokens. If staking is allowed, vote weights will be pulled from the voter's staked amount instead of liquid when casting votes. 
 
 ## Voters Table Breakdown
 
@@ -99,5 +98,8 @@ Scope: `your-voter-name`
 
 | Field | Type | Description |
 | --- | --- | --- |
-| liquid | asset | Current liquid amount of tokens. |
-| staked | asset | Current staked amount of tokens. |
+| liquid | asset | Balance of liquid tokens. |
+| staked | asset | Balance of staked tokens. |
+| delegated | asset | Tokens delegated to a registered delegate. |
+| delegated_to | name | The delegate account to which the voter's tokens are delegated. |
+| delegation_time | time_point_sec | Time point the last delegation or undelegation occurred. |

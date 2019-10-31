@@ -1,0 +1,3 @@
+[submodule "eosio.contracts"]
+	path = libraries/eosio.contracts
+	url = https://github.com/telos-foundation/eosio.contracts

@@ -8,33 +8,29 @@ A worker on the Trail Voting Platform is an account that watches for jobs and co
 
 ### What Kinds of Jobs are Available?
 
-In Trail v2.0.0 there are two kinds of jobs: rebalances and cleanups. 
+In Trail v2.0.0 there are two kinds of jobs: rebalances and cleanups. Additional job types will become available as new features are added to Trail.
 
 `Rebalance` jobs become available when voters cast votes on a ballot and then change their vote weight. This action prompts workers to recalculate that voter's weighted votes based on their new balance, and the worker is paid for performing this recalculation. Since a voter can participate on any number of different ballots, rebalance jobs become available on *every active vote by that voter* after a balance change.
 
 Note that if a voter changes their balance again, another rebalance job will be available that will overwrite the work done by the previous recalculation if performed by a different worker. This way workers must always stay vigilant, even after rebalancing a vote. Rebalance work is always tracked, but isn't credited until the vote is cleaned at the end of the voting period.
 
-`Cleanup` jobs become available after ballots close and the votes for that ballot need cleaning. Workers are paid for cleaning up the expired votes and returning the committed RAM back to the original voter.
+`Cleanup` jobs become available after ballots close and the votes for that ballot are no longer needed on-chain. Workers are paid for cleaning up the expired votes and returning the committed RAM back to the original voter.
 
 ## Getting Started
 
 Follow these steps to get started as a Trail Worker:
 
-### 1. Register as a Worker
-
-Worker Registration is easy, it's open to everyone and simply requires sending a `regworker()` transaction to Trail.
-
-```
-cleos push action trailservice regworker '["craig.tf"]' -p craig.tf
-```
-
-### 2. Find Work
+### 1. Find Work
 
 Finding work to perform is as simple as watching the trailservice contract for specific actions.
 
 Any time a voter casts a vote on a ballot and then changes their token balance, that vote need to be recalculated. Workers can watch for actions like `stake()`, `unstake()`, `transfer()`, etc. for rebalance work. However, since ballots have control over which token balance they read from (either liquid or staked) some of these actions may not warrant a rebalance job because the actual balanced used in calculating votes wasn't affected. 
 
 For example, if a ballot reads a voter's staked balance when they vote, then regular `transfer()` actions won't make a rebalance job available (since the voter's staked balance wasn't affected by the transfer, only their liquid balance).
+
+### 2. Perform Work
+
+...
 
 ### 3. Getting Paid
 
@@ -75,6 +71,6 @@ Worker Fund * Total Work Proportion = Total Payout
 500 * .2659 = 132.95 TLOS Total Payout
 ```
 
-### 4. Unregistering
+### 4. Unregistering and Forfeiting Payment
 
 ...
