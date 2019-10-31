@@ -1253,7 +1253,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         validate_labor(worker2, asset::from_string("30.0000 VOTE"), 1, 0);
         validate_labor(worker3, asset::from_string("20.0000 VOTE"), 1, 1);
 
-        auto claim_validate = [&](const auto& worker) {
+        auto claim_validate = [&](const auto& worker) -> asset {
             asset worker_init_balance = base_tester::get_currency_balance(trail_name, tlos_sym, worker);
             cout << "initial balance: " << worker_init_balance << endl;
             
@@ -1282,6 +1282,8 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
                 claimable_events[name("cleancount")] - unclaimed_events[name("cleancount")],
                 claimable_volume[name("rebalvolume")] - unclaimed_volume[name("rebalvolume")]    
             );
+
+            return pay_out;
         };
 
         auto forfeit_validate = [&](const auto& worker) {
@@ -1304,7 +1306,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
             BOOST_REQUIRE(get_labor(treasury_symbol, worker).is_null());
 
             asset current_balance = base_tester::get_currency_balance(trail_name, tlos_sym, worker);
-            cout << "current balance: " << current_balance << endl;
+            cout << "current balance: " << current_balance << endl << endl;
 
             BOOST_REQUIRE_EQUAL(current_balance, worker_init_balance);
             validate_bucket( 
@@ -1314,14 +1316,16 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
             );
         };
 
-        cout << get_labor_bucket(treasury_symbol, name("workers")) << endl;
-
-        claim_validate(worker);
-        claim_validate(worker1);
-        claim_validate(worker2);
+        asset worker_pay = claim_validate(worker);
+        asset worker1_pay = claim_validate(worker1);
+        asset worker2_pay = claim_validate(worker2);
         forfeit_validate(worker3);
 
         validate_bucket(0, 0, asset::from_string("0.0000 VOTE"));
+        
+        payroll = get_payroll(max_supply.get_symbol(), name("workers"));
+
+        BOOST_REQUIRE_EQUAL(payroll["claimable_pay"].as<asset>(), asset::from_string("1000.0000 TLOS") - worker_pay - worker1_pay - worker2_pay);
 
     } FC_LOG_AND_RETHROW()
     
