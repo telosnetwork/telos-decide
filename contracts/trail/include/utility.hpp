@@ -2,25 +2,18 @@
 // 
 // @author Craig Branscom
 
+#pragma once
+
 #include <eosio/eosio.hpp>
 #include <eosio/asset.hpp>
+#include <eosio.system/eosio.system.hpp>
 
 using namespace std;
 using namespace eosio;
 
-//TODO: add get_staked_rex()
-
-//defined in eosio.system.hpp
-struct user_resources {
-    name owner;
-    asset net_weight;
-    asset cpu_weight;
-    int64_t ram_bytes = 0;
-
-    uint64_t primary_key()const { return owner.value; }
-    EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes) )
-};
-typedef eosio::multi_index<name("userres"), user_resources> user_resources_table;
+using user_resources = eosiosystem::user_resources;
+using user_resources_table = eosiosystem::user_resources_table;
+using rex_bal_table = eosiosystem::rex_balance_table;
 
 //defined in 
 asset get_staked_tlos(name owner) {
@@ -34,5 +27,18 @@ asset get_staked_tlos(name owner) {
         amount = (res.cpu_weight.amount + res.net_weight.amount);
     }
     
+    return asset(amount, symbol("TLOS", 4));
+}
+
+asset get_tlos_in_rex(name owner) {
+    rex_bal_table rexbals(name("eosio"), name("eosio").value);
+    auto rb = rexbals.find(owner.value);
+
+    int64_t amount = 0;
+
+    if (rb != rexbals.end()) {
+        amount = rb->vote_stake.amount;
+    }
+
     return asset(amount, symbol("TLOS", 4));
 }

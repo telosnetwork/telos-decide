@@ -1,0 +1,2611 @@
+{
+    "post-accounts": [
+        {
+            "name": "trailservice",
+            "contract": {
+                "path": "/Users/stephen/Desktop/trail-service/contracts/build/trail",
+                "init": [
+                    {
+                        "account": "trailservice",
+                        "name": "setconfig",
+                        "authorization": [
+                            {
+                                "actor": "trailservice",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "trail_version": "v2.0.0-RFC1",
+                            "ballot_fee": "15.0000 TLOS",
+                            "registry_fee": "250.0000 TLOS",
+                            "archival_fee": "25.0000 TLOS",
+                            "min_ballot_length": 60,
+                            "ballot_cooldown": 60,
+                            "max_vote_receipts": 51
+                        }
+                    },
+
+
+
+
+
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccounta",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccounta"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountb",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountb"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountc",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountc"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountd",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountd"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccounte",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccounte"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccounte",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccounte"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountf",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountf"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountg",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountg"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccounth",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccounth"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccounti",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccounti"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountj",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountj"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountk",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountk"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountl",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountl"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountm",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountm"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountn",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountn"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccounto",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccounto"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountp",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountp"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountq",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountq"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountr",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountr"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccounts",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccounts"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountt",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountt"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountu",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountu"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountv",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountv"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountw",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountw"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountx",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountx"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccounty",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccounty"
+                        }
+                    },
+                    {
+                        "account": "eosio.token",
+                        "name": "issue",
+                        "authorization": [
+                            {
+                                "actor": "eosio",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "to": "testaccountz",
+                            "quantity": "5000.0000 TLOS",
+                            "memo": "issue testaccountz"
+                        }
+                    },
+
+
+
+
+
+
+
+
+
+
+                    {
+                        "account": "eosio.token",
+                        "name": "transfer",
+                        "authorization": [
+                            {
+                                "actor": "testaccounta",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccounta",
+                            "to": "trailservice",
+                            "quantity": "450.0000 TLOS",
+                            "memo": "deposit"
+                        }
+                    },
+
+
+
+
+
+
+
+
+                    {
+                        "account": "trailservice",
+                        "name": "newregistry",
+                        "authorization": [
+                            {
+                                "actor": "trailservice",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "manager": "trailservice",
+                            "max_supply": "10000000000.0000 VOTE",
+                            "access": "public"
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "trailservice",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "trailservice",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+
+
+
+
+
+
+
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccounta",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccounta",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountb",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountb",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountc",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountc",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountd",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountd",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccounte",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccounte",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountf",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountf",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountg",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountg",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccounth",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccounth",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccounti",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccounti",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountj",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountj",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountk",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountk",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountl",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountl",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountm",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountm",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountn",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountn",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccounto",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccounto",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountp",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountp",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountq",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountq",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountr",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountr",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccounts",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccounts",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountt",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountt",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountu",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountu",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountv",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountv",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountw",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountw",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountx",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountx",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccounty",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccounty",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+                    {
+                        "account": "trailservice",
+                        "name": "regvoter",
+                        "authorization": [
+                            {
+                                "actor": "testaccountz",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "voter": "testaccountz",
+                            "registry_symbol": "4,VOTE",
+                            "referrer": null
+                        }
+                    },
+
+
+
+
+
+
+
+
+
+
+
+
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccounta",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccounta",
+                            "receiver": "testaccounta",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountb",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountb",
+                            "receiver": "testaccountb",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountc",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountc",
+                            "receiver": "testaccountc",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountd",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountd",
+                            "receiver": "testaccountd",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccounte",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccounte",
+                            "receiver": "testaccounte",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccounte",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccounte",
+                            "receiver": "testaccounte",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountf",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountf",
+                            "receiver": "testaccountf",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountg",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountg",
+                            "receiver": "testaccountg",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccounth",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccounth",
+                            "receiver": "testaccounth",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccounti",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccounti",
+                            "receiver": "testaccounti",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountj",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountj",
+                            "receiver": "testaccountj",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountk",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountk",
+                            "receiver": "testaccountk",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountl",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountl",
+                            "receiver": "testaccountl",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountm",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountm",
+                            "receiver": "testaccountm",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountn",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountn",
+                            "receiver": "testaccountn",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccounto",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccounto",
+                            "receiver": "testaccounto",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountp",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountp",
+                            "receiver": "testaccountp",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountq",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountq",
+                            "receiver": "testaccountq",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountr",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountr",
+                            "receiver": "testaccountr",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccounts",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccounts",
+                            "receiver": "testaccounts",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountt",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountt",
+                            "receiver": "testaccountt",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountu",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountu",
+                            "receiver": "testaccountu",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountv",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountv",
+                            "receiver": "testaccountv",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountw",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountw",
+                            "receiver": "testaccountw",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountx",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountx",
+                            "receiver": "testaccountx",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccounty",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccounty",
+                            "receiver": "testaccounty",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "buyram",
+                        "authorization": [
+                            {
+                                "actor": "testaccountz",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "payer": "testaccountz",
+                            "receiver": "testaccountz",
+                            "quant": "50.0000 TLOS"
+                        }
+                    },
+
+
+
+
+
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccounta",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccounta",
+                            "receiver": "testaccounta",
+                            "stake_net_quantity": "5.0000 TLOS",
+                            "stake_cpu_quantity": "2995.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountb",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountb",
+                            "receiver": "testaccountb",
+                            "stake_net_quantity": "100.0000 TLOS",
+                            "stake_cpu_quantity": "2900.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountc",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountc",
+                            "receiver": "testaccountc",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountd",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountd",
+                            "receiver": "testaccountd",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccounte",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccounte",
+                            "receiver": "testaccounte",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountf",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountf",
+                            "receiver": "testaccountf",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountg",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountg",
+                            "receiver": "testaccountg",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccounth",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccounth",
+                            "receiver": "testaccounth",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccounti",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccounti",
+                            "receiver": "testaccounti",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountj",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountj",
+                            "receiver": "testaccountj",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountk",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountk",
+                            "receiver": "testaccountk",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountl",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountl",
+                            "receiver": "testaccountl",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountm",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountm",
+                            "receiver": "testaccountm",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountn",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountn",
+                            "receiver": "testaccountn",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccounto",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccounto",
+                            "receiver": "testaccounto",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountp",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountp",
+                            "receiver": "testaccountp",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountq",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountq",
+                            "receiver": "testaccountq",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountr",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountr",
+                            "receiver": "testaccountr",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccounts",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccounts",
+                            "receiver": "testaccounts",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountt",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountt",
+                            "receiver": "testaccountt",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountu",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountu",
+                            "receiver": "testaccountu",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountv",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountv",
+                            "receiver": "testaccountv",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountw",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountw",
+                            "receiver": "testaccountw",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountx",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountx",
+                            "receiver": "testaccountx",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccounty",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccounty",
+                            "receiver": "testaccounty",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    },
+                    {
+                        "account": "eosio",
+                        "name": "delegatebw",
+                        "authorization": [
+                            {
+                                "actor": "testaccountz",
+                                "permission": "active"
+                            }
+                        ],
+                        "data": {
+                            "from": "testaccountz",
+                            "receiver": "testaccountz",
+                            "stake_net_quantity": "500.0000 TLOS",
+                            "stake_cpu_quantity": "2500.0000 TLOS",
+                            "transfer": false
+                        }
+                    }
+
+
+
+
+
+
+
+
+                ]
+            },
+            "actions": [
+                {
+                    "account": "trailservice",
+                    "name": "newballot",
+                    "authorization": [
+                        {
+                            "actor": "testaccounta",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "ballot_name": "trailballot1",
+                        "category": "poll",
+                        "publisher": "testaccounta",
+                        "registry_symbol": "4,VOTE",
+                        "voting_method": "1tsquare1v",
+                        "initial_options": [
+                            "craig",
+                            "ed",
+                            "zane",
+                            "peter"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "editdetails",
+                    "authorization": [
+                        {
+                            "actor": "testaccounta",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "ballot_name": "trailballot1",
+                        "title": "2019 Election",
+                        "description": "Who should be President?",
+                        "ballot_info": "some website"
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "readyballot",
+                    "authorization": [
+                        {
+                            "actor": "testaccounta",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "ballot_name": "trailballot1",
+                        "end_time": "2019-08-08T01:00:00"
+                    }
+                },
+
+
+
+
+
+
+
+
+
+                {
+                    "account": "trailservice",
+                    "name": "regcommittee",
+                    "authorization": [
+                        {
+                            "actor": "testaccountz",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "committee_name": "cooldevs",
+                        "committee_title": "Cool Devs",
+                        "registry_symbol": "4,VOTE",
+                        "initial_seats": [
+                            "prez",
+                            "vp"
+                        ],
+                        "registree": "testaccountz"
+                    }
+                }
+
+
+
+
+
+
+
+
+
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountb",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountb",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountc",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountc",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "ed",
+                            "zane"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountc",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountc",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccounta",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccounta",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "peter",
+                            "zane"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountd",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountd",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccounte",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccounte",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "peter",
+                            "zane"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountf",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountf",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "ed",
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountg",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountg",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccounth",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccounth",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccounti",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccounti",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountj",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountj",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountk",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountk",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountl",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountl",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "ed"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountm",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountm",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountn",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountn",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccounto",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccounto",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountp",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountp",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountq",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountq",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountr",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountr",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "peter"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccounts",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccounts",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountt",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountt",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountu",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountu",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountv",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountv",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountw",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountw",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountx",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountx",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccounty",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccounty",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                },
+                {
+                    "account": "trailservice",
+                    "name": "castvote",
+                    "authorization": [
+                        {
+                            "actor": "testaccountz",
+                            "permission": "active"
+                        }
+                    ],
+                    "data": {
+                        "voter": "testaccountz",
+                        "ballot_name": "trailballot1",
+                        "options": [
+                            "craig"
+                        ]
+                    }
+                }
+
+
+
+
+
+
+
+            ],
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        }
+    ],
+    "pre-accounts": [
+        {
+            "name": "eosio.token",
+            "contract": "eosio.token",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "eosio.msig",
+            "contract": "eosio.msig",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "eosio.amend",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "eosio.saving",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "eosio.arb",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "eosio.bpay",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "eosio.names",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "eosio.ram",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "eosio.rex",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "eosio.ramfee",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "eosio.stake",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "eosio.vpay",
+            "keypair": {
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP",
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT"
+            }
+        },
+        {
+            "name": "testaccounta",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountb",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountc",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountd",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccounte",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountf",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountg",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccounth",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccounti",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountk",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountj",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountl",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountm",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountn",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccounto",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountp",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountq",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountr",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccounts",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountt",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountu",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountv",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountw",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountx",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccounty",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        },
+        {
+            "name": "testaccountz",
+            "keypair": {
+                "public": "EOS8Tgks3GenqBVNmSUjtGcnvzMV4ak5sgArGhfvsJChV9e715ruT",
+                "private": "5JwyVW4fjkpeDVZAjfpcunnUVh8CfFKBQmTqgFTbrkNSeSfhNMP"
+            }
+        }
+    ]
+}

@@ -1,12 +1,13 @@
 #include <example.hpp>
 
-example::example(name self, name code, datastream<const char*> ds) : contract(self, code, ds) {}
+example::example(name self, name code, datastream<const char*> ds) : contract(self, code, ds) { }
 
-example::~example() {}
+example::~example() { }
 
 //======================== actions ========================
 
 ACTION example::watchballot(name ballot_name, symbol registry_symbol, name committee_name, name seat_name) {
+    
     //open open_ballots table, search for open ballot
     openballots_table openballots(get_self(), get_self().value);
     auto ob = openballots.find(ballot_name.value);

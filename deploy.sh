@@ -34,11 +34,11 @@ while getopts ":c:a:t:h" opt; do
       ;;
     t ) 
         if [[ $OPTARG == "mainnet" ]]; then
-            url=http://api.tlos.goodblock.io
+            url="http://api.tlos.goodblock.io/"
         elif [[ $OPTARG == "testnet" ]]; then
-            url=https://testnet2.telos.eosdetroit.io
+            url="https://testnet2.telos.eosdetroit.io/"
         elif [[ $OPTARG == "local" ]]; then
-            url=http://127.0.0.1:8888
+            url="http://127.0.0.1:8888/"
         else
             echo "Please provide a deployment target with [-t] {TARGET_OPTION}. Options: [ mainnet, testnet, local ]"
             exit 1
