@@ -733,7 +733,6 @@ namespace trail {
                 return push_transaction( trx );
             }
 
-            //TODO: unvotes a single option
             // ACTION unvote(name voter, name ballot_name, name option_to_unvote);
 
             //rollback all votes on a ballot

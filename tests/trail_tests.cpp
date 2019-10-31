@@ -988,7 +988,6 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
 
         //one_token_square_one_vote testing
-        //TODO: this voting method isn't implemented correctly
         open_voting(voter1, one_token_square_one_vote, get_current_time_point_sec() + 86410);
         produce_blocks();
 
@@ -1105,11 +1104,24 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         //worker labor emplacement should be null, no work has been done
         BOOST_REQUIRE(get_labor(treasury_symbol, worker).is_null());
 
+        auto validate_bucket = [&](uint32_t rebal_count, uint32_t clean_count, asset rebal_volume) {
+            fc::variant bucket = get_labor_bucket(treasury_symbol, name("workers"));
+            cout << endl << "bucket: " << bucket << endl;
+
+            map<name, asset> claimable_volume = variant_to_map<name, asset>(bucket["claimable_volume"]);
+            map<name, uint32_t> claimable_events = variant_to_map<name, uint32_t>(bucket["claimable_events"]);
+
+            BOOST_REQUIRE_EQUAL(claimable_volume[name("rebalvolume")], rebal_volume);
+            BOOST_REQUIRE_EQUAL(claimable_events[name("rebalcount")], rebal_count);
+            BOOST_REQUIRE_EQUAL(claimable_events[name("cleancount")], clean_count);
+            cout << endl << endl;
+        };
+
         //rebalance votes and validate new quantity matches new stake
         rebalance(worker, voter1, ballot_name, { worker });
         produce_blocks();
 
-        // TODO: check labor_bucket validation
+        validate_bucket(0, 0, asset::from_string("0.0000 VOTE"));
 
         //ballot quantities should be updated to current stake in VOTE
         ballot_info = get_ballot(ballot_name);
@@ -1152,6 +1164,12 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         add_funds(eosio_name, eosio_name, treasury_symbol, name("workers"), asset::from_string("1000.0000 TLOS"));
         edit_pay_rate(eosio_name, name("workers"), treasury_symbol, 86400, asset::from_string("500.0000 TLOS"));
         BOOST_REQUIRE_EQUAL(get_payroll(treasury_symbol, name("workers"))["payroll_funds"].as<asset>(), asset::from_string("1000.0000 TLOS"));
+
+        fc::variant payroll = get_payroll(treasury_symbol, name("workers"));
+
+        BOOST_REQUIRE_EQUAL(payroll["payroll_funds"].as<asset>(), asset::from_string("1000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(payroll["period_length"].as<uint32_t>(), 86400);
+        BOOST_REQUIRE_EQUAL(payroll["per_period"].as<asset>(), asset::from_string("500.0000 TLOS"));\
 
         produce_blocks();
 
@@ -1218,18 +1236,35 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         produce_block(fc::days(2));
         produce_blocks();
 
+        auto validate_labor = [&](const auto& worker, asset rebal_volume, uint32_t rebal_count, uint32_t clean_count) {
+            fc::variant labor = get_labor(treasury_symbol, worker);
+            cout << endl << "labor: " << labor << endl;
+            map<name, asset> unclaimed_volume = variant_to_map<name, asset>(labor["unclaimed_volume"]);
+            map<name, uint32_t> unclaimed_events = variant_to_map<name, uint32_t>(labor["unclaimed_events"]);
 
-        fc::variant bucket = get_labor_bucket(treasury_symbol, name("workers"));
-        fc::variant payroll = get_payroll(treasury_symbol, name("workers"));
-        fc::variant labor = get_labor(treasury_symbol, worker);
+            BOOST_REQUIRE_EQUAL(unclaimed_volume[name("rebalvolume")], rebal_volume);
+            BOOST_REQUIRE_EQUAL(unclaimed_events[name("rebalcount")], rebal_count);
+            BOOST_REQUIRE_EQUAL(unclaimed_events[name("cleancount")], clean_count);
+            cout << endl << endl;
+        };
 
-        // cout << "bucket: " << bucket << endl << endl;
-        // cout << "payroll: " << payroll << endl << endl;
-        // cout << "labor: " << labor << endl << endl;
+        validate_labor(worker, asset::from_string("120.0000 VOTE"), 3, 3);
+        validate_labor(worker1, asset::from_string("40.0000 VOTE"), 2, 3);
+        validate_labor(worker2, asset::from_string("30.0000 VOTE"), 1, 0);
+        validate_labor(worker3, asset::from_string("20.0000 VOTE"), 1, 1);
 
         auto claim_validate = [&](const auto& worker) {
             asset worker_init_balance = base_tester::get_currency_balance(trail_name, tlos_sym, worker);
             cout << "initial balance: " << worker_init_balance << endl;
+            
+            fc::variant init_labor = get_labor(treasury_symbol, worker);
+            fc::variant init_bucket = get_labor_bucket(treasury_symbol, name("workers"));
+
+            map<name, asset> unclaimed_volume = variant_to_map<name, asset>(init_labor["unclaimed_volume"]);
+            map<name, uint32_t> unclaimed_events = variant_to_map<name, uint32_t>(init_labor["unclaimed_events"]);
+
+            map<name, asset> claimable_volume = variant_to_map<name, asset>(init_bucket["claimable_volume"]);
+            map<name, uint32_t> claimable_events = variant_to_map<name, uint32_t>(init_bucket["claimable_events"]);
 
             asset pay_out = get_worker_claim(worker, treasury_symbol);
             cout << "pay_out balance: " << pay_out << endl;
@@ -1241,6 +1276,12 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
             cout << "current balance: " << current_balance << endl;
 
             BOOST_REQUIRE_EQUAL(current_balance, worker_init_balance + pay_out);
+
+            validate_bucket( 
+                claimable_events[name("rebalcount")] - unclaimed_events[name("rebalcount")], 
+                claimable_events[name("cleancount")] - unclaimed_events[name("cleancount")],
+                claimable_volume[name("rebalvolume")] - unclaimed_volume[name("rebalvolume")]    
+            );
         };
 
         auto forfeit_validate = [&](const auto& worker) {
@@ -1250,6 +1291,15 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
             asset pay_out = get_worker_claim(worker, treasury_symbol);
             cout << "pay_out balance: " << pay_out << endl;
 
+            fc::variant init_labor = get_labor(treasury_symbol, worker);
+            fc::variant init_bucket = get_labor_bucket(treasury_symbol, name("workers"));
+
+            map<name, asset> unclaimed_volume = variant_to_map<name, asset>(init_labor["unclaimed_volume"]);
+            map<name, uint32_t> unclaimed_events = variant_to_map<name, uint32_t>(init_labor["unclaimed_events"]);
+
+            map<name, asset> claimable_volume = variant_to_map<name, asset>(init_bucket["claimable_volume"]);
+            map<name, uint32_t> claimable_events = variant_to_map<name, uint32_t>(init_bucket["claimable_events"]);
+
             forfeit_work(worker, treasury_symbol);
             BOOST_REQUIRE(get_labor(treasury_symbol, worker).is_null());
 
@@ -1257,14 +1307,21 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
             cout << "current balance: " << current_balance << endl;
 
             BOOST_REQUIRE_EQUAL(current_balance, worker_init_balance);
+            validate_bucket( 
+                claimable_events[name("rebalcount")] - unclaimed_events[name("rebalcount")], 
+                claimable_events[name("cleancount")] - unclaimed_events[name("cleancount")],
+                claimable_volume[name("rebalvolume")] - unclaimed_volume[name("rebalvolume")]    
+            );
         };
+
+        cout << get_labor_bucket(treasury_symbol, name("workers")) << endl;
 
         claim_validate(worker);
         claim_validate(worker1);
         claim_validate(worker2);
         forfeit_validate(worker3);
 
-        // TODO: validate labor_bucket post clean_up and rebalence, bucket should have 0s for counts and rebalance volume
+        validate_bucket(0, 0, asset::from_string("0.0000 VOTE"));
 
     } FC_LOG_AND_RETHROW()
     
