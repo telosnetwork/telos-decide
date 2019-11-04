@@ -4,7 +4,7 @@ In this guide we will explore all the different Treasury interactions that can b
 
 #### What is a Treasury?
 
-A Trail Treasury is a place to keep track of data about a certain family of token. Information like the current supply of tokens, the max supply, the treasury settings, and the name of the current treasury manager are all tracked on the Treasury. Note that tokens cannot exist on Trail without an accompanying Treasury.
+A Treasury is a place to keep track of data about a certain type of token. Information like the current supply of tokens, the max supply, the treasury settings, and the name of the current treasury manager are all tracked on the Treasury. Note that tokens cannot exist on Trail without an accompanying Treasury.
 
 #### What is a Treasury Symbol?
 

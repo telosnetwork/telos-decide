@@ -4,7 +4,7 @@ In this guide we will explore all the different interactions Workers can perform
 
 ### What is a Worker?
 
-A worker on the Trail Voting Platform is an account that watches for jobs and completes them in return for payment. There are many different kinds of jobs and they become available based on certain types of activity within the platform.
+A worker is an account that watches for jobs and completes them in return for payment. There are many different kinds of jobs and they become available based on certain types of activity within the platform.
 
 ### What Kinds of Jobs are Available?
 
@@ -30,29 +30,39 @@ For example, if a ballot reads a voter's staked balance when they vote, then reg
 
 ### 2. Perform Work
 
-...
+Work can be performed by calling the appropriate worker action. Make sure to put your account name in the "worker" parameter.
+
+Submit a `rebalance()` action to perform a rebalance on an active vote. The work will be logged on the vote, and when the vote is cleaned the total rebalance work will be credited to the worker's account.
+
+If a vote is ready to be cleaned, call the `cleanupvote()` action to clean it up. Cleaning up votes submits all the reblanace work that was done on it as well.
 
 ### 3. Getting Paid
 
-Workers may call the `claimpayment()` action once every 24 hours to claim their earned payment for work performed since the last `claimpayment()` call.
+Workers may call the `claimpayment()` action to claim their earned payment for work performed since the last `claimpayment()` call.
 
-When calling `claimpayment()` a worker must specify which registry they are claiming work for, as worker funds are managed on a registry-by-registry basis. Only work performed for ballots under that registry will be paid - this way its always clear where worker fund money is going and registries only need to worry about funding their own ballots.
+When calling `claimpayment()` a worker must specify which treasury they are claiming work for, as worker funds are managed on a treasury-by-treasury basis. Only work performed for ballots under that treasury will be paid - this way its always clear where worker fund money is going and treasuries only need to worry about funding their own ballots.
 
-For example, all ballots using the `TEST` registry will pay workers from the `TEST` registry's worker fund. Funds for the `CRAIG` registry will never be paid for work done on the `TEST` registry, and vice versa, ad infinitum.
+For example, all ballots using the `TEST` treasury will pay workers from the `TEST` treasury's worker fund. Funds for the `CRAIG` treasury will never be paid for work done on the `TEST` treasury, and vice versa, ad infinitum.
 
 #### How is Payment Calculated?
 
-Payment is calculated based on 3 worker metrics: Rebalance Volume, Rebalance Count, and Cleanup Count.
+Payment is calculated based on 3 Work Metrics: Rebalance Volume, Rebalance Count, and Cleanup Count.
 
-`Rebalance Volume` is the total volume of rebalance work done for a registry, measured by the amount of raw tokens rebalanced (raw tokens being the pre-weighted amount).
+`Rebalance Volume` is the total volume of rebalance work done for a treasury, measured by the amount of raw tokens rebalanced (raw tokens being the pre-weighted amount).
 
-`Rebalance Count` is the total number of valid rebalances done for a registry by the worker.
+`Rebalance Count` is the total number of valid rebalances done for a treasury by the worker.
 
-`Cleanup Count` is the total number of cleanups done for a registry by the worker.
+`Cleanup Count` is the total number of cleanups done for a treasury by the worker.
 
-Each metric is weighted evenly, and the percentage of work done in relation to the total work done on the registry is added together and divided by 3.
+Each metric is weighted evenly, and the total earned payout is equal to the total amount of work being claimed by the worker proportional to all the currently unclaimed work in the treasury. In other words, if a worker is claiming 15% of all unclaimed work from a treasury with 100 TLOS available in their worker payroll, the payout will be 15 TLOS.
 
-> For example:
+#### Payment Decay
+
+Approved work volume has a 1 day grace period to be claimed before it begins to decay at a rate of 1% per day.
+
+After 10 days without claiming, the work may instead be claimed or forfeited by another worker.
+
+### Example
 
 Worker Fund: 500 TLOS
 
@@ -71,6 +81,6 @@ Worker Fund * Total Work Proportion = Total Payout
 500 * .2659 = 132.95 TLOS Total Payout
 ```
 
-### 4. Unregistering and Forfeiting Payment
+### 4. Forfeiting Work
 
-...
+Work performed can optionally be forfeited at any time by the worker with the `forfeitwork()` action. This will delete all work done by the worker for the treasury and forfeit all payment they would otherwise receive. 

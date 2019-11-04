@@ -1,10 +1,10 @@
 ## Trail Ballot Guide
 
-...
+In this guide we will explore all the different Ballot interactions that can be performed on the Trail Voting Platform.
 
 ### Ballot Creation
 
-...
+To create a new ballot, a voter can call the `newballot()` action.
 
 #### Ballot Statuses
 
@@ -25,7 +25,6 @@
 | 1token1vote | Raw weight is split among all selections. | 3.00 TEST | 1.00 TEST Each |
 | 1tsquare1v | Raw weight is squared and split among selections. At ballot closure each option's total will be square-rooted | 3.00 TEST | 9.00 TEST Each |
 | quadratic | Raw weight is squared and split among selections. | 3.00 TEST | 9.00 Each |
-| ranked | Votes are cast in order of preference, with the weighted total divided by the option's position. | 3.00 TEST | #1 = 3.00 TEST, #2 = 1.50 TEST, ... |
 
 #### Ballot Settings
 
