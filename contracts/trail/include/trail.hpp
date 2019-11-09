@@ -425,6 +425,8 @@ namespace trailservice {
             time_point_sec end_time; //time that voting closes
 
             uint64_t primary_key() const { return ballot_name.value; }
+            uint64_t by_symbol() const { return treasury_symbol.code().raw(); }
+            uint64_t by_end_time() const { return static_cast<uint64_t>(end_time.utc_seconds); }
             EOSLIB_SERIALIZE(ballot, 
                 (ballot_name)(category)(publisher)(status)
                 (title)(description)(content)
@@ -432,7 +434,10 @@ namespace trailservice {
                 (total_voters)(total_delegates)(total_raw_weight)(cleaned_count)(settings)
                 (begin_time)(end_time))
         };
-        typedef multi_index<name("ballots"), ballot> ballots_table;
+        typedef multi_index<name("ballots"), ballot,
+            indexed_by<name("bysymbol"), const_mem_fun<ballot, uint64_t, &ballot::by_symbol>>,
+            indexed_by<name("byendtime"), const_mem_fun<ballot, uint64_t, &ballot::by_end_time>>
+        > ballots_table;
 
         //scope: ballot_name.value
         //ram: 
