@@ -34,7 +34,7 @@ while getopts ":c:a:t:h" opt; do
       ;;
     t ) 
         if [[ $OPTARG == "mainnet" ]]; then
-            url="http://api.tlos.goodblock.io/"
+            url="https://telos.caleos.io/"
         elif [[ $OPTARG == "testnet" ]]; then
             url="https://api-test.tlos.goodblock.io/"
         elif [[ $OPTARG == "local" ]]; then
