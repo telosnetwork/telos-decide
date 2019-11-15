@@ -4,7 +4,7 @@ In this guide we will explore all the different Treasury interactions that can b
 
 #### What is a Treasury?
 
-A Trail Treasury is a place to keep track of data about a certain family of token. Information like the current supply of tokens, the max supply, the treasury settings, and the name of the current treasury manager are all tracked on the Treasury. Note that tokens cannot exist on Trail without an accompanying Treasury.
+A Treasury is a place to keep track of data about a certain type of token. Information like the current supply of tokens, the max supply, the treasury settings, and the name of the current treasury manager are all tracked on the Treasury. Note that tokens cannot exist on Trail without an accompanying Treasury.
 
 #### What is a Treasury Symbol?
 
@@ -58,14 +58,14 @@ cleos push action trailservice regvoter '["craig.tf", "2,CRAIG", null]' -p craig
 
 #### Treasury Settings
 
-| Setting | Description |
+| Setting | Description | Default |
 | --- | --- |
-| transferable | Allows tokens to be transferred. |
-| burnable | Allows tokens to be burned by the manager. |
-| reclaimable | Allows tokens to be reclaimed by the manager. |
-| stakeable | Allows tokens to be staked. |
-| unstakeable | Allows tokens to be unstaked. |
-| maxmutable | Allows max supply to be mutated. |
+| transferable | Allows tokens to be transferred. | false |
+| burnable | Allows tokens to be burned by the manager. | false |
+| reclaimable | Allows tokens to be reclaimed by the manager. | false |
+| stakeable | Allows tokens to be staked. | false |
+| unstakeable | Allows tokens to be unstaked. | false |
+| maxmutable | Allows max supply to be mutated. | false |
 
 #### Treasury Access
 

@@ -3,11 +3,11 @@
 ---
 spec_version: "0.2.0"
 title: Set Trail Config
-summary: 'Set Trail Config with version {{nowrap trail_version}}'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+summary: 'Set Trail Config Version'
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/admin.png#9bf1cec664863bd6aaac0f814b235f8799fb02c850e9aa5da34e8a004bd6518e
 ---
 
-{{$action.account}} sets the Trail Service config.
+{{$action.account}} sets the Trail Service config to version {{trail_version}}.
 
 <h1 class="contract">updatefee</h1>
 
@@ -15,7 +15,7 @@ icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
 spec_version: "0.2.0"
 title: Update Fee
 summary: 'Update Platform Fee'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/admin.png#9bf1cec664863bd6aaac0f814b235f8799fb02c850e9aa5da34e8a004bd6518e
 ---
 
 Trail Admin {{$action.account}} updates {{fee_name}} fee to {{fee_amount}}.
@@ -26,7 +26,7 @@ Trail Admin {{$action.account}} updates {{fee_name}} fee to {{fee_amount}}.
 spec_version: "0.2.0"
 title: Update Time Setting
 summary: 'Update Platform Time Setting'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/admin.png#9bf1cec664863bd6aaac0f814b235f8799fb02c850e9aa5da34e8a004bd6518e
 ---
 
 Trail Admin {{$action.account}} udpates the {{time_name}} time to {{length}} seconds.
@@ -37,7 +37,7 @@ Trail Admin {{$action.account}} udpates the {{time_name}} time to {{length}} sec
 spec_version: "0.2.0"
 title: Define New Treasury
 summary: 'Define New Treasury'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/resource.png#3830f1ce8cb07f7757dbcf383b1ec1b11914ac34a1f9d8b065f07600fa9dac19
 ---
 
 {{manager}} is defining a new treasury with a max supply of {{max_supply}} and an initial access method of {{access}}.
@@ -52,7 +52,7 @@ All settings on the new treasury will be initialized to false.
 spec_version: "0.2.0"
 title: Edit Treasury Info
 summary: 'Edit Treasury Info'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/resource.png#3830f1ce8cb07f7757dbcf383b1ec1b11914ac34a1f9d8b065f07600fa9dac19
 ---
 
 {{$action.account}} sets the treasury title to {{title}}, the description to {{description}}, and the icon to {{icon}} for the {{treasury_symbol}} treasury.
@@ -62,8 +62,8 @@ icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
 ---
 spec_version: "0.2.0"
 title: Toggle Treasury Setting
-summary: 'Toggle Treasury Setting {{nowrap setting_name}}'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+summary: 'Toggle Treasury Setting'
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/resource.png#3830f1ce8cb07f7757dbcf383b1ec1b11914ac34a1f9d8b065f07600fa9dac19
 ---
 
 {{$action.account}} toggles the treasury setting {{setting_name}} for the {{treasury_symbol}} treasury.
@@ -74,7 +74,7 @@ icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
 spec_version: "0.2.0"
 title: Mint Tokens
 summary: 'Mint Treasury Tokens'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Treasury Manager {{$action.account}} mints {{quantity}} to {{to}} account.
@@ -85,7 +85,7 @@ Treasury Manager {{$action.account}} mints {{quantity}} to {{to}} account.
 spec_version: "0.2.0"
 title: Transfer Tokens
 summary: 'Transfer Treasury Tokens'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/transfer.png#5dfad0df72772ee1ccc155e670c1d124f5c5122f1d5027565df38b418042d1dd
 ---
 
 Voter {{$action.account}} transfers {{quantity}} to {{to}}.
@@ -96,7 +96,7 @@ Voter {{$action.account}} transfers {{quantity}} to {{to}}.
 spec_version: "0.2.0"
 title: Burn Tokens
 summary: 'Burn Treasury Tokens from Manager Balance'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Treasury Manager {{$action.account}} burns {{quantity}} from their account.
@@ -107,7 +107,7 @@ Treasury Manager {{$action.account}} burns {{quantity}} from their account.
 spec_version: "0.2.0"
 title: Reclaim Tokens
 summary: 'Reclaim Treasury Tokens from Voter'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Treasury manager {{$action.account}} reclaims {{quantity}} from {{voter}}.
@@ -118,7 +118,7 @@ Treasury manager {{$action.account}} reclaims {{quantity}} from {{voter}}.
 spec_version: "0.2.0"
 title: Mutate Max Supply
 summary: 'Mutate Treasury Max Supply'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Treasury Manager {{$action.account}} mutates the {{treasury_symbol}} treasury's max supply to {{new_max_supply}}.
@@ -129,7 +129,7 @@ Treasury Manager {{$action.account}} mutates the {{treasury_symbol}} treasury's 
 spec_version: "0.2.0"
 title: Set Treasury Unlocker
 summary: 'Set Treasury Unlocker Account and Permission'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Treasury Manager {{$action.account}} sets the {{treasury_symbol}} unlocker auth to {{new_unlock_acct}}@{{new_unlock_auth}}.
@@ -140,7 +140,7 @@ Treasury Manager {{$action.account}} sets the {{treasury_symbol}} unlocker auth 
 spec_version: "0.2.0"
 title: Lock Treasury Settings
 summary: 'Lock Treasury Settings'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Treasury Manager {{$action.account}} locks the {{treasury_symbol}} treasury.
@@ -151,7 +151,7 @@ Treasury Manager {{$action.account}} locks the {{treasury_symbol}} treasury.
 spec_version: "0.2.0"
 title: Unlock Treasury Settings
 summary: 'Unlock Treasury Settings'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Treasury Unlocker {{$action.account}} unlocks the {{treasury_symbol}} treasury.
@@ -162,7 +162,7 @@ Treasury Unlocker {{$action.account}} unlocks the {{treasury_symbol}} treasury.
 spec_version: "0.2.0"
 title: Add Payroll Funds
 summary: 'Add to Treasury Payroll Funds'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 {{$action.account}} adds {{quantity}} to the {{treasury_symbol}}'s {{payroll_name}} payroll.
@@ -173,7 +173,7 @@ icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
 spec_version: "0.2.0"
 title: Edit Payroll Pay Rate
 summary: 'Edit Payroll Pay Rate'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Treasury Manager {{$action.account}} changes {{treasury_symbol}}'s {{payroll_name}} pay rate to {{per_period}} per {{period_length}} second period.
@@ -184,7 +184,7 @@ Treasury Manager {{$action.account}} changes {{treasury_symbol}}'s {{payroll_nam
 spec_version: "0.2.0"
 title: New Treasury Ballot
 summary: 'Create New Treasury Ballot'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Voter {{publisher}} creates the {{ballot_name}} ballot for the {{treasury_symbol}} treasury.
@@ -195,7 +195,7 @@ Voter {{publisher}} creates the {{ballot_name}} ballot for the {{treasury_symbol
 spec_version: "0.2.0"
 title: Edit Ballot Info
 summary: 'Edit Ballot Info'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Ballot publiser {{$action.account}} edits the ballot title to {{title}}, the description to {{description}}, and the content to {{content}}.
@@ -206,7 +206,7 @@ Ballot publiser {{$action.account}} edits the ballot title to {{title}}, the des
 spec_version: "0.2.0"
 title: Toggle Ballot Setting
 summary: 'Toggle Ballot Setting'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Ballot publisher {{$action.account}} toggles the {{setting_name}} on the {{ballot_name}} ballot.
@@ -217,7 +217,7 @@ Ballot publisher {{$action.account}} toggles the {{setting_name}} on the {{ballo
 spec_version: "0.2.0"
 title: Edit Ballot Min/Max
 summary: 'Edit Ballot Min/Max Options'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Ballot publisher {{$action.account}} edits number of minimum vote options to {{new_min_options}}, and the max vote options to {{new_max_options}}. This means voters can select between {{new_min_options}} and {{new_max_options}} options when voting.
@@ -228,7 +228,7 @@ Ballot publisher {{$action.account}} edits number of minimum vote options to {{n
 spec_version: "0.2.0"
 title: Add Ballot Option
 summary: 'Add Ballot Option'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Ballot publisher {{$action.account}} adds the {{new_option_name}} option to the {{ballot_name}} ballot.
@@ -239,7 +239,7 @@ Ballot publisher {{$action.account}} adds the {{new_option_name}} option to the 
 spec_version: "0.2.0"
 title: Remove Ballot Option
 summary: 'Remove Ballot Option'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Ballot publisher {{$action.account}} removes the {{option_name}} option from the {{ballot_name}} ballot.
@@ -250,7 +250,7 @@ Ballot publisher {{$action.account}} removes the {{option_name}} option from the
 spec_version: "0.2.0"
 title: Open Ballot Voting
 summary: 'Open Ballot For Voting'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Ballot puboisher {{$action.account}} opens voting on {{ballot_name}} ballot until {{end_time}}.
@@ -261,7 +261,7 @@ Ballot puboisher {{$action.account}} opens voting on {{ballot_name}} ballot unti
 spec_version: "0.2.0"
 title: Cancel Ballot
 summary: 'Cancel Ballot'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Ballot publisher {{$action.account}} cancels the {{ballot_name}} ballot and forfeits all fees spent in its creation.
@@ -276,7 +276,7 @@ The {{ballot_name}} will be changed to the "cancelled" status. From there, it ca
 spec_version: "0.2.0"
 title: Delete Ballot
 summary: 'Delete Ballot'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 {{$action.account}} deletes the {{ballot_name}} ballot.
@@ -287,7 +287,7 @@ icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
 spec_version: "0.2.0"
 title: Post Light Ballot Results
 summary: 'Post Light Ballot Results'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Ballot publisher {{$action.account}} posts the results of the {{ballot_name}} light ballot.
@@ -298,7 +298,7 @@ Ballot publisher {{$action.account}} posts the results of the {{ballot_name}} li
 spec_version: "0.2.0"
 title: Close Ballot Voting
 summary: 'Close Ballot Voting'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Ballot publisher {{$action.account}} closes the completed {{ballot_name}} ballot.
@@ -309,7 +309,7 @@ Ballot publisher {{$action.account}} closes the completed {{ballot_name}} ballot
 spec_version: "0.2.0"
 title: Broadcast Ballot Results
 summary: 'Broadcast Ballot Results'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Broadcasts the final ballot results to the ballot publisher's account.
@@ -320,7 +320,7 @@ Broadcasts the final ballot results to the ballot publisher's account.
 spec_version: "0.2.0"
 title: Archive Ballot
 summary: 'Archive Ballot'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Ballot publisher {{$action.account}} archives the {{ballot_name}} ballot until {{archived_until}}.
@@ -331,7 +331,7 @@ Ballot publisher {{$action.account}} archives the {{ballot_name}} ballot until {
 spec_version: "0.2.0"
 title: Unarchive Ballot
 summary: 'Unarchive Ballot'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3065f31a5c5d654
 ---
 
 Ballot archiver {{$action.account}} unarchives the {{ballot_name}} ballot.
@@ -342,7 +342,7 @@ Ballot archiver {{$action.account}} unarchives the {{ballot_name}} ballot.
 spec_version: "0.2.0"
 title: Register Voter
 summary: 'Register Voter'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/account.png#3d55a2fc3a5c20b456f5657faf666bc25ffd06f4836c5e8256f741149b0b294f
 ---
 
 Register the new voter {{$action.account}} to the {{treasury_symbol}} treasury.
@@ -353,7 +353,7 @@ Register the new voter {{$action.account}} to the {{treasury_symbol}} treasury.
 spec_version: "0.2.0"
 title: Unregister voter
 summary: 'Unregister Voter'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/account.png#3d55a2fc3a5c20b456f5657faf666bc25ffd06f4836c5e8256f741149b0b294f
 ---
 
 Unregister the {{$action.account}} voter from the {{treasury_symbol}} treasury.
@@ -364,7 +364,7 @@ Unregister the {{$action.account}} voter from the {{treasury_symbol}} treasury.
 spec_version: "0.2.0"
 title: Cast Vote
 summary: 'Cast Vote on a Ballot'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/voting.png#db28cd3db6e62d4509af3644ce7d377329482a14bb4bfaca2aa5f1400d8e8a84
 ---
 
 Voter {{$action.account}} casts votes for {{options}} on the {{ballot_name}} ballot.
@@ -375,7 +375,7 @@ Voter {{$action.account}} casts votes for {{options}} on the {{ballot_name}} bal
 spec_version: "0.2.0"
 title: Unvote All Options
 summary: 'Unvote All Options'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/voting.png#db28cd3db6e62d4509af3644ce7d377329482a14bb4bfaca2aa5f1400d8e8a84
 ---
 
 Voter {{$action.account}} unvotes all options on their vote.
@@ -386,7 +386,7 @@ Voter {{$action.account}} unvotes all options on their vote.
 spec_version: "0.2.0"
 title: Stake Tokens
 summary: 'Stake Tokens'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/voting.png#db28cd3db6e62d4509af3644ce7d377329482a14bb4bfaca2aa5f1400d8e8a84
 ---
 
 Voter {{$action.account}} stakes {{quantity}}.
@@ -397,7 +397,7 @@ Voter {{$action.account}} stakes {{quantity}}.
 spec_version: "0.2.0"
 title: Unstake Tokens
 summary: 'Unstake Tokens'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/voting.png#db28cd3db6e62d4509af3644ce7d377329482a14bb4bfaca2aa5f1400d8e8a84
 ---
 
 Voter {{$action.account}} unstakes {{quantity}}.
@@ -408,7 +408,7 @@ Voter {{$action.account}} unstakes {{quantity}}.
 spec_version: "0.2.0"
 title: Rebalance Vote
 summary: 'Rebalance Vote'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/voting.png#db28cd3db6e62d4509af3644ce7d377329482a14bb4bfaca2aa5f1400d8e8a84
 ---
 
 Worker {{$action.account}} rebalances {{voter}}'s vote on the {{ballot_name}} ballot.
@@ -419,7 +419,7 @@ Worker {{$action.account}} rebalances {{voter}}'s vote on the {{ballot_name}} ba
 spec_version: "0.2.0"
 title: Clean Vote
 summary: 'Clean Vote'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/voting.png#db28cd3db6e62d4509af3644ce7d377329482a14bb4bfaca2aa5f1400d8e8a84
 ---
 
 Worker {{$action.account}} cleans {{voter}}'s vote on the {{ballot_name}}.
@@ -430,7 +430,7 @@ Worker {{$action.account}} cleans {{voter}}'s vote on the {{ballot_name}}.
 spec_version: "0.2.0"
 title: Forfeit Work
 summary: 'Forfeit Work'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/voting.png#db28cd3db6e62d4509af3644ce7d377329482a14bb4bfaca2aa5f1400d8e8a84
 ---
 
 Worker {{$action.account}} forfeits all currently commited work on the {{treasury_symbol}} treasury.
@@ -441,7 +441,7 @@ Worker {{$action.account}} forfeits all currently commited work on the {{treasur
 spec_version: "0.2.0"
 title: Claim Payment
 summary: 'Claim Payment'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/account.png#3d55a2fc3a5c20b456f5657faf666bc25ffd06f4836c5e8256f741149b0b294f
 ---
 
 Worker {{$action.account}} claims payment for all committed work on the {{treasury_symbol}} treasury.
@@ -452,7 +452,7 @@ Worker {{$action.account}} claims payment for all committed work on the {{treasu
 spec_version: "0.2.0"
 title: Withdraw TLOS
 summary: 'Withdraw TLOS from Trail to Wallet'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/account.png#3d55a2fc3a5c20b456f5657faf666bc25ffd06f4836c5e8256f741149b0b294f
 ---
 
 Account {{$action.account}} withdraws {{quantity}} from the Trail platform.
@@ -463,7 +463,7 @@ Account {{$action.account}} withdraws {{quantity}} from the Trail platform.
 spec_version: "0.2.0"
 title: Register New Committee
 summary: 'Register New Committee'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/account.png#3d55a2fc3a5c20b456f5657faf666bc25ffd06f4836c5e8256f741149b0b294f
 ---
 
 Voter {{$action.account}} registers the {{committee_name}} committee for the {{treasury_symbol}} treasury.
@@ -474,7 +474,7 @@ Voter {{$action.account}} registers the {{committee_name}} committee for the {{t
 spec_version: "0.2.0"
 title: Add Committee Seat
 summary: 'Add Committee Seat'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/account.png#3d55a2fc3a5c20b456f5657faf666bc25ffd06f4836c5e8256f741149b0b294f
 ---
 
 Committee updater {{$action.account}} adds the {{seat_name}} seat to the {{committee_name}} committee.
@@ -485,7 +485,7 @@ Committee updater {{$action.account}} adds the {{seat_name}} seat to the {{commi
 spec_version: "0.2.0"
 title: Remove Committee Seat
 summary: 'Remove Committee Seat'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/account.png#3d55a2fc3a5c20b456f5657faf666bc25ffd06f4836c5e8256f741149b0b294f
 ---
 
 Committee updater {{$action.account}} removes the {{seat_name}} seat from the {{committee_name}} committee.
@@ -496,7 +496,7 @@ Committee updater {{$action.account}} removes the {{seat_name}} seat from the {{
 spec_version: "0.2.0"
 title: Assign Committee Seat
 summary: 'Assign Committee Seat'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/account.png#3d55a2fc3a5c20b456f5657faf666bc25ffd06f4836c5e8256f741149b0b294f
 ---
 
 Committee updater {{$action.account}} assigns {{seat_holder}} to the {{seat_name}} seat in the {{committee_name}} committee.
@@ -507,7 +507,7 @@ Committee updater {{$action.account}} assigns {{seat_holder}} to the {{seat_name
 spec_version: "0.2.0"
 title: Set Committee Updater
 summary: 'Set Committee Updater'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/account.png#3d55a2fc3a5c20b456f5657faf666bc25ffd06f4836c5e8256f741149b0b294f
 ---
 
 Committee updater {{$action.account}} sets the updater to {{updater_acct}}@{{updater_auth}} for the {{committee_name}} committee.
@@ -518,7 +518,7 @@ Committee updater {{$action.account}} sets the updater to {{updater_acct}}@{{upd
 spec_version: "0.2.0"
 title: Delete Committee
 summary: 'Delete Committee'
-icon: @ICON_BASE_URL@/@ADMIN_ICON_URI@
+icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/account.png#3d55a2fc3a5c20b456f5657faf666bc25ffd06f4836c5e8256f741149b0b294f
 ---
 
 Committee Updater {{$action.account}} deletes the committee.

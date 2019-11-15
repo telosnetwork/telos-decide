@@ -10,15 +10,15 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 * `Advanced Voting Methods`
 
-    The Trail Voting Platform boasts an extensive set of voting methods and customization options. Voting Methods available include: `1acct1vote`, `1tokennvote`, `1token1vote`, `1tsquare1v`, and `quadratic`. For more information on the different voting methods and how they are used see the `Voting Methods` section of the [Trail Developer Guide](docs/DeveloperGuide.md).
+    The Trail Voting Platform boasts an extensive set of voting methods that transform how votes are applied to ballot options. With these voting methods, ballot publishers are able to customize how they want to handle differences in voters' token balances and how those tokens should be cast among multiple choices on the ballot.
 
 * `Custom Token Treasuries`
 
-    Any user on the Telos Blockchain Network may create a custom token treasury that automatically inherits Trail's entire suite of voting services. These registries can also be customized to allow or disallow specific behaviors like transferring, burning, staking, or reclaiming of tokens.
+    Any user on the Telos Blockchain Network may create a custom token treasury that automatically inherits Trail's entire suite of voting services. These treasuries govern the minting and distribution of tokens and can also be customized to allow or disallow specific token behaviors like transferring, burning, staking, or reclaiming. Once a treasury has been created, any voter with a balance of it's tokens may publish public ballots accessible to all other holders of that same token.
 
 * `Committee Management Tools`
 
-    Trail offers a suite of committee creation and management tools that are available to any active token treasury and its voters. Developers can also hook their external smart contracts into Trail's committee tools to enable complete on-chain management of committees and their members.
+    Trail offers a suite of committee creation and management actions that are available to any active token treasury and its voters. Developers can also hook their external smart contracts into Trail's committee tools to enable complete on-chain management of committees and their members.
 
 * `Traceable Vote Integrity`
 
@@ -42,17 +42,44 @@ Trail is an on-chain voting platform for the Telos Blockchain Network that offer
 
 | Name | Description |
 | --- | --- |
-| [Developer Guide](docs/DeveloperGuide.md) | Breakdown of Trail features for developers interfacing with Trail. |
-| [Voter Guide](docs/VoterGuide.md) | How to become a voter and how voting works. |
+| [Starter Guide](docs/StarterGuide.md) | Breakdown of Trail features for developers interfacing with Trail. |
+| [Voter Guide](docs/VoterGuide.md) | How to become a voter and participate in ballots. |
 | [Treasury Guide](docs/TreasuryGuide.md) | How to create and manage Trail Treasuries. |
-| [Worker Guide](docs/WorkerGuide.md) | How to become a worker and the types of jobs available for workers to perform. |
+| [Worker Guide](docs/WorkerGuide.md) | How to perform work and the types of jobs available. |
 | [Contract API](docs/ContractAPI.md) | Full Action and Table Breakdown. |
 
-## Join the Firewatch
+## Roadmap
+
+### Ongoing
+
+- Platform Optimization
+
+### Q4 2019
+
+- Example Guides
+- External Contract Examples
+
+### Q1 2020
+
+- Additional Worker Services
+- Additional Voting Methods
+
+### Q2 2020
+
+- Delegates, Delegate Voting
+- External Token Mirroring
+
+### Down Yonder
+
+- Optional Identity Services
+
+## Idea Board
+
+### Join the Firewatch
 
 The Firewatch is a league of voters and developers dedicated to running a secure and optimized voting platform. Firewatch workers may claim a portion of Trail profits proportional to their recent contributions, and may also be eligible for platform-wide leaderboard rewards.
 
-## The TRAIL Token
+### The TRAIL Token
 
 Trail has a platform specific token that is only obtainable by performing various jobs and tasks that help optimize the platform by cleaning expired votes, rebalancing active vote receipts, and completing and interacting with valid ballots.
 
@@ -63,29 +90,6 @@ Proposed Use Cases:
 - Burn in exchange for listing on Featured table.
 
 **Disclaimer:** *The TRAIL token is not an ICO nor should it be considered for investment or speculative purposes. It is a reward for user assistance in maintaining an efficiently run voting platform and will have evolving purposes as the platform grows.*
-
-## Roadmap
-
-### Ongoing
-
-- Platform Optimization
-- Firewatch Incentivization
-
-### Q4 2019
-
-- Example Guides
-- External Contract Examples
-- Delegates, Delegate Voting
-- External Token Mirroring
-
-### Q1 2020
-
-- Additional Worker Services
-- Additional Voting Methods
-
-### Down Yonder
-
-- Optional Identity Services
 
 ## References
 

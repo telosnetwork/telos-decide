@@ -30,7 +30,7 @@ Once a suitable treasury has been found, the voter (or the referrer) must call t
 
 - Voter
 
-    This is be the name of the voter's Telos account.
+    This is be the name of the new voter's Telos account.
 
     EX: `testaccounta` or `craig.tf`
 
@@ -86,7 +86,7 @@ Sometimes voters want to retract previously submitted votes. Note that unvoting 
 
 ### Staking and Unstaking
 
-Certain treasuries will allow or disallow staking of it's tokens. If staking is allowed, vote weights will be pulled from the voter's staked amount instead of liquid when casting votes. 
+Certain treasuries will allow or disallow staking of tokens. If staking is allowed, vote weights will be pulled from the voter's staked amount instead of liquid when casting votes. 
 
 ## Voters Table Breakdown
 
@@ -100,6 +100,7 @@ Scope: `your-voter-name`
 | --- | --- | --- |
 | liquid | asset | Balance of liquid tokens. |
 | staked | asset | Balance of staked tokens. |
+| staked_time | time_point_sec | Time point the last stake or unstake occurred. |
 | delegated | asset | Tokens delegated to a registered delegate. |
 | delegated_to | name | The delegate account to which the voter's tokens are delegated. |
 | delegation_time | time_point_sec | Time point the last delegation or undelegation occurred. |

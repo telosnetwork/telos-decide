@@ -21,11 +21,10 @@ using namespace eosio;
 using namespace std;
 
 namespace trailservice {
+    
     CONTRACT trail : public contract {
 
     public:
-
-        //TODO: add payment decay to claimpayment
 
         trail(name self, name code, datastream<const char*> ds);
 
@@ -83,6 +82,7 @@ namespace trailservice {
         ACTION newtreasury(name manager, asset max_supply, name access);
         using newtreasury_action = action_wrapper<"newtreasury"_n, &trail::newtreasury>;
 
+        //edit treasury title, description, and icon
         ACTION edittrsinfo(symbol treasury_symbol, string title, string description, string icon);
         using edittrsinfo_action = action_wrapper<"edittrsinfo"_n, &trail::edittrsinfo>;
 
@@ -425,6 +425,11 @@ namespace trailservice {
             time_point_sec end_time; //time that voting closes
 
             uint64_t primary_key() const { return ballot_name.value; }
+            uint64_t by_category() const { return category.value; }
+            uint64_t by_status() const { return status.value; }
+            uint64_t by_symbol() const { return treasury_symbol.code().raw(); }
+            uint64_t by_end_time() const { return static_cast<uint64_t>(end_time.utc_seconds); }
+            
             EOSLIB_SERIALIZE(ballot, 
                 (ballot_name)(category)(publisher)(status)
                 (title)(description)(content)
@@ -432,7 +437,12 @@ namespace trailservice {
                 (total_voters)(total_delegates)(total_raw_weight)(cleaned_count)(settings)
                 (begin_time)(end_time))
         };
-        typedef multi_index<name("ballots"), ballot> ballots_table;
+        typedef multi_index<name("ballots"), ballot,
+            indexed_by<name("bycategory"), const_mem_fun<ballot, uint64_t, &ballot::by_category>>,
+            indexed_by<name("bystatus"), const_mem_fun<ballot, uint64_t, &ballot::by_status>>,
+            indexed_by<name("bysymbol"), const_mem_fun<ballot, uint64_t, &ballot::by_symbol>>,
+            indexed_by<name("byendtime"), const_mem_fun<ballot, uint64_t, &ballot::by_end_time>>
+        > ballots_table;
 
         //scope: ballot_name.value
         //ram: 
