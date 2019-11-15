@@ -34,32 +34,8 @@ Voting Methods describe how a ballot will react to voters with different token b
 
 Ballots have a range of settings that further alter their behavior.
 
-| Setting | Description |
-| --- | --- |
-| lightballot | Marks as a light ballot if true. |
-| revotable | Allows revoting on the ballot if true. |
-| votestake | Reads voter's staked balance for casting votes if true. |
-
-### Ballot Management
-
-...
-
-### Ballot Closing
-
-...
-
-### Broadcasting Ballot Results
-
-...
-
-### Ballot Deletion
-
-...
-
-### Ballot Cancellation
-
-...
-
-### Archiving and Unarchiving
-
-...
+| Setting | Description | Default |
+| --- | --- | --- |
+| lightballot | Marks as a light ballot. | false |
+| revotable | Allows revoting on the ballot. | true |
+| votestake | Reads voter's staked balance for casting votes. | true |

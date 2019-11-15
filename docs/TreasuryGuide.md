@@ -58,14 +58,14 @@ cleos push action trailservice regvoter '["craig.tf", "2,CRAIG", null]' -p craig
 
 #### Treasury Settings
 
-| Setting | Description |
+| Setting | Description | Default |
 | --- | --- |
-| transferable | Allows tokens to be transferred. |
-| burnable | Allows tokens to be burned by the manager. |
-| reclaimable | Allows tokens to be reclaimed by the manager. |
-| stakeable | Allows tokens to be staked. |
-| unstakeable | Allows tokens to be unstaked. |
-| maxmutable | Allows max supply to be mutated. |
+| transferable | Allows tokens to be transferred. | false |
+| burnable | Allows tokens to be burned by the manager. | false |
+| reclaimable | Allows tokens to be reclaimed by the manager. | false |
+| stakeable | Allows tokens to be staked. | false |
+| unstakeable | Allows tokens to be unstaked. | false |
+| maxmutable | Allows max supply to be mutated. | false |
 
 #### Treasury Access
 
