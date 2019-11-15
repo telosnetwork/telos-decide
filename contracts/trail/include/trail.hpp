@@ -21,11 +21,10 @@ using namespace eosio;
 using namespace std;
 
 namespace trailservice {
+    
     CONTRACT trail : public contract {
 
     public:
-
-        //TODO: add payment decay to claimpayment
 
         trail(name self, name code, datastream<const char*> ds);
 
@@ -83,6 +82,7 @@ namespace trailservice {
         ACTION newtreasury(name manager, asset max_supply, name access);
         using newtreasury_action = action_wrapper<"newtreasury"_n, &trail::newtreasury>;
 
+        //edit treasury title, description, and icon
         ACTION edittrsinfo(symbol treasury_symbol, string title, string description, string icon);
         using edittrsinfo_action = action_wrapper<"edittrsinfo"_n, &trail::edittrsinfo>;
 
