@@ -59,7 +59,7 @@ cleos push action trailservice regvoter '["craig.tf", "2,CRAIG", null]' -p craig
 #### Treasury Settings
 
 | Setting | Description | Default |
-| --- | --- |
+| --- | --- | --- |
 | transferable | Allows tokens to be transferred. | false |
 | burnable | Allows tokens to be burned by the manager. | false |
 | reclaimable | Allows tokens to be reclaimed by the manager. | false |
