@@ -75,7 +75,6 @@ namespace trail {
                 create_accounts({ token_name, trail_name, rex_name, ram_name, ramfee_name, stake_name, bpay_name, vpay_name, names_name });
                 setup_token_contract();
                 setup_sys_contract();
-
                 asset ram_amount = asset::from_string("400.0000 TLOS");
                 asset liquid_amount = asset::from_string("10000.0000 TLOS");
 
@@ -176,7 +175,7 @@ namespace trail {
                                                         ("receiver", a)
                                                         ("stake_net_quantity", net )
                                                         ("stake_cpu_quantity", cpu )
-                                                        ("transfer", 0 )
+                                                        ("transfer", 1 )
                                                     )
                                             );
 
@@ -1018,8 +1017,8 @@ namespace trail {
             //======================== system getters =======================
 
             fc::variant get_user_res(name account) {
-                vector<char> data = get_row_by_account(eosio_name, account, name("userres"), account);
-                return data.empty() ? fc::variant() : sys_abi_ser.binary_to_variant("user_resources", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(eosio_name, account, name("delband"), account);
+                return data.empty() ? fc::variant() : sys_abi_ser.binary_to_variant("delegated_bandwidth", data, abi_serializer_max_time);
             }
 
             //======================== helper actions =======================
