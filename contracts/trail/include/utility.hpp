@@ -12,19 +12,18 @@ using namespace std;
 using namespace eosio;
 
 using user_resources = eosiosystem::user_resources;
-using user_resources_table = eosiosystem::user_resources_table;
+using del_bandwidth_table = eosiosystem::del_bandwidth_table;
 using rex_bal_table = eosiosystem::rex_balance_table;
 
 //defined in 
 asset get_staked_tlos(name owner) {
-    user_resources_table userres(name("eosio"), owner.value);
-    auto r = userres.find(owner.value);
+    del_bandwidth_table delband(name("eosio"), owner.value);
+    auto r = delband.find(owner.value);
 
     int64_t amount = 0;
 
-    if (r != userres.end()) {
-        auto res = *r;
-        amount = (res.cpu_weight.amount + res.net_weight.amount);
+    if (r != delband.end()) {
+        amount = (r->cpu_weight.amount + r->net_weight.amount);
     }
     
     return asset(amount, symbol("TLOS", 4));

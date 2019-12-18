@@ -817,10 +817,14 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         
         new_treasury(eosio_name, max_supply, name("public"));
 
-        reg_voter(voter1, treasury_symbol, { });
+        delegate_bw(testa, testb, asset::from_string("1.0000 TLOS"), asset::from_string("1.0000 TLOS"), false);
 
+        reg_voter(voter1, treasury_symbol, { });
+        produce_blocks();
         //check that cpu + net quantity = total staked in trail
-        fc::variant user_resource_info = get_user_res(voter1);
+        fc::variant user_resource_info = get_user_res(testa);
+        cout << user_resource_info << endl;
+
         asset current_stake = user_resource_info["net_weight"].as<asset>() + user_resource_info["cpu_weight"].as<asset>();
         int64_t staked_weight_amount = current_stake.get_amount();
 
