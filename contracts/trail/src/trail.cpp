@@ -1,6 +1,8 @@
 #include <trail.hpp>
 #include <utility.hpp>
 
+#include <eosio.token/eosio.token.hpp>
+
 using namespace trailservice;
 
 trail::trail(name self, name code, datastream<const char*> ds) : contract(self, code, ds) {}

@@ -13,8 +13,6 @@
 #include <eosio/asset.hpp>
 #include <eosio/singleton.hpp>
 
-#include <eosio.token/eosio.token.hpp>
-
 #include <cmath>
 
 using namespace eosio;
