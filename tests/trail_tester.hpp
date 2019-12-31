@@ -7,7 +7,7 @@
 
 #include <boost/range/algorithm/find_if.hpp>
 
-#include "contracts.hpp"
+#include <contracts.hpp>
 
 using namespace eosio::chain;
 using namespace eosio::testing;
