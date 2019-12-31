@@ -24,7 +24,10 @@ endif(VERSION_OUTPUT STREQUAL "MATCH")
 configure_file(${CMAKE_SOURCE_DIR}/contracts.hpp.in ${CMAKE_BINARY_DIR}/contracts.hpp)
 message(STATUS "${CMAKE_BINARY_DIR}")
 file(COPY contracts DESTINATION ${CMAKE_BINARY_DIR})
-include_directories(${CMAKE_BINARY_DIR})
+include_directories(
+   ${CMAKE_BINARY_DIR}
+   ${CMAKE_SOURCE_DIR}
+)
 ### UNIT TESTING ###
 include(CTest) # eliminates DartConfiguration.tcl errors at test runtime
 enable_testing()
