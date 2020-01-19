@@ -7,7 +7,7 @@
 
 #include <boost/range/algorithm/find_if.hpp>
 
-#include <contracts.hpp>
+#include "contracts.hpp"
 
 using namespace eosio::chain;
 using namespace eosio::testing;
@@ -16,16 +16,17 @@ using namespace std;
 
 using mvo = fc::mutable_variant_object;
 
-namespace trail {
+namespace decidetesting {
 
     namespace  testing {
 
-        class trail_tester : public tester {
-        public:
-            //ACCOUNT NAMEs
+        class decide_tester : public tester {
+
+            public:
+
+            //system accounts
             const name eosio_name = name("eosio");
             const name token_name = name("eosio.token");
-            const name trail_name = name("trailservice");
             const name rex_name = name("eosio.rex");
             const name ram_name = name("eosio.ram");
             const name ramfee_name = name("eosio.ramfee");
@@ -34,9 +35,16 @@ namespace trail {
             const name vpay_name = name("eosio.vpay");
             const name names_name = name("eosio.names");
 
+            //decide accounts
+            const name decide_name = name("telos.decide");
+
+            //test accounts
             const name testa = name("testaccounta");
             const name testb = name("testaccountb"); 
             const name testc = name("testaccountc");
+
+            //legacy accounts
+            const name trail_name = name("eosio.trail");
 
             //TABLE NAMEs
             const name config_tname = name("config");
@@ -56,10 +64,9 @@ namespace trail {
             //SYMBOLs
             const symbol tlos_sym = symbol(4, "TLOS");
             const symbol vote_sym = symbol(4, "VOTE");
-            const symbol trail_sym = symbol(4, "TRAIL");
 
             //ABI SERIALIZERs
-            abi_serializer abi_ser;
+            abi_serializer decide_abi_ser;
             abi_serializer token_abi_ser;
             abi_serializer sys_abi_ser;
 
@@ -71,20 +78,30 @@ namespace trail {
                 full
             };
 
-            trail_tester(setup_mode mode = setup_mode::full) {
-                create_accounts({ token_name, trail_name, rex_name, ram_name, ramfee_name, stake_name, bpay_name, vpay_name, names_name });
+            decide_tester(setup_mode mode = setup_mode::full) {
+
+                //create contract accounts
+                create_accounts({ token_name, decide_name, rex_name, ram_name, ramfee_name, stake_name, bpay_name, vpay_name, names_name, trail_name });
+
+                //setup system and token contracts
                 setup_token_contract();
                 setup_sys_contract();
+
+                //initialize
                 asset ram_amount = asset::from_string("400.0000 TLOS");
                 asset liquid_amount = asset::from_string("10000.0000 TLOS");
 
+                //create test accounts
                 create_account_with_resources(testa, eosio_name, ram_amount, false);
                 create_account_with_resources(testb, eosio_name, ram_amount, false);
                 create_account_with_resources(testc, eosio_name, ram_amount, false);
+
+                //fund test accounts
                 base_tester::transfer(eosio_name, testa, "10000.0000 TLOS", "initial funds", token_name);
                 base_tester::transfer(eosio_name, testb, "10000.0000 TLOS", "initial funds", token_name);
                 base_tester::transfer(eosio_name, testc, "10000.0000 TLOS", "initial funds", token_name);
 
+                //assert token balances
                 BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, testa), liquid_amount);
                 BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, testb), liquid_amount);
                 BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, testc), liquid_amount);
@@ -92,23 +109,34 @@ namespace trail {
                 
                 if(mode == setup_mode::none) return; 
 
-                set_code( trail_name, contracts::trail_wasm());
-                set_abi( trail_name, contracts::trail_abi().data() );
+                //set code and abi
+                set_code( decide_name, contracts::decide_wasm());
+                set_abi( decide_name, contracts::decide_abi().data() );
                 {
-                    const auto& accnt = control->db().get<account_object,by_name>( trail_name );
+                    const auto& accnt = control->db().get<account_object,by_name>( decide_name );
                     abi_def abi;
                     BOOST_REQUIRE_EQUAL(abi_serializer::to_abi(accnt.abi, abi), true);
-                    abi_ser.set_abi(abi, abi_serializer_max_time);
+                    decide_abi_ser.set_abi(abi, abi_serializer_max_time);
                 }
                 produce_blocks();
                 
                 if(mode == setup_mode::basic) return; 
 
+                //initialize
+                string decide_version = "v2.0.0";
+
+                //init decide contract
+                decide_init(decide_version);
+                produce_blocks();
+
+                cout << "Decide Full Setup Complete" << endl;
                 
-                if(mode == setup_mode::full) return; 
+                if(mode == setup_mode::full) return;
             }
 
             void setup_token_contract() {
+                
+                //set code and abi
                 set_code( token_name, contracts::token_wasm());
                 set_abi( token_name, contracts::token_abi().data() );
                 {
@@ -118,12 +146,18 @@ namespace trail {
                     token_abi_ser.set_abi(abi, abi_serializer_max_time);
                 }
                 produce_blocks();
+
+                //create, issue, open
                 create(eosio_name, asset::from_string("1000000000.0000 TLOS"));
                 issue(eosio_name, eosio_name, asset::from_string("1000000.0000 TLOS"), "");
                 open(rex_name, tlos_sym, rex_name);
+                produce_blocks();
+
             }
 
             void setup_sys_contract() {
+                
+                //set code and abi
                 set_code( eosio_name, contracts::sys_wasm());
                 set_abi( eosio_name, contracts::sys_abi().data() );
                 {
@@ -137,6 +171,7 @@ namespace trail {
                 produce_block(fc::minutes(10));
                 produce_blocks();
                 produce_blocks(1000);
+
             }
 
             //======================== system/token actions ========================
@@ -242,44 +277,43 @@ namespace trail {
             //======================== admin actions ========================
 
             //sets new config singleton
-            transaction_trace_ptr set_config(string trail_version, bool set_defaults) {
+            transaction_trace_ptr decide_init(string app_version) {
                 signed_transaction trx;
-                vector<permission_level> permissions { { trail_name, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("setconfig"), permissions, 
+                vector<permission_level> permissions { { decide_name, name("active") } };
+                trx.actions.emplace_back(get_action(decide_name, name("init"), permissions, 
                     mvo()
-                        ("trail_version", trail_version)
-                        ("set_defaults", set_defaults)
+                        ("app_version", app_version)
                 ));
                 set_transaction_headers( trx );
-                trx.sign(get_private_key(trail_name, "active"), control->get_chain_id());
+                trx.sign(get_private_key(decide_name, "active"), control->get_chain_id());
                 return push_transaction( trx );
             }
 
             //updates fee amount
             transaction_trace_ptr update_fee(name fee_name, asset fee_amount) {
                 signed_transaction trx;
-                vector<permission_level> permissions { { trail_name, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("updatefee"), permissions, 
+                vector<permission_level> permissions { { decide_name, name("active") } };
+                trx.actions.emplace_back(get_action(decide_name, name("updatefee"), permissions, 
                     mvo()
                         ("fee_name", fee_name)
                         ("fee_amount", fee_amount)
                 ));
                 set_transaction_headers( trx );
-                trx.sign(get_private_key(trail_name, "active"), control->get_chain_id());
+                trx.sign(get_private_key(decide_name, "active"), control->get_chain_id());
                 return push_transaction( trx );
             }
 
             //updates time length
             transaction_trace_ptr update_time(name time_name, uint32_t length) {
                 signed_transaction trx;
-                vector<permission_level> permissions { { trail_name, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("updatetime"), permissions, 
+                vector<permission_level> permissions { { decide_name, name("active") } };
+                trx.actions.emplace_back(get_action(decide_name, name("updatetime"), permissions, 
                     mvo()
                         ("time_name", time_name)
                         ("length", length)
                 ));
                 set_transaction_headers( trx );
-                trx.sign(get_private_key(trail_name, "active"), control->get_chain_id());
+                trx.sign(get_private_key(decide_name, "active"), control->get_chain_id());
                 return push_transaction( trx );
             }
 
@@ -289,7 +323,7 @@ namespace trail {
             transaction_trace_ptr new_treasury(name manager, asset max_supply, name access) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { manager, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("newtreasury"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("newtreasury"), permissions, 
                     mvo()
                         ("manager", manager)
                         ("max_supply", max_supply)
@@ -303,7 +337,7 @@ namespace trail {
             transaction_trace_ptr edit_trs_info(name manager, symbol treasury_symbol, string title, string description, string icon) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { manager, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("edittrsinfo"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("edittrsinfo"), permissions, 
                     mvo()
                         ("treasury_symbol", treasury_symbol)
                         ("title", title)
@@ -319,7 +353,7 @@ namespace trail {
             transaction_trace_ptr toggle(name manager, symbol treasury_symbol, name setting_name) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { manager, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("toggle"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("toggle"), permissions, 
                     mvo()
                         ("treasury_symbol", treasury_symbol)
                         ("setting_name", setting_name)
@@ -333,7 +367,7 @@ namespace trail {
             transaction_trace_ptr mint(name manager, name to, asset quantity, string memo) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { manager, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("mint"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("mint"), permissions, 
                     mvo()
                         ("to", to)
                         ("quantity", quantity)
@@ -348,7 +382,7 @@ namespace trail {
             transaction_trace_ptr transfer(name from, name to, asset quantity, string memo) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { from, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("transfer"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("transfer"), permissions, 
                     mvo()
                         ("from", from)
                         ("to", to)
@@ -364,7 +398,7 @@ namespace trail {
             transaction_trace_ptr burn(name manager, asset quantity, string memo) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { manager, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("burn"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("burn"), permissions, 
                     mvo()
                         ("quantity", quantity)
                         ("memo", memo)
@@ -378,7 +412,7 @@ namespace trail {
             transaction_trace_ptr reclaim(name manager, name voter, asset quantity, string memo) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { manager, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("reclaim"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("reclaim"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("quantity", quantity)
@@ -393,7 +427,7 @@ namespace trail {
             transaction_trace_ptr mutate_max(name manager, asset new_max_supply, string memo) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { manager, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("mutatemax"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("mutatemax"), permissions, 
                     mvo()
                         ("new_max_supply", new_max_supply)
                         ("memo", memo)
@@ -407,7 +441,7 @@ namespace trail {
             transaction_trace_ptr set_unlocker(name manager, symbol treasury_symbol, name new_unlock_acct, name new_unlock_auth) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { manager, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("setunlocker"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("setunlocker"), permissions, 
                     mvo()
                         ("treasury_symbol", treasury_symbol)
                         ("new_unlock_acct", new_unlock_acct)
@@ -422,7 +456,7 @@ namespace trail {
             transaction_trace_ptr lock(name manager, symbol treasury_symbol) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { manager, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("lock"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("lock"), permissions, 
                     mvo()
                         ("treasury_symbol", treasury_symbol)
                 ));
@@ -435,7 +469,7 @@ namespace trail {
             transaction_trace_ptr unlock(name unlock_acct, symbol treasury_symbol) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { unlock_acct, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("unlock"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("unlock"), permissions, 
                     mvo()
                         ("treasury_symbol", treasury_symbol)
                 ));
@@ -450,7 +484,7 @@ namespace trail {
             transaction_trace_ptr add_funds(name authorizer, name from, symbol treasury_symbol, name payroll_name, asset quantity) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { authorizer, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("addfunds"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("addfunds"), permissions, 
                     mvo()
                         ("treasury_symbol", treasury_symbol)
                         ("payroll_name", payroll_name)
@@ -466,7 +500,7 @@ namespace trail {
             transaction_trace_ptr edit_pay_rate(name manager, name payroll_name, symbol treasury_symbol, uint32_t period_length, asset per_period) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { manager, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("editpayrate"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("editpayrate"), permissions, 
                     mvo()
                         ("payroll_name", payroll_name)
                         ("treasury_symbol", treasury_symbol)
@@ -486,7 +520,7 @@ namespace trail {
 
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("newballot"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("newballot"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("category", category)
@@ -504,7 +538,7 @@ namespace trail {
             transaction_trace_ptr edit_details(name publisher, name ballot_name, string title, string description, string content) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("editdetails"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("editdetails"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("title", title)
@@ -520,7 +554,7 @@ namespace trail {
             transaction_trace_ptr toggle_bal(name publisher, name ballot_name, name setting_name) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("togglebal"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("togglebal"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("setting_name", setting_name)
@@ -534,7 +568,7 @@ namespace trail {
             transaction_trace_ptr edit_min_max(name publisher, name ballot_name, uint8_t new_min_options, uint8_t new_max_options) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("editminmax"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("editminmax"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("new_min_options", new_min_options)
@@ -549,7 +583,7 @@ namespace trail {
             transaction_trace_ptr add_option(name publisher, name ballot_name, name new_option_name) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("addoption"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("addoption"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("new_option_name", new_option_name)
@@ -563,7 +597,7 @@ namespace trail {
             transaction_trace_ptr rmv_option(name publisher, name ballot_name, name option_name) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("rmvoption"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("rmvoption"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("option_name", option_name)
@@ -577,7 +611,7 @@ namespace trail {
             transaction_trace_ptr open_voting(name publisher, name ballot_name, time_point_sec end_time) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("openvoting"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("openvoting"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("end_time", end_time)
@@ -591,7 +625,7 @@ namespace trail {
             transaction_trace_ptr cancel_ballot(name publisher, name ballot_name, string memo) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("cancelballot"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("cancelballot"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("memo", memo)
@@ -605,7 +639,7 @@ namespace trail {
             transaction_trace_ptr delete_ballot(name publisher, name ballot_name) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("deleteballot"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("deleteballot"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                 ));
@@ -618,7 +652,7 @@ namespace trail {
             transaction_trace_ptr post_results(name publisher, name ballot_name, map<name, asset> light_results, uint32_t total_voters) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("postresults"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("postresults"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("light_results", light_results)
@@ -633,7 +667,7 @@ namespace trail {
             transaction_trace_ptr close_ballot(name publisher, name ballot_name, bool broadcast) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("closevoting"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("closevoting"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("broadcast", broadcast)
@@ -646,15 +680,15 @@ namespace trail {
             //broadcast ballot results
             transaction_trace_ptr broadcast(name ballot_name, map<name, asset> final_results, uint32_t total_voters) {
                 signed_transaction trx;
-                vector<permission_level> permissions { { trail_name, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("broadcast"), permissions, 
+                vector<permission_level> permissions { { decide_name, name("active") } };
+                trx.actions.emplace_back(get_action(decide_name, name("broadcast"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("final_results", final_results)
                         ("total_voters", total_voters)
                 ));
                 set_transaction_headers( trx );
-                trx.sign(get_private_key(trail_name, "active"), control->get_chain_id());
+                trx.sign(get_private_key(decide_name, "active"), control->get_chain_id());
                 return push_transaction( trx );
             }
 
@@ -662,7 +696,7 @@ namespace trail {
             transaction_trace_ptr archive(name publisher, name ballot_name, time_point_sec archived_until) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("archive"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("archive"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("archived_until", archived_until)
@@ -676,7 +710,7 @@ namespace trail {
             transaction_trace_ptr unarchive(name publisher, name ballot_name, bool force) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { publisher, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("unarchive"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("unarchive"), permissions, 
                     mvo()
                         ("ballot_name", ballot_name)
                         ("force", force)
@@ -692,7 +726,7 @@ namespace trail {
             transaction_trace_ptr reg_voter(name voter, symbol treasury_symbol, fc::optional<name> referrer) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { (referrer) ? *referrer : voter, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("regvoter"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("regvoter"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("treasury_symbol", treasury_symbol)
@@ -707,7 +741,7 @@ namespace trail {
             transaction_trace_ptr unreg_voter(name voter, symbol treasury_symbol) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { voter, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("unregvoter"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("unregvoter"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("treasury_symbol", treasury_symbol)
@@ -721,7 +755,7 @@ namespace trail {
             transaction_trace_ptr cast_vote(name voter, name ballot_name, vector<name> options) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { voter, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("castvote"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("castvote"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("ballot_name", ballot_name)
@@ -738,7 +772,7 @@ namespace trail {
             transaction_trace_ptr unvote_all(name voter, name ballot_name) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { voter, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("unvoteall"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("unvoteall"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("ballot_name", ballot_name)
@@ -752,7 +786,7 @@ namespace trail {
             transaction_trace_ptr stake(name voter, asset quantity) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { voter, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("stake"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("stake"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("quantity", quantity)
@@ -766,7 +800,7 @@ namespace trail {
             transaction_trace_ptr unstake(name voter, asset quantity) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { voter, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("unstake"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("unstake"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("quantity", quantity)
@@ -782,7 +816,7 @@ namespace trail {
             transaction_trace_ptr forfeit_work(name worker_name, symbol treasury_symbol) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { worker_name, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("forfeitwork"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("forfeitwork"), permissions, 
                     mvo()
                         ("worker_name", worker_name)
                         ("treasury_symbol", treasury_symbol)
@@ -796,7 +830,7 @@ namespace trail {
             transaction_trace_ptr claim_payment(name worker_name, symbol treasury_symbol) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { worker_name, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("claimpayment"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("claimpayment"), permissions, 
                     mvo()
                         ("worker_name", worker_name)
                         ("treasury_symbol", treasury_symbol)
@@ -810,7 +844,7 @@ namespace trail {
             transaction_trace_ptr rebalance(name authorizer, name voter, name ballot_name, fc::optional<name> worker) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { authorizer, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("rebalance"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("rebalance"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("ballot_name", ballot_name)
@@ -825,7 +859,7 @@ namespace trail {
             transaction_trace_ptr cleanup_vote(name authorizer, name voter, name ballot_name, fc::optional<name> worker) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { authorizer, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("cleanupvote"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("cleanupvote"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("ballot_name", ballot_name)
@@ -840,7 +874,7 @@ namespace trail {
             transaction_trace_ptr withdraw(name voter, asset quantity) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { voter, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("withdraw"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("withdraw"), permissions, 
                     mvo()
                         ("voter", voter)
                         ("quantity", quantity)
@@ -858,7 +892,7 @@ namespace trail {
 
                 signed_transaction trx;
                 vector<permission_level> permissions { { registree, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("regcommittee"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("regcommittee"), permissions, 
                     mvo()
                         ("committee_name", committee_name)
                         ("committee_title", committee_title)
@@ -875,7 +909,7 @@ namespace trail {
             transaction_trace_ptr add_seat(name authorizer, name committee_name, symbol treasury_symbol, name new_seat_name) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { authorizer, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("addseat"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("addseat"), permissions, 
                     mvo()
                         ("committee_name", committee_name)
                         ("treasury_symbol", treasury_symbol)
@@ -890,7 +924,7 @@ namespace trail {
             transaction_trace_ptr remove_seat(name authorizer, name committee_name, symbol treasury_symbol, name seat_name) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { authorizer, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("removeseat"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("removeseat"), permissions, 
                     mvo()
                         ("committee_name", committee_name)
                         ("treasury_symbol", treasury_symbol)
@@ -905,7 +939,7 @@ namespace trail {
             transaction_trace_ptr assign_seat(name authorizer, name committee_name, symbol treasury_symbol, name seat_name, name seat_holder, string memo) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { authorizer, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("assignseat"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("assignseat"), permissions, 
                     mvo()
                         ("committee_name", committee_name)
                         ("treasury_symbol", treasury_symbol)
@@ -921,7 +955,7 @@ namespace trail {
             //sets updater account and auth
             transaction_trace_ptr set_updater(vector<permission_level> permissions, name committee_name, symbol treasury_symbol, name updater_account, name updater_auth) {
                 signed_transaction trx;
-                trx.actions.emplace_back(get_action(trail_name, name("setupdater"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("setupdater"), permissions, 
                     mvo()
                         ("committee_name", committee_name)
                         ("treasury_symbol", treasury_symbol)
@@ -940,7 +974,7 @@ namespace trail {
             transaction_trace_ptr del_committee(name authorizer, name committee_name, symbol treasury_symbol, string memo) {
                 signed_transaction trx;
                 vector<permission_level> permissions { { authorizer, name("active") } };
-                trx.actions.emplace_back(get_action(trail_name, name("delcommittee"), permissions, 
+                trx.actions.emplace_back(get_action(decide_name, name("delcommittee"), permissions, 
                     mvo()
                         ("committee_name", committee_name)
                         ("treasury_symbol", treasury_symbol)
@@ -955,63 +989,63 @@ namespace trail {
             //======================== row getters  ========================
 
             fc::variant get_config() { 
-                vector<char> data = get_row_by_account(trail_name, trail_name, config_tname, config_tname);
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("config", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, decide_name, config_tname, config_tname);
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("config", data, abi_serializer_max_time);
             }
 
             fc::variant get_treasury(symbol treasury_symbol) {
-                vector<char> data = get_row_by_account(trail_name, trail_name, treasury_tname, treasury_symbol.to_symbol_code());
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("treasury", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, decide_name, treasury_tname, treasury_symbol.to_symbol_code());
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("treasury", data, abi_serializer_max_time);
             }
 
             fc::variant get_payroll(symbol treasury_symbol, name payroll_name) {
-                vector<char> data = get_row_by_account(trail_name, treasury_symbol.to_symbol_code(), payroll_tname, payroll_name);
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("payroll", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, treasury_symbol.to_symbol_code(), payroll_tname, payroll_name);
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("payroll", data, abi_serializer_max_time);
             }
 
             fc::variant get_labor_bucket(symbol treasury_symbol, name payroll_name) {
-                vector<char> data = get_row_by_account(trail_name, treasury_symbol.to_symbol_code(), laborbucket_tname, payroll_name);
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("labor_bucket", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, treasury_symbol.to_symbol_code(), laborbucket_tname, payroll_name);
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("labor_bucket", data, abi_serializer_max_time);
             }
 
             fc::variant get_labor(symbol treasury_symbol, name worker_name) {
-                vector<char> data = get_row_by_account(trail_name, treasury_symbol.to_symbol_code(), labors_tname, worker_name);
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("labor", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, treasury_symbol.to_symbol_code(), labors_tname, worker_name);
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("labor", data, abi_serializer_max_time);
             }
 
             fc::variant get_ballot(name ballot_name) {
-                vector<char> data = get_row_by_account(trail_name, trail_name, ballots_tname, ballot_name);
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("ballot", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, decide_name, ballots_tname, ballot_name);
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("ballot", data, abi_serializer_max_time);
             }
 
             fc::variant get_vote(name ballot_name, name voter) {
-                vector<char> data = get_row_by_account(trail_name, ballot_name, votes_tname, voter);
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("vote", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, ballot_name, votes_tname, voter);
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("vote", data, abi_serializer_max_time);
             }
 
             fc::variant get_voter(name voter, symbol vote_symbol) {
-                vector<char> data = get_row_by_account(trail_name, voter, voters_tname, vote_symbol.to_symbol_code());
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("voter", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, voter, voters_tname, vote_symbol.to_symbol_code());
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("voter", data, abi_serializer_max_time);
             }
 
             fc::variant get_delegate(symbol treasury_symbol, name delegate_name) {
-                vector<char> data = get_row_by_account(trail_name, treasury_symbol.to_symbol_code(), delegates_tname, delegate_name);
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("delegate", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, treasury_symbol.to_symbol_code(), delegates_tname, delegate_name);
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("delegate", data, abi_serializer_max_time);
             }
 
             fc::variant get_committee(symbol treasury_symbol, name commitee_name) {
-                vector<char> data = get_row_by_account(trail_name, treasury_symbol.to_symbol_code(), committees_tname, commitee_name);
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("committee", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, treasury_symbol.to_symbol_code(), committees_tname, commitee_name);
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("committee", data, abi_serializer_max_time);
             }
 
             fc::variant get_archival(name ballot_name) {
-                vector<char> data = get_row_by_account(trail_name, trail_name, archivals_tname, ballot_name);
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("archival", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, decide_name, archivals_tname, ballot_name);
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("archival", data, abi_serializer_max_time);
             }
 
             fc::variant get_featured_ballot(symbol treasury_symbol, name ballot_name) {
-                vector<char> data = get_row_by_account(trail_name, treasury_symbol.to_symbol_code(), featured_tname, ballot_name);
-                return data.empty() ? fc::variant() : abi_ser.binary_to_variant("featured_ballot", data, abi_serializer_max_time);
+                vector<char> data = get_row_by_account(decide_name, treasury_symbol.to_symbol_code(), featured_tname, ballot_name);
+                return data.empty() ? fc::variant() : decide_abi_ser.binary_to_variant("featured_ballot", data, abi_serializer_max_time);
             }
 
             //======================== system getters =======================

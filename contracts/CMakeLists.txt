@@ -5,5 +5,5 @@ project(contracts)
 set(EOSIO_WASM_OLD_BEHAVIOR "Off")
 find_package(eosio.cdt)
 
-add_subdirectory(example)
-add_subdirectory(trail)
+add_subdirectory(decide)
+add_subdirectory(watcher)

@@ -1,10 +1,10 @@
-#include <trail.hpp>
+#include <decide.hpp>
 
-using namespace trailservice;
+using namespace decidespace;
 
 //======================== ballot actions ========================
 
-ACTION trail::newballot(name ballot_name, name category, name publisher,  
+ACTION decide::newballot(name ballot_name, name category, name publisher,  
     symbol treasury_symbol, name voting_method, vector<name> initial_options) {
    
     //authenticate
@@ -48,7 +48,6 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
     new_settings[name("lightballot")] = false;
     new_settings[name("revotable")] = true;
     new_settings[name("votestake")] = trs.settings.at("stakeable"_n);
-    new_settings[name("writein")] = false;
     //TODO: new_settings[name("allowdgate")] = false;
 
     //emplace new ballot
@@ -76,7 +75,7 @@ ACTION trail::newballot(name ballot_name, name category, name publisher,
 
 }
 
-ACTION trail::editdetails(name ballot_name, string title, string description, string content) {
+ACTION decide::editdetails(name ballot_name, string title, string description, string content) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -97,7 +96,7 @@ ACTION trail::editdetails(name ballot_name, string title, string description, st
 
 }
 
-ACTION trail::togglebal(name ballot_name, name setting_name) {
+ACTION decide::togglebal(name ballot_name, name setting_name) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -119,7 +118,7 @@ ACTION trail::togglebal(name ballot_name, name setting_name) {
 
 }
 
-ACTION trail::editminmax(name ballot_name, uint8_t new_min_options, uint8_t new_max_options) {
+ACTION decide::editminmax(name ballot_name, uint8_t new_min_options, uint8_t new_max_options) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -142,7 +141,7 @@ ACTION trail::editminmax(name ballot_name, uint8_t new_min_options, uint8_t new_
 
 }
 
-ACTION trail::addoption(name ballot_name, name new_option_name) {
+ACTION decide::addoption(name ballot_name, name new_option_name) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -161,7 +160,7 @@ ACTION trail::addoption(name ballot_name, name new_option_name) {
 
 }
 
-ACTION trail::rmvoption(name ballot_name, name option_name) {
+ACTION decide::rmvoption(name ballot_name, name option_name) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -192,7 +191,7 @@ ACTION trail::rmvoption(name ballot_name, name option_name) {
 
 }
 
-ACTION trail::openvoting(name ballot_name, time_point_sec end_time) {
+ACTION decide::openvoting(name ballot_name, time_point_sec end_time) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -231,7 +230,7 @@ ACTION trail::openvoting(name ballot_name, time_point_sec end_time) {
 
 }
 
-ACTION trail::cancelballot(name ballot_name, string memo) {
+ACTION decide::cancelballot(name ballot_name, string memo) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -259,7 +258,7 @@ ACTION trail::cancelballot(name ballot_name, string memo) {
 
 }
 
-ACTION trail::deleteballot(name ballot_name) {
+ACTION decide::deleteballot(name ballot_name) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -286,7 +285,7 @@ ACTION trail::deleteballot(name ballot_name) {
 
 }
 
-ACTION trail::postresults(name ballot_name, map<name, asset> light_results, uint32_t total_voters) {
+ACTION decide::postresults(name ballot_name, map<name, asset> light_results, uint32_t total_voters) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -313,7 +312,7 @@ ACTION trail::postresults(name ballot_name, map<name, asset> light_results, uint
 
 }
 
-ACTION trail::closevoting(name ballot_name, bool broadcast) {
+ACTION decide::closevoting(name ballot_name, bool broadcast) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -364,7 +363,7 @@ ACTION trail::closevoting(name ballot_name, bool broadcast) {
 
 }
 
-ACTION trail::broadcast(name ballot_name, map<name, asset> final_results, uint32_t total_voters) {
+ACTION decide::broadcast(name ballot_name, map<name, asset> final_results, uint32_t total_voters) {
     //authenticate
     //TODO: require_auth(permission_level{get_self(), name("postresults")});
     require_auth(get_self());
@@ -383,7 +382,7 @@ ACTION trail::broadcast(name ballot_name, map<name, asset> final_results, uint32
     require_recipient(bal.publisher);
 }
 
-ACTION trail::archive(name ballot_name, time_point_sec archived_until) {
+ACTION decide::archive(name ballot_name, time_point_sec archived_until) {
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
     auto& bal = ballots.get(ballot_name.value, "ballot not found");
@@ -427,7 +426,7 @@ ACTION trail::archive(name ballot_name, time_point_sec archived_until) {
 
 }
 
-ACTION trail::unarchive(name ballot_name, bool force) {
+ACTION decide::unarchive(name ballot_name, bool force) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);

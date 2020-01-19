@@ -10,9 +10,9 @@
 #include <eosio/chain/exceptions.hpp>
 #include <Runtime/Runtime.h>
 
-#include "trail_tester.hpp"
+#include "decide_tester.hpp"
 
-using namespace trail;
+using namespace decidetesting;
 #define BOOST_TEST_STATIC_LINK
 
 void translate_fc_exception(const fc::exception &e) {
