@@ -23,7 +23,7 @@ done
 
 if ! [[ -d "./build" ]]; then
     printf "${RED}\tBuild folder not found, generating cmake files\n\n${NC}"
-    printf "\t=========== Building Trail Service ===========\n\n"
+    printf "\t=========== Building Telos Decide ===========\n\n"
     mkdir -p build
     pushd build &> /dev/null
     cmake ../

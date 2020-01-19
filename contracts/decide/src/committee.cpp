@@ -1,10 +1,10 @@
-#include <trail.hpp>
+#include <decide.hpp>
 
-using namespace trailservice;
+using namespace decidespace;
 
 //======================== committee actions ========================
 
-ACTION trail::regcommittee(name committee_name, string committee_title,
+ACTION decide::regcommittee(name committee_name, string committee_title,
 
     symbol treasury_symbol, vector<name> initial_seats, name registree) {
     //authenticate
@@ -49,7 +49,7 @@ ACTION trail::regcommittee(name committee_name, string committee_title,
 
 }
 
-ACTION trail::addseat(name committee_name, symbol treasury_symbol, name new_seat_name) {
+ACTION decide::addseat(name committee_name, symbol treasury_symbol, name new_seat_name) {
 
     //open committees table, get committee
     committees_table committees(get_self(), treasury_symbol.code().raw());
@@ -68,7 +68,7 @@ ACTION trail::addseat(name committee_name, symbol treasury_symbol, name new_seat
 
 }
 
-ACTION trail::removeseat(name committee_name, symbol treasury_symbol, name seat_name) {
+ACTION decide::removeseat(name committee_name, symbol treasury_symbol, name seat_name) {
 
     //open committees table, get committee
     committees_table committees(get_self(), treasury_symbol.code().raw());
@@ -87,7 +87,7 @@ ACTION trail::removeseat(name committee_name, symbol treasury_symbol, name seat_
 
 }
 
-ACTION trail::assignseat(name committee_name, symbol treasury_symbol, name seat_name, name seat_holder, string memo) {
+ACTION decide::assignseat(name committee_name, symbol treasury_symbol, name seat_name, name seat_holder, string memo) {
 
     //open committees table, get committee
     committees_table committees(get_self(), treasury_symbol.code().raw());
@@ -106,7 +106,7 @@ ACTION trail::assignseat(name committee_name, symbol treasury_symbol, name seat_
 
 }
 
-ACTION trail::setupdater(name committee_name, symbol treasury_symbol, name updater_account, name updater_auth) {
+ACTION decide::setupdater(name committee_name, symbol treasury_symbol, name updater_account, name updater_auth) {
 
     //open committees table, get committee
     committees_table committees(get_self(), treasury_symbol.code().raw());
@@ -124,7 +124,7 @@ ACTION trail::setupdater(name committee_name, symbol treasury_symbol, name updat
 
 }
 
-ACTION trail::delcommittee(name committee_name, symbol treasury_symbol, string memo) {
+ACTION decide::delcommittee(name committee_name, symbol treasury_symbol, string memo) {
 
     //open committees table, get committee
     committees_table committees(get_self(), treasury_symbol.code().raw());

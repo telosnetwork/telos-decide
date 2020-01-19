@@ -1,10 +1,10 @@
-#include <trail.hpp>
+#include <decide.hpp>
 
-using namespace trailservice;
+using namespace decidespace;
 
 //======================== voter actions ========================
 
-ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referrer) {
+ACTION decide::regvoter(name voter, symbol treasury_symbol, optional<name> referrer) {
     
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -18,7 +18,6 @@ ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referr
     check(is_account(voter), "voter account doesn't exist");
     check(vtr_itr == voters.end(), "voter already exists");
     check(treasury_symbol != TLOS_SYM, "cannot register as TLOS voter, use VOTE instead");
-    check(treasury_symbol != TRAIL_SYM, "cannot register as TRAIL voter");
 
     //initialize
     name ram_payer = voter;
@@ -63,7 +62,7 @@ ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referr
             }
             break;
         case (name("membership").value):
-            //inline sent from trailservice@membership
+            //inline sent from telos.decide@membership
             require_auth(permission_level{get_self(), name("membership")});
             ram_payer = get_self();
             //TODO: membership payment features
@@ -92,7 +91,7 @@ ACTION trail::regvoter(name voter, symbol treasury_symbol, optional<name> referr
     }
 }
 
-ACTION trail::unregvoter(name voter, symbol treasury_symbol) {
+ACTION decide::unregvoter(name voter, symbol treasury_symbol) {
     
     //authenticate
     require_auth(voter);
@@ -122,7 +121,7 @@ ACTION trail::unregvoter(name voter, symbol treasury_symbol) {
 
 }
 
-ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
+ACTION decide::castvote(name voter, name ballot_name, vector<name> options) {
     
     //authenticate
     require_auth(voter);
@@ -230,7 +229,7 @@ ACTION trail::castvote(name voter, name ballot_name, vector<name> options) {
 
 }
 
-ACTION trail::unvoteall(name voter, name ballot_name) {
+ACTION decide::unvoteall(name voter, name ballot_name) {
     
     //authenticate
     require_auth(voter);
@@ -281,7 +280,7 @@ ACTION trail::unvoteall(name voter, name ballot_name) {
     
 }
 
-ACTION trail::stake(name voter, asset quantity) {
+ACTION decide::stake(name voter, asset quantity) {
     
     //authenticate
     require_auth(voter);
@@ -304,7 +303,7 @@ ACTION trail::stake(name voter, asset quantity) {
 
 }
 
-ACTION trail::unstake(name voter, asset quantity) {
+ACTION decide::unstake(name voter, asset quantity) {
     
     //authenticate
     require_auth(voter);
@@ -327,7 +326,7 @@ ACTION trail::unstake(name voter, asset quantity) {
 
 }
 
-map<name, asset> trail::calc_vote_weights(symbol treasury_symbol, name voting_method, 
+map<name, asset> decide::calc_vote_weights(symbol treasury_symbol, name voting_method, 
     vector<name> selections,  asset raw_vote_weight) {
     
     //initialize
