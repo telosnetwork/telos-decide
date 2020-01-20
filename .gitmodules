@@ -1,0 +1,3 @@
+[submodule "libraries/telos.contracts"]
+	path = libraries/telos.contracts
+	url = https://github.com/telosnetwork/telos.contracts
