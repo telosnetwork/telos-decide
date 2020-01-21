@@ -10,8 +10,8 @@ add_contract( decide decide
 target_include_directories( decide
    PUBLIC
    ${CMAKE_CURRENT_SOURCE_DIR}/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/eosio.contracts/contracts/eosio.token/include
-   ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/eosio.contracts/contracts/eosio.system/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/telos.contracts/contracts/eosio.token/include
+   ${CMAKE_CURRENT_SOURCE_DIR}/../../libraries/telos.contracts/contracts/eosio.system/include
 )
 
 set_target_properties( decide

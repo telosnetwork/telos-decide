@@ -10,12 +10,15 @@ namespace decidetesting {
 
         struct contracts {
 
+            //telos-decide v2.0.0
             static vector<uint8_t> decide_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../contracts/decide/decide.wasm"); }
             static vector<char> decide_abi() { return read_abi("${CMAKE_BINARY_DIR}/../contracts/decide/decide.abi"); }
 
+            //telos.contracts v...
             static vector<uint8_t> sys_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/contracts/eosio.system/eosio.system.wasm"); }
             static vector<char> sys_abi() { return read_abi("${CMAKE_BINARY_DIR}/contracts/eosio.system/eosio.system.abi"); }
 
+            //eosio.token v...
             static vector<uint8_t> token_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/contracts/eosio.token/eosio.token.wasm"); }
             static vector<char> token_abi() { return read_abi("${CMAKE_BINARY_DIR}/contracts/eosio.token/eosio.token.abi"); }
 
