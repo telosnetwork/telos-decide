@@ -1,10 +1,9 @@
-// Trail is an on-chain voting platform for the Telos Blockchain Network that provides
+// Telos Decide is an on-chain governance engine for the Telos Blockchain Network that provides
 // a full suite of voting services for users and developers.
 //
 // @author Craig Branscom
-// @contract trail
-// @date October 6th, 2019
-// @version v2.0.0-RC2
+// @contract decide
+// @version v2.0.0
 // @copyright see LICENSE.txt
 
 #pragma once
@@ -13,25 +12,26 @@
 #include <eosio/asset.hpp>
 #include <eosio/singleton.hpp>
 
+#include <eosio.token/eosio.token.hpp>
+
 #include <cmath>
 
 using namespace eosio;
 using namespace std;
 
-namespace trailservice {
+namespace decidespace {
     
-    CONTRACT trail : public contract {
+    CONTRACT decide : public contract {
 
     public:
 
-        trail(name self, name code, datastream<const char*> ds);
+        decide(name self, name code, datastream<const char*> ds);
 
-        ~trail();
+        ~decide();
 
         //reserved symbols
         static constexpr symbol TLOS_SYM = symbol("TLOS", 4);
         static constexpr symbol VOTE_SYM = symbol("VOTE", 4);
-        static constexpr symbol TRAIL_SYM = symbol("TRAIL", 0);
 
         //reserved permission names
         static constexpr name active_permission = "active"_n;
@@ -57,7 +57,7 @@ namespace trailservice {
 
         //ballot statuses: setup, voting, closed, cancelled, archived
 
-        //ballot settings: lightballot, revotable, votestake, writein
+        //ballot settings: lightballot, revotable, voteliquid, votestake
 
         //voting methods: 1acct1vote, 1tokennvote, 1token1vote, 1tsquare1v, quadratic
 
@@ -65,8 +65,8 @@ namespace trailservice {
 
         //======================== admin actions ========================
 
-        //sets new config singleton
-        ACTION setconfig(string trail_version, bool set_defaults);
+        //initialize contract
+        ACTION init(string app_version);
 
         //updates fee amount
         ACTION updatefee(name fee_name, asset fee_amount);
@@ -78,47 +78,47 @@ namespace trailservice {
 
         //create a new treasury
         ACTION newtreasury(name manager, asset max_supply, name access);
-        using newtreasury_action = action_wrapper<"newtreasury"_n, &trail::newtreasury>;
+        using newtreasury_action = action_wrapper<"newtreasury"_n, &decide::newtreasury>;
 
         //edit treasury title, description, and icon
         ACTION edittrsinfo(symbol treasury_symbol, string title, string description, string icon);
-        using edittrsinfo_action = action_wrapper<"edittrsinfo"_n, &trail::edittrsinfo>;
+        using edittrsinfo_action = action_wrapper<"edittrsinfo"_n, &decide::edittrsinfo>;
 
         //toggle a treasury setting
         ACTION toggle(symbol treasury_symbol, name setting_name);
-        using toggle_action = action_wrapper<"toggle"_n, &trail::toggle>;
+        using toggle_action = action_wrapper<"toggle"_n, &decide::toggle>;
 
         //mint new tokens to the recipient
         ACTION mint(name to, asset quantity, string memo);
-        using mint_action = action_wrapper<"mint"_n, &trail::mint>;
+        using mint_action = action_wrapper<"mint"_n, &decide::mint>;
 
         //transfer tokens
         ACTION transfer(name from, name to, asset quantity, string memo);
-        using transfer_action = action_wrapper<"transfer"_n, &trail::transfer>;
+        using transfer_action = action_wrapper<"transfer"_n, &decide::transfer>;
 
         //burn tokens from manager balance
         ACTION burn(asset quantity, string memo);
-        using burn_action = action_wrapper<"burn"_n, &trail::burn>;
+        using burn_action = action_wrapper<"burn"_n, &decide::burn>;
 
         //reclaim tokens from voter to the manager balance
         ACTION reclaim(name voter, asset quantity, string memo);
-        using reclaim_action = action_wrapper<"reclaim"_n, &trail::reclaim>;
+        using reclaim_action = action_wrapper<"reclaim"_n, &decide::reclaim>;
 
         //change max supply
         ACTION mutatemax(asset new_max_supply, string memo);
-        using mutatemax_action = action_wrapper<"mutatemax"_n, &trail::mutatemax>;
+        using mutatemax_action = action_wrapper<"mutatemax"_n, &decide::mutatemax>;
 
         //set new unlock auth
         ACTION setunlocker(symbol treasury_symbol, name new_unlock_acct, name new_unlock_auth);
-        using setunlocker_action = action_wrapper<"setunlocker"_n, &trail::setunlocker>;
+        using setunlocker_action = action_wrapper<"setunlocker"_n, &decide::setunlocker>;
 
         //lock a treasury
         ACTION lock(symbol treasury_symbol);
-        using lock_action = action_wrapper<"lock"_n, &trail::lock>;
+        using lock_action = action_wrapper<"lock"_n, &decide::lock>;
 
         //unlock a treasury
         ACTION unlock(symbol treasury_symbol);
-        using unlock_action = action_wrapper<"unlock"_n, &trail::unlock>;
+        using unlock_action = action_wrapper<"unlock"_n, &decide::unlock>;
 
         //======================== payroll actions ========================
 
@@ -133,59 +133,59 @@ namespace trailservice {
         //creates a new ballot
         ACTION newballot(name ballot_name, name category, name publisher,  
             symbol treasury_symbol, name voting_method, vector<name> initial_options);
-        using newballot_action = action_wrapper<"newballot"_n, &trail::newballot>;
+        using newballot_action = action_wrapper<"newballot"_n, &decide::newballot>;
 
         //edits ballots details
         ACTION editdetails(name ballot_name, string title, string description, string content);
-        using editdetails_action = action_wrapper<"editdetails"_n, &trail::editdetails>;
+        using editdetails_action = action_wrapper<"editdetails"_n, &decide::editdetails>;
 
         //toggles ballot settings
         ACTION togglebal(name ballot_name, name setting_name);
-        using togglebal_action = action_wrapper<"togglebal"_n, &trail::togglebal>;
+        using togglebal_action = action_wrapper<"togglebal"_n, &decide::togglebal>;
 
         //edits ballot min and max options
         ACTION editminmax(name ballot_name, uint8_t new_min_options, uint8_t new_max_options);
-        using editminmax_action = action_wrapper<"editminmax"_n, &trail::editminmax>;
+        using editminmax_action = action_wrapper<"editminmax"_n, &decide::editminmax>;
 
         //adds an option to a ballot
         ACTION addoption(name ballot_name, name new_option_name);
-        using addoption_action = action_wrapper<"addoption"_n, &trail::addoption>;
+        using addoption_action = action_wrapper<"addoption"_n, &decide::addoption>;
 
         //removes an option from a ballot
         ACTION rmvoption(name ballot_name, name option_name);
-        using rmvoption_action = action_wrapper<"rmvoption"_n, &trail::rmvoption>;
+        using rmvoption_action = action_wrapper<"rmvoption"_n, &decide::rmvoption>;
 
         //opens a ballot for voting
         ACTION openvoting(name ballot_name, time_point_sec end_time);
-        using openvoting_action = action_wrapper<"openvoting"_n, &trail::openvoting>;
+        using openvoting_action = action_wrapper<"openvoting"_n, &decide::openvoting>;
 
         //cancels a ballot
         ACTION cancelballot(name ballot_name, string memo);
-        using cancelballot_action = action_wrapper<"cancelballot"_n, &trail::cancelballot>;
+        using cancelballot_action = action_wrapper<"cancelballot"_n, &decide::cancelballot>;
 
         //deletes an expired ballot
         ACTION deleteballot(name ballot_name);
-        using deleteballot_action = action_wrapper<"deleteballot"_n, &trail::deleteballot>;
+        using deleteballot_action = action_wrapper<"deleteballot"_n, &decide::deleteballot>;
 
         //posts results from a light ballot before closing
         ACTION postresults(name ballot_name, map<name, asset> light_results, uint32_t total_voters);
-        using postresults_action = action_wrapper<"postresults"_n, &trail::postresults>;
+        using postresults_action = action_wrapper<"postresults"_n, &decide::postresults>;
 
         //closes voting on a ballot and post final results
         ACTION closevoting(name ballot_name, bool broadcast);
-        using closevoting_action = action_wrapper<"closevoting"_n, &trail::closevoting>;
+        using closevoting_action = action_wrapper<"closevoting"_n, &decide::closevoting>;
 
         //broadcast ballot results
         ACTION broadcast(name ballot_name, map<name, asset> final_results, uint32_t total_voters);
-        using broadcast_action = action_wrapper<"broadcast"_n, &trail::broadcast>;
+        using broadcast_action = action_wrapper<"broadcast"_n, &decide::broadcast>;
 
         //archives a ballot for a fee
         ACTION archive(name ballot_name, time_point_sec archived_until);
-        using archive_action = action_wrapper<"archive"_n, &trail::archive>;
+        using archive_action = action_wrapper<"archive"_n, &decide::archive>;
 
         //unarchives a ballot after archival time has expired
         ACTION unarchive(name ballot_name, bool force);
-        using unarchive_action = action_wrapper<"unarchive"_n, &trail::unarchive>;
+        using unarchive_action = action_wrapper<"unarchive"_n, &decide::unarchive>;
 
         //======================== voter actions ========================
 
@@ -232,27 +232,27 @@ namespace trailservice {
         //registers a new committee for a treasury
         ACTION regcommittee(name committee_name, string committee_title,
             symbol treasury_symbol, vector<name> initial_seats, name registree);
-        using regcommittee_action = action_wrapper<"regcommittee"_n,&trail::regcommittee>;
+        using regcommittee_action = action_wrapper<"regcommittee"_n,&decide::regcommittee>;
 
         //adds a committee seat
         ACTION addseat(name committee_name, symbol treasury_symbol, name new_seat_name);
-        using addseat_action = action_wrapper<"addseat"_n, &trail::addseat>;
+        using addseat_action = action_wrapper<"addseat"_n, &decide::addseat>;
 
         //removes a committee seat
         ACTION removeseat(name committee_name, symbol treasury_symbol, name seat_name);
-        using removeseat_action = action_wrapper<"removeseat"_n, &trail::removeseat>;
+        using removeseat_action = action_wrapper<"removeseat"_n, &decide::removeseat>;
 
         //assigns a new member to a committee seat
         ACTION assignseat(name committee_name, symbol treasury_symbol, name seat_name, name seat_holder, string memo);
-        using assignseat_action = action_wrapper<"assignseat"_n, &trail::assignseat>;
+        using assignseat_action = action_wrapper<"assignseat"_n, &decide::assignseat>;
 
         //sets updater account and auth
         ACTION setupdater(name committee_name, symbol treasury_symbol, name updater_account, name updater_auth);
-        using setupdater_action = action_wrapper<"setupdater"_n, &trail::setupdater>;
+        using setupdater_action = action_wrapper<"setupdater"_n, &decide::setupdater>;
 
         //deletes a committee
         ACTION delcommittee(name committee_name, symbol treasury_symbol, string memo);
-        using delcommittee_action = action_wrapper<"delcommitee"_n, &trail::delcommittee>;
+        using delcommittee_action = action_wrapper<"delcommitee"_n, &decide::delcommittee>;
 
         //========== notification methods ==========
 
@@ -312,10 +312,13 @@ namespace trailservice {
         //scope: singleton
         //ram: 
         TABLE config {
-            string trail_version;
+            string app_name;
+            string app_version;
             asset total_deposits;
             map<name, asset> fees; //ballot, treasury, archival
-            map<name, uint32_t> times; //balcooldown, minballength
+            map<name, uint32_t> times; //balcooldown, minballength, forfeittime
+
+            EOSLIB_SERIALIZE(config, (app_name)(app_version)(total_deposits)(fees)(times))
         };
         typedef singleton<name("config"), config> config_singleton;
 

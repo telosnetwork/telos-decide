@@ -1,8 +1,8 @@
-#include <trail.hpp>
+#include <decide.hpp>
 
-using namespace trailservice;
+using namespace decidespace;
 
-ACTION trail::newtreasury(name manager, asset max_supply, name access) {
+ACTION decide::newtreasury(name manager, asset max_supply, name access) {
     
     //authenticate
     require_auth(manager);
@@ -13,7 +13,7 @@ ACTION trail::newtreasury(name manager, asset max_supply, name access) {
 
     //open configs singleton, get configs
     config_singleton configs(get_self(), get_self().value);
-    check(configs.exists(), "trailservice::setconfig must be called before treasuries can be emplaced");
+    check(configs.exists(), "telos.decide::init must be called before treasuries can be emplaced");
     auto conf = configs.get();
 
     //validate
@@ -27,7 +27,6 @@ ACTION trail::newtreasury(name manager, asset max_supply, name access) {
     if (manager != name("eosio")) {
         check(max_supply.symbol.code().raw() != TLOS_SYM.code().raw(), "TLOS symbol is reserved");
         check(max_supply.symbol.code().raw() != VOTE_SYM.code().raw(), "VOTE symbol is reserved");
-        check(max_supply.symbol.code().raw() != TRAIL_SYM.code().raw(), "TRAIL symbol is reserved");
     }
 
     //charge treasury fee
@@ -101,7 +100,7 @@ ACTION trail::newtreasury(name manager, asset max_supply, name access) {
 
 }
 
-ACTION trail::edittrsinfo(symbol treasury_symbol, string title, string description, string icon) {
+ACTION decide::edittrsinfo(symbol treasury_symbol, string title, string description, string icon) {
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
     auto& trs = treasuries.get(treasury_symbol.code().raw(), "treasury not found");
@@ -120,7 +119,7 @@ ACTION trail::edittrsinfo(symbol treasury_symbol, string title, string descripti
     });
 }
 
-ACTION trail::toggle(symbol treasury_symbol, name setting_name) {
+ACTION decide::toggle(symbol treasury_symbol, name setting_name) {
     
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -141,7 +140,7 @@ ACTION trail::toggle(symbol treasury_symbol, name setting_name) {
 
 }
 
-ACTION trail::mint(name to, asset quantity, string memo) {
+ACTION decide::mint(name to, asset quantity, string memo) {
     
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -170,7 +169,7 @@ ACTION trail::mint(name to, asset quantity, string memo) {
 
 }
 
-ACTION trail::transfer(name from, name to, asset quantity, string memo) {
+ACTION decide::transfer(name from, name to, asset quantity, string memo) {
     
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -199,7 +198,7 @@ ACTION trail::transfer(name from, name to, asset quantity, string memo) {
 
 }
 
-ACTION trail::burn(asset quantity, string memo) {
+ACTION decide::burn(asset quantity, string memo) {
     
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -233,7 +232,7 @@ ACTION trail::burn(asset quantity, string memo) {
 
 }
 
-ACTION trail::reclaim(name voter, asset quantity, string memo) {
+ACTION decide::reclaim(name voter, asset quantity, string memo) {
     
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -261,7 +260,7 @@ ACTION trail::reclaim(name voter, asset quantity, string memo) {
 
 }
 
-ACTION trail::mutatemax(asset new_max_supply, string memo) {
+ACTION decide::mutatemax(asset new_max_supply, string memo) {
     
     //get treasuries table, open treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -284,7 +283,7 @@ ACTION trail::mutatemax(asset new_max_supply, string memo) {
 
 }
 
-ACTION trail::setunlocker(symbol treasury_symbol, name new_unlock_acct, name new_unlock_auth) {
+ACTION decide::setunlocker(symbol treasury_symbol, name new_unlock_acct, name new_unlock_auth) {
     
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -305,7 +304,7 @@ ACTION trail::setunlocker(symbol treasury_symbol, name new_unlock_acct, name new
 
 }
 
-ACTION trail::lock(symbol treasury_symbol) {
+ACTION decide::lock(symbol treasury_symbol) {
     
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -322,7 +321,7 @@ ACTION trail::lock(symbol treasury_symbol) {
 
 }
 
-ACTION trail::unlock(symbol treasury_symbol) {
+ACTION decide::unlock(symbol treasury_symbol) {
     
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -343,7 +342,7 @@ ACTION trail::unlock(symbol treasury_symbol) {
 
 //======================== payroll actions ========================
 
-ACTION trail::addfunds(name from, symbol treasury_symbol, asset quantity) {
+ACTION decide::addfunds(name from, symbol treasury_symbol, asset quantity) {
     
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -365,7 +364,7 @@ ACTION trail::addfunds(name from, symbol treasury_symbol, asset quantity) {
     });
 }
 
-ACTION trail::editpayrate(symbol treasury_symbol, uint32_t period_length, asset per_period) {
+ACTION decide::editpayrate(symbol treasury_symbol, uint32_t period_length, asset per_period) {
     
     //open payrolls table, get payroll
     payrolls_table payrolls(get_self(), treasury_symbol.code().raw());

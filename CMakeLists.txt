@@ -1,10 +1,9 @@
 cmake_minimum_required(VERSION 3.5)
-project(trail_service)
+project(telos_decide)
 
 set(VERSION_MAJOR 2)
 set(VERSION_MINOR 0)
 set(VERSION_PATCH 0)
-set(VERSION_SUFFIX RC2)
 
 if (VERSION_SUFFIX)
    set(VERSION_FULL "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH}-${VERSION_SUFFIX}")
@@ -16,7 +15,7 @@ include(ExternalProject)
 
 find_package(eosio.cdt)
 
-message(STATUS "Building trail-service v${VERSION_FULL}")
+message(STATUS "Building Telos Decide v${VERSION_FULL}")
 
 set(EOSIO_CDT_VERSION_MIN "1.6")
 set(EOSIO_CDT_VERSION_SOFT_MAX "1.6")

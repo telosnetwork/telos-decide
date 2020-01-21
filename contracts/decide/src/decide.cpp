@@ -1,54 +1,56 @@
-#include <trail.hpp>
+#include <decide.hpp>
 #include <utility.hpp>
 
-#include <eosio.token/eosio.token.hpp>
+using namespace decidespace;
 
-using namespace trailservice;
+decide::decide(name self, name code, datastream<const char*> ds) : contract(self, code, ds) {}
 
-trail::trail(name self, name code, datastream<const char*> ds) : contract(self, code, ds) {}
-
-trail::~trail() {}
+decide::~decide() {}
 
 //======================== admin actions ========================
 
-ACTION trail::setconfig(string trail_version, bool set_defaults) {
+ACTION decide::init(string app_version) {
     
     //authenticate
     require_auth(get_self());
 
-    //initialize
-    map<name, asset> new_fees;
-    map<name, uint32_t> new_times;
-
-    if (set_defaults) {
-        //set default fees
-        new_fees[name("ballot")] = asset(300000, TLOS_SYM); //30 TLOS
-        new_fees[name("treasury")] = asset(10000000, TLOS_SYM); //1000 TLOS
-        new_fees[name("archival")] = asset(30000, TLOS_SYM); //3 TLOS (per day)
-        new_fees[name("committee")] = asset(100000, TLOS_SYM); //100 TLOS
-
-        //set default times
-        new_times[name("minballength")] = uint32_t(86400); //1 day in seconds
-        new_times[name("balcooldown")] = uint32_t(432000); //5 days in seconds
-        new_times[name("forfeittime")] = uint32_t(864000); //10 days in seconds
-    }
-
     //open config singleton
     config_singleton configs(get_self(), get_self().value);
 
+    //validate
+    check(!configs.exists(), "contract already initialized");
+
+    //initialize
+    string app_name = "Telos Decide";
+    map<name, asset> new_fees;
+    map<name, uint32_t> new_times;
+        
+    //set default fees
+    new_fees[name("ballot")] = asset(100000, TLOS_SYM); //10 TLOS
+    new_fees[name("treasury")] = asset(5000000, TLOS_SYM); //500 TLOS
+    new_fees[name("archival")] = asset(10000, TLOS_SYM); //1 TLOS (per day)
+    new_fees[name("committee")] = asset(100000, TLOS_SYM); //100 TLOS
+
+    //set default times
+    new_times[name("minballength")] = uint32_t(60); //1 minute in seconds
+    new_times[name("balcooldown")] = uint32_t(86400); //1 day in seconds
+    new_times[name("forfeittime")] = uint32_t(864000); //10 days in seconds
+
     //build new configs
     config new_config = {
-        trail_version, //trail_version
-        asset(0, TLOS_SYM),
+        app_name, //app_name
+        app_version, //app_version
+        asset(0, TLOS_SYM), //total_deposits
         new_fees, //fees
         new_times //times
     };
 
     //set new config
     configs.set(new_config, get_self());
+
 }
 
-ACTION trail::updatefee(name fee_name, asset fee_amount) {
+ACTION decide::updatefee(name fee_name, asset fee_amount) {
     
     //authenticate
     require_auth(get_self());
@@ -72,7 +74,7 @@ ACTION trail::updatefee(name fee_name, asset fee_amount) {
 
 }
 
-ACTION trail::updatetime(name time_name, uint32_t length) {
+ACTION decide::updatetime(name time_name, uint32_t length) {
     
     //authenticate
     require_auth(get_self());
@@ -95,7 +97,7 @@ ACTION trail::updatetime(name time_name, uint32_t length) {
 
 }
 
-ACTION trail::withdraw(name voter, asset quantity) {
+ACTION decide::withdraw(name voter, asset quantity) {
     
     //authenticate
     require_auth(voter);
@@ -122,25 +124,26 @@ ACTION trail::withdraw(name voter, asset quantity) {
     configs.set(config, get_self());
 
     //transfer to eosio.token
-    //inline trx requires trailservice@active to have trailservice@eosio.code
+    //inline trx requires telos.decide@active to have telos.decide@eosio.code
     //TODO: replace with action handler
     token::transfer_action transfer_act("eosio.token"_n, { get_self(), active_permission });
-    transfer_act.send(get_self(), voter, quantity, std::string("trailservice withdrawal"));
+    transfer_act.send(get_self(), voter, quantity, std::string("Telos Decide Withdrawal"));
+
 }
 
 //========== notification methods ==========
 
-void trail::catch_delegatebw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {
+void decide::catch_delegatebw(name from, name receiver, asset stake_net_quantity, asset stake_cpu_quantity, bool transfer) {
     //sync external stake with internal stake
     sync_external_account(from, VOTE_SYM, stake_net_quantity.symbol);
 }
 
-void trail::catch_undelegatebw(name from, name receiver, asset unstake_net_quantity, asset unstake_cpu_quantity) {
+void decide::catch_undelegatebw(name from, name receiver, asset unstake_net_quantity, asset unstake_cpu_quantity) {
     //sync external stake with internal stake
     sync_external_account(from, VOTE_SYM, unstake_net_quantity.symbol);
 }
 
-void trail::catch_transfer(name from, name to, asset quantity, string memo) {
+void decide::catch_transfer(name from, name to, asset quantity, string memo) {
     //get initial receiver contract
     name rec = get_first_receiver();
 
@@ -179,13 +182,13 @@ void trail::catch_transfer(name from, name to, asset quantity, string memo) {
 
         asset total_transferable = (token::get_balance("eosio.token"_n, get_self(), TLOS_SYM.code()) + quantity) - config.total_deposits;
         
-        check(total_transferable >= quantity, "trailservice lacks the liquid TLOS to make this transfer");
+        check(total_transferable >= quantity, "Telos Decide lacks the liquid TLOS to make this transfer");
     }
 }
 
 //========== utility methods ==========
 
-void trail::add_liquid(name voter, asset quantity) {
+void decide::add_liquid(name voter, asset quantity) {
     //open voters table, get voter
     voters_table to_voters(get_self(), voter.value);
     auto& to_voter = to_voters.get(quantity.symbol.code().raw(), "add_liquid: voter not found");
@@ -196,7 +199,7 @@ void trail::add_liquid(name voter, asset quantity) {
     });
 }
 
-void trail::sub_liquid(name voter, asset quantity) {
+void decide::sub_liquid(name voter, asset quantity) {
     //open voters table, get voter
     voters_table from_voters(get_self(), voter.value);
     auto& from_voter = from_voters.get(quantity.symbol.code().raw(), "sub_liquid: voter not found");
@@ -210,7 +213,7 @@ void trail::sub_liquid(name voter, asset quantity) {
     });
 }
 
-void trail::add_stake(name voter, asset quantity) {
+void decide::add_stake(name voter, asset quantity) {
     //open voters table, get voter
     voters_table to_voters(get_self(), voter.value);
     auto& to_voter = to_voters.get(quantity.symbol.code().raw(), "add_stake: voter not found");
@@ -222,7 +225,7 @@ void trail::add_stake(name voter, asset quantity) {
     });
 }
 
-void trail::sub_stake(name voter, asset quantity) {
+void decide::sub_stake(name voter, asset quantity) {
     //open voters table, get voter
     voters_table from_voters(get_self(), voter.value);
     auto& from_voter = from_voters.get(quantity.symbol.code().raw(), "sub_stake: voter not found");
@@ -237,7 +240,7 @@ void trail::sub_stake(name voter, asset quantity) {
     });
 }
 
-bool trail::valid_category(name category) {
+bool decide::valid_category(name category) {
     switch (category.value) {
         case (name("proposal").value):
             return true;
@@ -254,7 +257,7 @@ bool trail::valid_category(name category) {
     }
 }
 
-bool trail::valid_voting_method(name voting_method) {
+bool decide::valid_voting_method(name voting_method) {
     switch (voting_method.value) {
         case (name("1acct1vote").value):
             return true;
@@ -274,7 +277,7 @@ bool trail::valid_voting_method(name voting_method) {
     }
 }
 
-bool trail::valid_access_method(name access_method) {
+bool decide::valid_access_method(name access_method) {
     switch (access_method.value) {
         case (name("public").value):
             return true;
@@ -290,7 +293,7 @@ bool trail::valid_access_method(name access_method) {
     }
 }
 
-void trail::require_fee(name account_name, asset fee) {
+void decide::require_fee(name account_name, asset fee) {
     //open accounts table, get TLOS balance
     accounts_table tlos_accounts(get_self(), account_name.value);
     auto& tlos_acct = tlos_accounts.get(TLOS_SYM.code().raw(), "TLOS balance not found");
@@ -311,7 +314,7 @@ void trail::require_fee(name account_name, asset fee) {
     });
 }
 
-void trail::sync_external_account(name voter, symbol internal_symbol, symbol external_symbol) {
+void decide::sync_external_account(name voter, symbol internal_symbol, symbol external_symbol) {
     
     //initialize
     asset tlos_stake;

@@ -1,13 +1,13 @@
-<h1 class="contract">setconfig</h1>
+<h1 class="contract">init</h1>
 
 ---
 spec_version: "0.2.0"
-title: Set Trail Config
-summary: 'Set Trail Config Version'
+title: Set Decide Config
+summary: 'Set Decide Config Version'
 icon: https://github.com/Telos-Foundation/images/raw/master/ricardian_assets/eosio.contracts/icons/admin.png#9bf1cec664863bd6aaac0f814b235f8799fb02c850e9aa5da34e8a004bd6518e
 ---
 
-{{$action.account}} sets the Trail Service config to version {{trail_version}}.
+{{$action.account}} sets the Telos Decide config to version {{app_version}}.
 
 <h1 class="contract">updatefee</h1>
 

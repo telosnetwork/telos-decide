@@ -1,10 +1,10 @@
-#include <trail.hpp>
+#include <decide.hpp>
 
-using namespace trailservice;
+using namespace decidespace;
 
 //======================== worker actions ========================
 
-ACTION trail::forfeitwork(name worker_name, symbol treasury_symbol) {
+ACTION decide::forfeitwork(name worker_name, symbol treasury_symbol) {
     //open workers table, get worker
     labors_table labors(get_self(), treasury_symbol.code().raw());
     auto& lab = labors.get(worker_name.value, "labor not found");
@@ -14,9 +14,6 @@ ACTION trail::forfeitwork(name worker_name, symbol treasury_symbol) {
     auto& bucket = laborbuckets.get(name("workers").value, "workers bucket not found");
 
     //authenticate
-    
-    //wrap get_self(), allows trails to erase old work no matter what
-
     require_auth(lab.worker_name);
 
     //initialize
@@ -37,7 +34,7 @@ ACTION trail::forfeitwork(name worker_name, symbol treasury_symbol) {
     labors.erase(lab);
 }
 
-ACTION trail::claimpayment(name claimant, symbol treasury_symbol) {
+ACTION decide::claimpayment(name claimant, symbol treasury_symbol) {
     //open labors table, get labor
     labors_table labors(get_self(), treasury_symbol.code().raw());
     auto& lab = labors.get(claimant.value, "work not found");
@@ -87,7 +84,6 @@ ACTION trail::claimpayment(name claimant, symbol treasury_symbol) {
 
     //calculate worker payout
     asset payout = asset(0, pr.payroll_funds.symbol);
-    asset trail_payout = asset(0, TRAIL_SYM);
 
     // the percentage of total volume rebalanced by this labor
     double vol_share = double(lab.unclaimed_volume.at(name("rebalvolume")).amount) / 
@@ -110,8 +106,6 @@ ACTION trail::claimpayment(name claimant, symbol treasury_symbol) {
     if(reduced_by > 0) {
         payout.amount = uint64_t(double(payout.amount) * (double(1.0) - reduced_by));
     }
-
-    //TODO: calculate TRAIL payout
 
     if (payout > new_claimable_pay) {
         payout = new_claimable_pay;
@@ -162,7 +156,7 @@ ACTION trail::claimpayment(name claimant, symbol treasury_symbol) {
 
 }
 
-ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
+ACTION decide::rebalance(name voter, name ballot_name, optional<name> worker) {
     
     //open ballots table, get ballot
     ballots_table ballots(get_self(), get_self().value);
@@ -238,7 +232,7 @@ ACTION trail::rebalance(name voter, name ballot_name, optional<name> worker) {
 
 }
 
-ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
+ACTION decide::cleanupvote(name voter, name ballot_name, optional<name> worker) {
     //open votes table, get vote
     votes_table votes(get_self(), ballot_name.value);
     auto& v = votes.get(voter.value, "vote not found");
@@ -278,7 +272,7 @@ ACTION trail::cleanupvote(name voter, name ballot_name, optional<name> worker) {
     
 }
 
-void trail::log_rebalance_work(name worker, symbol treasury_symbol, asset volume, uint16_t count) {
+void decide::log_rebalance_work(name worker, symbol treasury_symbol, asset volume, uint16_t count) {
     //open labors table, get labor
     labors_table labors(get_self(), treasury_symbol.code().raw());
     auto l = labors.find(worker.value);
@@ -322,7 +316,7 @@ void trail::log_rebalance_work(name worker, symbol treasury_symbol, asset volume
     
 }
 
-void trail::log_cleanup_work(name worker, symbol treasury_symbol, uint16_t count) {
+void decide::log_cleanup_work(name worker, symbol treasury_symbol, uint16_t count) {
     //authenticate
     require_auth(worker);
     //open labor table, get labor log

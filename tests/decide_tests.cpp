@@ -9,56 +9,45 @@
 #include <Runtime/Runtime.h>
 #include <iomanip>
 
-#include "trail_tester.hpp"
+#include "decide_tester.hpp"
 
 using namespace eosio;
 using namespace eosio::testing;
 using namespace eosio::chain;
 using namespace fc;
 using namespace std;
-using namespace trail::testing;
+using namespace decidetesting::testing;
 using mvo = fc::mutable_variant_object;
 
-//TODO: go through and fix invalid time calculations
+BOOST_AUTO_TEST_SUITE(decide_tests)
 
-BOOST_AUTO_TEST_SUITE(trail_tests)
+    BOOST_FIXTURE_TEST_CASE( configuration_setting, decide_tester ) try {
 
-    BOOST_FIXTURE_TEST_CASE( configuration_setting, trail_tester ) try {
-
-        string version = "v2.0.0-RC1";
-        set_config(version, true);
-        produce_blocks();
-
+        //get table data
         fc::variant config = get_config();
-
-        //check defaults are set correctly
-        BOOST_REQUIRE_EQUAL(config["trail_version"], version);
-        
-        //fee validation
         map<name, asset> fee_map = variant_to_map<name, asset>(config["fees"]);
-
-        validate_map(fee_map, name("archival"), asset::from_string("3.0000 TLOS"));
-
-        validate_map(fee_map, name("ballot"), asset::from_string("30.0000 TLOS"));
-
-        validate_map(fee_map, name("committee"), asset::from_string("10.0000 TLOS"));
-
-        validate_map(fee_map, name("treasury"), asset::from_string("1000.0000 TLOS"));
-
-        //time validation
         map<name, uint32_t> time_map = variant_to_map<name, uint32_t>(config["times"]);
 
-        validate_map(time_map, name("balcooldown"), uint32_t(432000));
-
-        validate_map(time_map, name("minballength"), uint32_t(86400));
-
+        //assert config values
+        BOOST_REQUIRE_EQUAL(config["app_name"], "Telos Decide");
+        BOOST_REQUIRE_EQUAL(config["app_version"], "v2.0.0");
+        BOOST_REQUIRE_EQUAL(config["total_deposits"].as<asset>(), asset::from_string("0.0000 TLOS"));
         
-        //change with improper symbol
+        validate_map(fee_map, name("archival"), asset::from_string("1.0000 TLOS"));
+        validate_map(fee_map, name("ballot"), asset::from_string("10.0000 TLOS"));
+        validate_map(fee_map, name("committee"), asset::from_string("10.0000 TLOS"));
+        validate_map(fee_map, name("treasury"), asset::from_string("500.0000 TLOS"));
+
+        validate_map(time_map, name("minballength"), uint32_t(60));
+        validate_map(time_map, name("balcooldown"), uint32_t(86400));
+        validate_map(time_map, name("forfeittime"), uint32_t(864000));
+        
+        //attempt fee change with improper symbol
         BOOST_REQUIRE_EXCEPTION(update_fee(name("archival"), asset::from_string("100.0000 TST")),
             eosio_assert_message_exception, eosio_assert_message_is( "fee symbol must be TLOS" ) 
         );
 
-        //change with a zero time
+        //attempt time change with a zero time
         BOOST_REQUIRE_EXCEPTION(update_time(name("balcooldown"), uint32_t(0)),
             eosio_assert_message_exception, eosio_assert_message_is( "length must be a positive number" ) 
         );
@@ -70,63 +59,63 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         update_time(name("minballength"), new_min_bal_length); 
         produce_blocks();
 
-        //validate changes
+        //get table data
         config = get_config();
         fee_map = variant_to_map<name, asset>(config["fees"]);
         time_map = variant_to_map<name, uint32_t>(config["times"]);
 
+        //assert table values
         validate_map(fee_map, name("archival"), new_archival_fee);
         validate_map(time_map, name("minballength"), new_min_bal_length);
 
     } FC_LOG_AND_RETHROW()
 
-    BOOST_FIXTURE_TEST_CASE( transfer_handling, trail_tester ) try {
-        string version = "v2.0.0-RC1";
-        set_config(version, true);
+    BOOST_FIXTURE_TEST_CASE( transfer_handling, decide_tester ) try {
+        
         //trail balance is zero for testa, because a "skip" memo is provided
         const asset initial_balance = base_tester::get_currency_balance(token_name, tlos_sym, testa);
         const asset transfer_amount = asset::from_string("1.0000 TLOS");
 
-        base_tester::transfer(testa, trail_name, "1.0000 TLOS", "skip", token_name);
+        base_tester::transfer(testa, decide_name, "1.0000 TLOS", "skip", token_name);
         
         //check trail balance is 0 for testa
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, testa), asset::from_string("0.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, testa), asset::from_string("0.0000 TLOS"));
 
         //check token balance of testa is initial - 1
         BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, testa), initial_balance - transfer_amount);
 
         //check token balance of trail is 1
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, trail_name), transfer_amount);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, decide_name), transfer_amount);
 
         auto config = get_config();
         BOOST_REQUIRE_EQUAL(config["total_deposits"].as<asset>(), asset::from_string("0.0000 TLOS"));
 
         //trail balance for testa a should be 1, because "skip" was not supplied
-        base_tester::transfer(testa, trail_name, "1.0000 TLOS", "literally anything else", token_name);
+        base_tester::transfer(testa, decide_name, "1.0000 TLOS", "literally anything else", token_name);
 
         //check trail balance is 1 for testa
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, testa), transfer_amount);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, testa), transfer_amount);
 
         //check token balance of testa is initial - 2
         BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, testa), initial_balance - (transfer_amount + transfer_amount));
 
         //check token balance of trail is 2
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, trail_name), transfer_amount + transfer_amount);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(token_name, tlos_sym, decide_name), transfer_amount + transfer_amount);
 
         config = get_config();
         BOOST_REQUIRE_EQUAL(config["total_deposits"].as<asset>(), asset::from_string("1.0000 TLOS"));
 
         //should fail because total_transferable < quantity in catch_transfer
-        BOOST_REQUIRE_EXCEPTION(base_tester::transfer(trail_name, testa, "2.0000 TLOS", "transfer amount too large", token_name),
-            eosio_assert_message_exception, eosio_assert_message_is( "trailservice lacks the liquid TLOS to make this transfer" ) 
+        BOOST_REQUIRE_EXCEPTION(base_tester::transfer(decide_name, testa, "2.0000 TLOS", "transfer amount too large", token_name),
+            eosio_assert_message_exception, eosio_assert_message_is( "Telos Decide lacks the liquid TLOS to make this transfer" ) 
         );
 
         //should succeed because it is less than transferable amount
-        base_tester::transfer(trail_name, testb, "1.0000 TLOS", "normal transfer", token_name);
+        base_tester::transfer(decide_name, testb, "1.0000 TLOS", "normal transfer", token_name);
 
         //should fail because total_transferable < quantity in catch_transfer
-        BOOST_REQUIRE_EXCEPTION(base_tester::transfer(trail_name, testa, "1.0000 TLOS", "transfer amount too large", token_name),
-            eosio_assert_message_exception, eosio_assert_message_is( "trailservice lacks the liquid TLOS to make this transfer" ) 
+        BOOST_REQUIRE_EXCEPTION(base_tester::transfer(decide_name, testa, "1.0000 TLOS", "transfer amount too large", token_name),
+            eosio_assert_message_exception, eosio_assert_message_is( "Telos Decide lacks the liquid TLOS to make this transfer" ) 
         );
         
         //testa should still able able to withdraw its deposit
@@ -139,16 +128,10 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
     } FC_LOG_AND_RETHROW()
 
-    BOOST_FIXTURE_TEST_CASE( treasury_basics, trail_tester ) try {
-        asset max_supply = asset::from_string("1000000 FART");
+    BOOST_FIXTURE_TEST_CASE( treasury_basics, decide_tester ) try {
         
-        //fails because setconfig must be called
-        BOOST_REQUIRE_EXCEPTION(new_treasury(testa, max_supply, name("public")),
-            eosio_assert_message_exception, eosio_assert_message_is( "trailservice::setconfig must be called before treasuries can be emplaced" ) 
-        );
-
-        //set config 
-        set_config("v2.0.0-RC1", true);
+        //initialize
+        asset max_supply = asset::from_string("1000000 DECIDE");
 
         //fails because there isn't a local balance for the fee
         BOOST_REQUIRE_EXCEPTION(new_treasury(testa, max_supply, name("public")),
@@ -156,10 +139,10 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         );
         produce_blocks();
 
-        base_tester::transfer(testa, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(testb, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(testc, trail_name, "3000.0000 TLOS", "", token_name);
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, testa), asset::from_string("3000.0000 TLOS"));
+        base_tester::transfer(testa, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(testb, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(testc, decide_name, "3000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, testa), asset::from_string("3000.0000 TLOS"));
         new_treasury(testa, max_supply, name("public"));
         
         //validate treasury structure
@@ -175,7 +158,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         validate_map(settings, name("unstakeable"), false);
 
         BOOST_REQUIRE_EQUAL(treasury["max_supply"].as<asset>(), max_supply);
-        BOOST_REQUIRE_EQUAL(treasury["supply"].as<asset>(), asset::from_string("0 FART"));
+        BOOST_REQUIRE_EQUAL(treasury["supply"].as<asset>(), asset::from_string("0 DECIDE"));
         BOOST_REQUIRE_EQUAL(treasury["access"].as<name>(), name("public"));
         BOOST_REQUIRE_EQUAL(treasury["manager"].as<name>(), testa);
         BOOST_REQUIRE_EQUAL(treasury["title"], "");
@@ -212,26 +195,26 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         reg_voter(testb, max_supply.get_symbol(), {});
 
         //mint tokens
-        mint(testa, testb, max_supply - asset::from_string("1 FART"), "init amount");
+        mint(testa, testb, max_supply - asset::from_string("1 DECIDE"), "init amount");
 
         treasury = get_treasury(max_supply.get_symbol()).as<mvo>();
 
-        BOOST_REQUIRE_EQUAL(treasury["supply"].as<asset>(), max_supply - asset::from_string("1 FART"));
+        BOOST_REQUIRE_EQUAL(treasury["supply"].as<asset>(), max_supply - asset::from_string("1 DECIDE"));
 
         validate_voter(testb, max_supply.get_symbol(), mvo()
-            ("liquid", max_supply - asset::from_string("1 FART"))
-            ("staked", "0 FART")
+            ("liquid", max_supply - asset::from_string("1 DECIDE"))
+            ("staked", "0 DECIDE")
             ("staked_time", time_point_sec(get_current_time_point()))
-            ("delegated", "0 FART")
+            ("delegated", "0 DECIDE")
             ("delegated_to", "")
             ("delegation_time", time_point_sec(get_current_time_point()))
         );
 
-        BOOST_REQUIRE_EXCEPTION(mint(testa, testb, asset::from_string("2 FART"), "an amount to go over max supply"),
+        BOOST_REQUIRE_EXCEPTION(mint(testa, testb, asset::from_string("2 DECIDE"), "an amount to go over max supply"),
             eosio_assert_message_exception, eosio_assert_message_is( "minting would breach max supply" ) 
         );
 
-        BOOST_REQUIRE_EXCEPTION(transfer(testb, testc, asset::from_string("1000 FART"), "should fail, testc isn't registered"), 
+        BOOST_REQUIRE_EXCEPTION(transfer(testb, testc, asset::from_string("1000 DECIDE"), "should fail, testc isn't registered"), 
             eosio_assert_message_exception, eosio_assert_message_is( "add_liquid: voter not found" ) 
         );
 
@@ -240,41 +223,41 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         reg_voter(testc, max_supply.get_symbol(), {});
 
         validate_voter(testc, max_supply.get_symbol(), mvo()
-            ("liquid", asset::from_string("0 FART"))
-            ("staked", "0 FART")
+            ("liquid", asset::from_string("0 DECIDE"))
+            ("staked", "0 DECIDE")
             ("staked_time", time_point_sec(get_current_time_point()))
-            ("delegated", "0 FART")
+            ("delegated", "0 DECIDE")
             ("delegated_to", "")
             ("delegation_time", time_point_sec(get_current_time_point()))
         );
 
         //transfer to testc should succeed now that the account is registered
-        transfer(testb, testc, asset::from_string("1000 FART"), "");
+        transfer(testb, testc, asset::from_string("1000 DECIDE"), "");
 
         validate_voter(testc, max_supply.get_symbol(), mvo()
-            ("liquid", asset::from_string("1000 FART"))
-            ("staked", "0 FART")
+            ("liquid", asset::from_string("1000 DECIDE"))
+            ("staked", "0 DECIDE")
             ("staked_time", time_point_sec(get_current_time_point()))
-            ("delegated", "0 FART")
+            ("delegated", "0 DECIDE")
             ("delegated_to", "")
             ("delegation_time", time_point_sec(get_current_time_point()))
         );
         
         //attempt to burn tokens the manage has not yet reclaimed, should fail because manager doesn't have a voter emplacement
-        BOOST_REQUIRE_EXCEPTION(burn(testa, asset::from_string("100 FART"), "should fail"), 
+        BOOST_REQUIRE_EXCEPTION(burn(testa, asset::from_string("100 DECIDE"), "should fail"), 
             eosio_assert_message_exception, eosio_assert_message_is( "manager voter not found" ) 
         );
 
         //register testa to its own treasury
         auto trace = reg_voter(testa, max_supply.get_symbol(), {});
 
-        validate_action_payer(trace, trail_name, name("regvoter"), testa);
+        validate_action_payer(trace, decide_name, name("regvoter"), testa);
 
         validate_voter(testa, max_supply.get_symbol(), mvo()
-            ("liquid", asset::from_string("0 FART"))
-            ("staked", "0 FART")
+            ("liquid", asset::from_string("0 DECIDE"))
+            ("staked", "0 DECIDE")
             ("staked_time", time_point_sec(get_current_time_point()))
-            ("delegated", "0 FART")
+            ("delegated", "0 DECIDE")
             ("delegated_to", "")
             ("delegation_time", time_point_sec(get_current_time_point()))
         );
@@ -282,50 +265,50 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         produce_blocks();
 
         //attempt to burn again, should fail because manager doesn't possess the tokens
-        BOOST_REQUIRE_EXCEPTION(burn(testa, asset::from_string("100 FART"), "should fail"), 
+        BOOST_REQUIRE_EXCEPTION(burn(testa, asset::from_string("100 DECIDE"), "should fail"), 
             eosio_assert_message_exception, eosio_assert_message_is( "burning would overdraw balance" ) 
         );
 
         //reclaim tokens from testb
-        reclaim(testa, testb, asset::from_string("100 FART"), "because you made me angry");
+        reclaim(testa, testb, asset::from_string("100 DECIDE"), "because you made me angry");
         validate_voter(testa, max_supply.get_symbol(), mvo()
-            ("liquid", asset::from_string("100 FART"))
-            ("staked", "0 FART")
+            ("liquid", asset::from_string("100 DECIDE"))
+            ("staked", "0 DECIDE")
             ("staked_time", time_point_sec(get_current_time_point()))
-            ("delegated", "0 FART")
+            ("delegated", "0 DECIDE")
             ("delegated_to", "")
             ("delegation_time", time_point_sec(get_current_time_point()))
         );
 
-        BOOST_REQUIRE_EXCEPTION(burn(testa, asset::from_string("101 FART"), "should fail"), 
+        BOOST_REQUIRE_EXCEPTION(burn(testa, asset::from_string("101 DECIDE"), "should fail"), 
             eosio_assert_message_exception, eosio_assert_message_is( "burning would overdraw balance" ) 
         );
 
-        burn(testa, asset::from_string("100 FART"), "should pass");
+        burn(testa, asset::from_string("100 DECIDE"), "should pass");
         validate_voter(testa, max_supply.get_symbol(), mvo()
-            ("liquid", asset::from_string("0 FART"))
-            ("staked", "0 FART")
+            ("liquid", asset::from_string("0 DECIDE"))
+            ("staked", "0 DECIDE")
             ("staked_time", time_point_sec(get_current_time_point()))
-            ("delegated", "0 FART")
+            ("delegated", "0 DECIDE")
             ("delegated_to", "")
             ("delegation_time", time_point_sec(get_current_time_point()))
         );
 
         treasury = get_treasury(max_supply.get_symbol()).as<mvo>();
 
-        BOOST_REQUIRE_EQUAL(treasury["supply"].as<asset>(), max_supply - asset::from_string("1 FART") - asset::from_string("100 FART"));
-        asset new_max_supply = max_supply - asset::from_string("100 FART");
+        BOOST_REQUIRE_EQUAL(treasury["supply"].as<asset>(), max_supply - asset::from_string("1 DECIDE") - asset::from_string("100 DECIDE"));
+        asset new_max_supply = max_supply - asset::from_string("100 DECIDE");
         mutate_max(testa, new_max_supply, "");
 
         treasury = get_treasury(max_supply.get_symbol()).as<mvo>();
         BOOST_REQUIRE_EQUAL(treasury["max_supply"].as<asset>(), new_max_supply);
 
         // change unlocker
-        set_unlocker(testa, max_supply.get_symbol(), testb, name("fart"));
+        set_unlocker(testa, max_supply.get_symbol(), testb, name("decide"));
         treasury = get_treasury(max_supply.get_symbol()).as<mvo>();
 
         BOOST_REQUIRE_EQUAL(treasury["unlock_acct"].as<name>(), testb);
-        BOOST_REQUIRE_EQUAL(treasury["unlock_auth"].as<name>(), name("fart"));
+        BOOST_REQUIRE_EQUAL(treasury["unlock_auth"].as<name>(), name("decide"));
 
         set_unlocker(testa, max_supply.get_symbol(), testa, name("active"));
 
@@ -353,7 +336,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         trace = reg_voter(testb, test_asset.get_symbol(), testa);
 
-        validate_action_payer(trace, trail_name, name("regvoter"), testa);
+        validate_action_payer(trace, decide_name, name("regvoter"), testa);
 
         //attempt to create a new treasury with membership access, should fail
         test_asset = asset::from_string("1000.00 TT");
@@ -369,7 +352,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         trace = reg_voter(testa, test_asset.get_symbol(), testc);
 
-        validate_action_payer(trace, trail_name, name("regvoter"), testc);
+        validate_action_payer(trace, decide_name, name("regvoter"), testc);
 
         edit_trs_info(testa, max_supply.get_symbol(), "new title", "new description", "new icon");
 
@@ -409,32 +392,30 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         );
     } FC_LOG_AND_RETHROW()
 
-    BOOST_FIXTURE_TEST_CASE( ballot_basics, trail_tester ) try {
-        //setup treasury
-        set_config("v2.0.0-RC1", true);
+    BOOST_FIXTURE_TEST_CASE( ballot_basics, decide_tester ) try {
+        
+        //initialize
         asset max_supply = asset::from_string("1000000.00 GOO");
         symbol treasury_symbol = max_supply.get_symbol();
         name ballot_name = name("ballot1");
         name valid_category = name("proposal");
         name invalid_category = name("invalid");
-
         name valid_voting_method = name("1acct1vote");
         name invalid_voting_method = name("invalidvote");
-
         name manager = name("manager");
         name voter1 = testa, voter2 = testb, voter3 = testc;
 
         create_account_with_resources(manager, eosio_name, asset::from_string("400.0000 TLOS"), false);
         base_tester::transfer(eosio_name, manager, "10000.0000 TLOS", "initial funds", token_name);
 
-        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(manager, trail_name, "5000.0000 TLOS", "", token_name);
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
+        base_tester::transfer(voter1, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(manager, decide_name, "5000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
         
         new_treasury(manager, max_supply, name("public"));
 
@@ -482,8 +463,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         validate_map(settings_map, name("lightballot"), false);
         validate_map(settings_map, name("revotable"), true);
-        validate_map(settings_map, name("votestake"), true);
-        validate_map(settings_map, name("writein"), false);
+        validate_map(settings_map, name("votestake"), false);
 
         //edit ballot details and verify
         string title = "The Title of My Ballot";
@@ -633,8 +613,9 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
     } FC_LOG_AND_RETHROW()
 
-    BOOST_FIXTURE_TEST_CASE( ballot_setup_restrictions, trail_tester ) try {
-        set_config("v2.0.0-RC1", true);
+    BOOST_FIXTURE_TEST_CASE( ballot_setup_restrictions, decide_tester ) try {
+        
+
         asset max_supply = asset::from_string("1000000.00 GOO");
         symbol treasury_symbol = max_supply.get_symbol();
         name ballot_name = name("ballot1");
@@ -647,14 +628,14 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         create_account_with_resources(manager, eosio_name, asset::from_string("400.0000 TLOS"), false);
         base_tester::transfer(eosio_name, manager, "10000.0000 TLOS", "initial funds", token_name);
 
-        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(manager, trail_name, "5000.0000 TLOS", "", token_name);
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
+        base_tester::transfer(voter1, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(manager, decide_name, "5000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
         
         new_treasury(manager, max_supply, name("public"));
 
@@ -694,8 +675,9 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         );
     } FC_LOG_AND_RETHROW()
 
-    BOOST_FIXTURE_TEST_CASE( committee_basics, trail_tester ) try {
-        set_config("v2.0.0-RC1", true);
+    BOOST_FIXTURE_TEST_CASE( committee_basics, decide_tester ) try {
+        
+        
         asset max_supply = asset::from_string("1000000.00 GOO");
         symbol treasury_symbol = max_supply.get_symbol();
         name ballot_name = name("ballot1");
@@ -707,14 +689,14 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         create_account_with_resources(manager, eosio_name, asset::from_string("400.0000 TLOS"), false);
         base_tester::transfer(eosio_name, manager, "10000.0000 TLOS", "initial funds", token_name);
 
-        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(manager, trail_name, "5000.0000 TLOS", "", token_name);
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
+        base_tester::transfer(voter1, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(manager, decide_name, "5000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
         
         new_treasury(manager, max_supply, name("public"));
         toggle(manager, treasury_symbol, name("stakeable"));
@@ -794,9 +776,9 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
     } FC_LOG_AND_RETHROW()
 
-    BOOST_FIXTURE_TEST_CASE( vote_symbol_staking, trail_tester ) try {
-        // setup treasury
-        set_config("v2.0.0-RC1", true);
+    BOOST_FIXTURE_TEST_CASE( vote_symbol_staking, decide_tester ) try {
+        
+        
         asset max_supply = asset::from_string("1000000000.0000 VOTE");
         symbol treasury_symbol = max_supply.get_symbol();
         name ballot_name = name("ballot1");
@@ -806,14 +788,14 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         name voter1 = testa, voter2 = testb, voter3 = testc;
 
-        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(eosio_name, trail_name, "10000.0000 TLOS", "", token_name);
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, eosio_name), asset::from_string("10000.0000 TLOS"));
+        base_tester::transfer(voter1, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(eosio_name, decide_name, "10000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, eosio_name), asset::from_string("10000.0000 TLOS"));
         
         new_treasury(eosio_name, max_supply, name("public"));
 
@@ -859,8 +841,9 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         BOOST_REQUIRE_EQUAL(voter_info["staked"].as<asset>().get_amount(), staked_weight_amount);
     } FC_LOG_AND_RETHROW()
 
-    BOOST_FIXTURE_TEST_CASE( voting_methods, trail_tester ) try {
-        set_config("v2.0.0-RC1", true);
+    BOOST_FIXTURE_TEST_CASE( voting_methods, decide_tester ) try {
+        
+        
         asset max_supply = asset::from_string("1000000.00 GOO");
         symbol treasury_symbol = max_supply.get_symbol();
         name ballot_name = name("ballot1");
@@ -878,14 +861,14 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         create_account_with_resources(manager, eosio_name, asset::from_string("400.0000 TLOS"), false);
         base_tester::transfer(eosio_name, manager, "10000.0000 TLOS", "initial funds", token_name);
 
-        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(manager, trail_name, "5000.0000 TLOS", "", token_name);
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
+        base_tester::transfer(voter1, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(manager, decide_name, "5000.0000 TLOS", "", token_name);
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, manager), asset::from_string("5000.0000 TLOS"));
         
         new_treasury(manager, max_supply, name("public"));
         toggle(manager, treasury_symbol, name("stakeable"));
@@ -1029,33 +1012,39 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         BOOST_REQUIRE_EQUAL(option_map[option2], quadratic_calc(raw_vote_weight, treasury_symbol));
     } FC_LOG_AND_RETHROW()
 
-    BOOST_FIXTURE_TEST_CASE( worker_basics, trail_tester ) try {
-        // setup treasury
-        set_config("v2.0.0-RC1", true);
+    BOOST_FIXTURE_TEST_CASE( worker_basics, decide_tester ) try {
+        
+        //initialize
         asset max_supply = asset::from_string("1000000000.0000 VOTE");
         symbol treasury_symbol = max_supply.get_symbol();
         name ballot_name = name("ballot1");
         name category = name("proposal");
         name option1 = name("option1"), option2 = name("option2");
-
         name voting_method = name("1tokennvote");
-
         name voter1 = testa, voter2 = testb, voter3 = testc, worker = name("worker");
 
+        //create worker account
         create_account_with_resources(worker, eosio_name, asset::from_string("1000.0000 TLOS"), false);
 
-        base_tester::transfer(voter1, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter2, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(voter3, trail_name, "3000.0000 TLOS", "", token_name);
-        base_tester::transfer(eosio_name, trail_name, "10000.0000 TLOS", "", token_name);
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
-        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(trail_name, tlos_sym, eosio_name), asset::from_string("10000.0000 TLOS"));
-        
-        new_treasury(eosio_name, max_supply, name("public"));
+        //deposit funds into decide
+        base_tester::transfer(voter1, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter2, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(voter3, decide_name, "3000.0000 TLOS", "", token_name);
+        base_tester::transfer(eosio_name, decide_name, "10000.0000 TLOS", "", token_name);
 
+        //assert table values
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter1), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter2), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, voter3), asset::from_string("3000.0000 TLOS"));
+        BOOST_REQUIRE_EQUAL(base_tester::get_currency_balance(decide_name, tlos_sym, eosio_name), asset::from_string("10000.0000 TLOS"));
+        
+        //create VOTE treasury
+        new_treasury(eosio_name, max_supply, name("public"));
+        produce_blocks();
+
+        //register voter1
         reg_voter(voter1, treasury_symbol, { });
+        produce_blocks();
 
         //check that cpu + net quantity = total staked in trail
         fc::variant user_resource_info = get_user_res(voter1);
@@ -1069,10 +1058,13 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         //open ballot
         new_ballot(ballot_name, category, voter1, treasury_symbol, voting_method, { option1, option2 });
         edit_min_max(voter1, ballot_name, 2, 2);
+        toggle_bal(voter1, ballot_name, name("votestake"));
         open_voting(voter1, ballot_name, get_current_time_point_sec() + 86410);
+        produce_blocks();
         BOOST_REQUIRE(!get_ballot(ballot_name).is_null());
 
         cast_vote(voter1, ballot_name, { option1, option2 });
+        produce_blocks();
 
         //checking initial voting quantity
         fc::variant ballot_info = get_ballot(ballot_name);
@@ -1173,12 +1165,13 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
         BOOST_REQUIRE_EQUAL(payroll["payroll_funds"].as<asset>(), asset::from_string("1000.0000 TLOS"));
         BOOST_REQUIRE_EQUAL(payroll["period_length"].as<uint32_t>(), 86400);
-        BOOST_REQUIRE_EQUAL(payroll["per_period"].as<asset>(), asset::from_string("500.0000 TLOS"));\
+        BOOST_REQUIRE_EQUAL(payroll["per_period"].as<asset>(), asset::from_string("500.0000 TLOS"));
 
         produce_blocks();
 
         auto vote_cast_rebalance = [&](name voter, asset delta, name worker, symbol treasury_symbol, 
             name ballot_name, vector<name> options, bool redelegate = true, fc::optional<name> referrer = {}) {
+            
             if(get_voter(voter,treasury_symbol).is_null()) {
                 reg_voter(voter, treasury_symbol, {});
             }
@@ -1190,6 +1183,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
 
                 rebalance(worker, voter, ballot_name, { worker });
             }
+
         };
         
         name worker1 = name("worker1"), worker2 = name("worker2"), worker3 = name("worker3");
@@ -1203,6 +1197,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         
         new_ballot(ballot_name, category, voter1, treasury_symbol, voting_method, { option1, option2 });
         edit_min_max(voter1, ballot_name, 1, 2);
+        toggle_bal(voter1, ballot_name, name("votestake"));
         open_voting(voter1, ballot_name, get_current_time_point_sec() + 86401);
 
         vote_cast_rebalance(voter1, asset::from_string("10.0000 TLOS"), worker, treasury_symbol, ballot_name, { option1, option2 });
@@ -1258,7 +1253,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         validate_labor(worker3, asset::from_string("20.0000 VOTE"), 1, 1);
 
         auto claim_validate = [&](const auto& worker) -> asset {
-            asset worker_init_balance = base_tester::get_currency_balance(trail_name, tlos_sym, worker);
+            asset worker_init_balance = base_tester::get_currency_balance(decide_name, tlos_sym, worker);
             cout << "initial balance: " << worker_init_balance << endl;
             
             fc::variant init_labor = get_labor(treasury_symbol, worker);
@@ -1276,7 +1271,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
             claim_payment(worker, treasury_symbol);
             BOOST_REQUIRE(get_labor(treasury_symbol, worker).is_null());
 
-            asset current_balance = base_tester::get_currency_balance(trail_name, tlos_sym, worker);
+            asset current_balance = base_tester::get_currency_balance(decide_name, tlos_sym, worker);
             cout << "current balance: " << current_balance << endl;
 
             BOOST_REQUIRE_EQUAL(current_balance, worker_init_balance + pay_out);
@@ -1291,7 +1286,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
         };
 
         auto forfeit_validate = [&](const auto& worker) {
-            asset worker_init_balance = base_tester::get_currency_balance(trail_name, tlos_sym, worker);
+            asset worker_init_balance = base_tester::get_currency_balance(decide_name, tlos_sym, worker);
             cout << "initial balance: " << worker_init_balance << endl;
 
             asset pay_out = get_worker_claim(worker, treasury_symbol);
@@ -1309,7 +1304,7 @@ BOOST_AUTO_TEST_SUITE(trail_tests)
             forfeit_work(worker, treasury_symbol);
             BOOST_REQUIRE(get_labor(treasury_symbol, worker).is_null());
 
-            asset current_balance = base_tester::get_currency_balance(trail_name, tlos_sym, worker);
+            asset current_balance = base_tester::get_currency_balance(decide_name, tlos_sym, worker);
             cout << "current balance: " << current_balance << endl << endl;
 
             BOOST_REQUIRE_EQUAL(current_balance, worker_init_balance);
