@@ -126,8 +126,16 @@ ACTION decide::withdraw(name voter, asset quantity) {
     //transfer to eosio.token
     //inline trx requires telos.decide@active to have telos.decide@eosio.code
     //TODO: replace with action handler
-    token::transfer_action transfer_act("eosio.token"_n, { get_self(), active_permission });
-    transfer_act.send(get_self(), voter, quantity, std::string("Telos Decide Withdrawal"));
+    // token::transfer_action transfer_act("eosio.token"_n, { get_self(), active_permission });
+    // transfer_act.send(get_self(), voter, quantity, std::string("Telos Decide Withdrawal"));
+
+    //inline transfer
+    action(permission_level{get_self(), name("active")}, name("eosio.token"), name("transfer"), make_tuple(
+        get_self(), //from
+        voter, //to
+        quantity, //quantity
+        std::string("Telos Decide Withdrawal") //memo
+    )).send();
 
 }
 
@@ -180,7 +188,10 @@ void decide::catch_transfer(name from, name to, asset quantity, string memo) {
         config_singleton configs(get_self(), get_self().value);
         auto config = configs.get();
 
-        asset total_transferable = (token::get_balance("eosio.token"_n, get_self(), TLOS_SYM.code()) + quantity) - config.total_deposits;
+        eosio_accounts_table eosio_accounts(name("eosio.token"), get_self().value);
+        auto& eosio_acct = eosio_accounts.get(TLOS_SYM.code().raw(), "tlos balance not found");
+
+        asset total_transferable = (eosio_acct.balance + quantity) - config.total_deposits;
         
         check(total_transferable >= quantity, "Telos Decide lacks the liquid TLOS to make this transfer");
     }
