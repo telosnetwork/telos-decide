@@ -47,6 +47,7 @@ ACTION decide::newballot(name ballot_name, name category, name publisher,
     //intitial settings
     new_settings[name("lightballot")] = false;
     new_settings[name("revotable")] = true;
+    new_settings[name("voteliquid")] = false;
     new_settings[name("votestake")] = trs.settings.at("stakeable"_n);
     //TODO: new_settings[name("allowdgate")] = false;
 
