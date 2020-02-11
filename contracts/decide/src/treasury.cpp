@@ -255,9 +255,6 @@ ACTION decide::reclaim(name voter, asset quantity, string memo) {
     //add quantity to manager balance
     add_liquid(trs.manager, quantity);
 
-    //notify voter account
-    require_recipient(voter);
-
 }
 
 ACTION decide::mutatemax(asset new_max_supply, string memo) {
