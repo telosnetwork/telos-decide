@@ -35,7 +35,7 @@ For this Starter Guide we will also walk through building a simple external cont
 
 In our contract, we will launch a new election ballot and then *contractually act* on the results broadcast by Trail's `broadcast()` action. Upon hearing the broadcast, our contract will read the final results, determine the winning candidate, and then send an inline action back to Trail to update our committee with the election winner.
 
-> Guide: [Example Contract Integration](docs/ExampleGuide.md)
+> Guide: [Example Contract Integration](./ExampleGuide.md)
 
 > Source:
 [example.hpp](../contracts/example/include/example.hpp) / 
