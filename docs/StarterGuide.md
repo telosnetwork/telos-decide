@@ -17,7 +17,7 @@ For organizations, this means they can confidently track crucial ownership and p
 | Service | Description | Cost |
 | --- | --- | --- |
 | Voting | Voter registration, token balances, voting, unvoting, staking, and unstaking. | Free |
-| Ballots | Ballot hosting, customization, and results broadcasting. | 30 TLOS per ballot |
+| Ballots | Ballot hosting, customization, and results broadcasting. | 10 TLOS per ballot |
 | Treasuries  | Treasury creation, locking/unlocking, verbose settings, worker fund, token minting, transferring, reclaiming, and burning. | 1000 TLOS per treasury |
 | Committees | Committee creation, management, security, and seat control. | 100 TLOS per committee |
 | Archival | Archive important ballots to preserve results. | 3 TLOS per day |
