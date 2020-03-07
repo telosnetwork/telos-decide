@@ -50,13 +50,19 @@ ACTION decide::regvoter(name voter, symbol treasury_symbol, optional<name> refer
             break;
         case (name("invite").value):
             if (referrer) {
-                //authenticate
-                require_auth(*referrer);
 
-                //TODO: check referrer is a voter
+                //initialize
+                name ref_name = *referrer;
+
+                //authenticate
+                require_auth(ref_name);
+
+                //check referrer is a registered voter of treasury
+                voters_table referrers(get_self(), ref_name.value);
+                auto& ref = referrers.get(treasury_symbol.code().raw(), "referrer not found");
 
                 //set referrer as ram payer
-                ram_payer = *referrer;
+                ram_payer = ref_name;
             } else {
                 require_auth(trs.manager);
             }
