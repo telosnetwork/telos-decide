@@ -50,6 +50,23 @@ ACTION decide::init(string app_version) {
 
 }
 
+ACTION decide::setversion(string new_app_version) {
+
+    //authenticate
+    require_auth(get_self());
+
+    //open configs singleton
+    config_singleton configs(get_self(), get_self().value);
+    auto conf = configs.get();
+
+    //set new version
+    conf.app_version = new_app_version;
+
+    //set config
+    configs.set(conf, get_self());
+
+}
+
 ACTION decide::updatefee(name fee_name, asset fee_amount) {
     
     //authenticate
