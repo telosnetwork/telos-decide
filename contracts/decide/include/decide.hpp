@@ -68,6 +68,9 @@ namespace decidespace {
         //initialize contract
         ACTION init(string app_version);
 
+        //set new app version
+        ACTION setversion(string new_app_version);
+
         //updates fee amount
         ACTION updatefee(name fee_name, asset fee_amount);
 

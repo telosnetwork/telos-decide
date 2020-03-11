@@ -21,7 +21,13 @@ using mvo = fc::mutable_variant_object;
 
 BOOST_AUTO_TEST_SUITE(decide_tests)
 
-    BOOST_FIXTURE_TEST_CASE( configuration_setting, decide_tester ) try {
+    BOOST_FIXTURE_TEST_CASE( config_tests, decide_tester ) try {
+
+        //======================== check config state from setup ========================
+
+        //initialize
+        string app_name = "Telos Decide";
+        string app_version = "v2.0.0";
 
         //get table data
         fc::variant config = get_config();
@@ -29,8 +35,8 @@ BOOST_AUTO_TEST_SUITE(decide_tests)
         map<name, uint32_t> time_map = variant_to_map<name, uint32_t>(config["times"]);
 
         //assert config values
-        BOOST_REQUIRE_EQUAL(config["app_name"], "Telos Decide");
-        BOOST_REQUIRE_EQUAL(config["app_version"], "v2.0.0");
+        BOOST_REQUIRE_EQUAL(config["app_name"], app_name);
+        BOOST_REQUIRE_EQUAL(config["app_version"], app_version);
         BOOST_REQUIRE_EQUAL(config["total_deposits"].as<asset>(), asset::from_string("0.0000 TLOS"));
         
         validate_map(fee_map, name("archival"), asset::from_string("1.0000 TLOS"));
@@ -41,6 +47,8 @@ BOOST_AUTO_TEST_SUITE(decide_tests)
         validate_map(time_map, name("minballength"), uint32_t(60));
         validate_map(time_map, name("balcooldown"), uint32_t(86400));
         validate_map(time_map, name("forfeittime"), uint32_t(864000));
+
+        //======================== attempt invalid actions ========================
         
         //attempt fee change with improper symbol
         BOOST_REQUIRE_EXCEPTION(update_fee(name("archival"), asset::from_string("100.0000 TST")),
@@ -52,21 +60,51 @@ BOOST_AUTO_TEST_SUITE(decide_tests)
             eosio_assert_message_exception, eosio_assert_message_is( "length must be a positive number" ) 
         );
 
+        //======================== change fee amount ========================
+
         //change a fee and a time
         asset new_archival_fee = asset::from_string("100.0000 TLOS");
-        uint32_t new_min_bal_length = uint32_t(1000);
+
+        //send updatefee action
         update_fee(name("archival"), new_archival_fee);
-        update_time(name("minballength"), new_min_bal_length); 
         produce_blocks();
 
         //get table data
         config = get_config();
         fee_map = variant_to_map<name, asset>(config["fees"]);
-        time_map = variant_to_map<name, uint32_t>(config["times"]);
 
         //assert table values
         validate_map(fee_map, name("archival"), new_archival_fee);
+
+        //======================== change time amount ========================
+
+        //initialize
+        uint32_t new_min_bal_length = uint32_t(1000);
+
+        //send updatetime action
+        update_time(name("minballength"), new_min_bal_length);
+        produce_blocks();
+
+        //get table data
+        config = get_config();
+        time_map = variant_to_map<name, uint32_t>(config["times"]);
+
+        //asset table values
         validate_map(time_map, name("minballength"), new_min_bal_length);
+
+        //======================== change app version ========================
+
+        //initialize
+        string new_app_version = "v2.0.1";
+
+        //send setversion action
+        decide_setversion(new_app_version);
+
+        //get table data
+        config = get_config();
+
+        //assert table values
+        BOOST_REQUIRE_EQUAL(config["app_version"], new_app_version);
 
     } FC_LOG_AND_RETHROW()
 
