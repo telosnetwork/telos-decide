@@ -255,9 +255,6 @@ ACTION decide::reclaim(name voter, asset quantity, string memo) {
     //add quantity to manager balance
     add_liquid(trs.manager, quantity);
 
-    //notify voter account
-    require_recipient(voter);
-
 }
 
 ACTION decide::mutatemax(asset new_max_supply, string memo) {
@@ -343,6 +340,9 @@ ACTION decide::unlock(symbol treasury_symbol) {
 //======================== payroll actions ========================
 
 ACTION decide::addfunds(name from, symbol treasury_symbol, asset quantity) {
+
+    //authenticate
+    require_auth(from);
     
     //open treasuries table, get treasury
     treasuries_table treasuries(get_self(), get_self().value);
@@ -362,6 +362,7 @@ ACTION decide::addfunds(name from, symbol treasury_symbol, asset quantity) {
     payrolls.modify(pr, same_payer, [&](auto& col) {
         col.payroll_funds += quantity;
     });
+
 }
 
 ACTION decide::editpayrate(symbol treasury_symbol, uint32_t period_length, asset per_period) {

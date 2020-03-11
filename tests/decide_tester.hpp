@@ -289,6 +289,18 @@ namespace decidetesting {
                 return push_transaction( trx );
             }
 
+            transaction_trace_ptr decide_setversion(string new_app_version) {
+                signed_transaction trx;
+                vector<permission_level> permissions { { decide_name, name("active") } };
+                trx.actions.emplace_back(get_action(decide_name, name("setversion"), permissions, 
+                    mvo()
+                        ("new_app_version", new_app_version)
+                ));
+                set_transaction_headers( trx );
+                trx.sign(get_private_key(decide_name, "active"), control->get_chain_id());
+                return push_transaction( trx );
+            }
+
             //updates fee amount
             transaction_trace_ptr update_fee(name fee_name, asset fee_amount) {
                 signed_transaction trx;

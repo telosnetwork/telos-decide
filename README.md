@@ -40,7 +40,7 @@ Telos Decide is an on-chain governance engine exclusively for the Telos Blockcha
 
 ## Telos Decide Documentation
 
-Full docuementation can be found in the [Telos Docs](docs.telos.net/telos-decide/introduction).
+Full docuementation can be found in the [Telos Docs](https://docs.telos.net/telos-decide/introduction).
 
 | Name | Description |
 | --- | --- |
