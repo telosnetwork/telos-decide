@@ -350,6 +350,10 @@ BOOST_AUTO_TEST_SUITE(decide_tests)
 
         new_treasury(testc, test_asset, name("invite"));
 
+        //register referrer
+        reg_voter(testc, test_asset.get_symbol(), {});
+
+        //invite voter
         trace = reg_voter(testa, test_asset.get_symbol(), testc);
 
         validate_action_payer(trace, decide_name, name("regvoter"), testc);
@@ -390,6 +394,7 @@ BOOST_AUTO_TEST_SUITE(decide_tests)
         BOOST_REQUIRE_EXCEPTION(edit_pay_rate(testa, name("workers"), max_supply.get_symbol(), 86400, asset::from_string("400.0000 GOO")),
             eosio_assert_message_exception, eosio_assert_message_is( "only TLOS allowed in payrolls" ) 
         );
+
     } FC_LOG_AND_RETHROW()
 
     BOOST_FIXTURE_TEST_CASE( ballot_basics, decide_tester ) try {
