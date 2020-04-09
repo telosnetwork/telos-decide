@@ -353,7 +353,7 @@ void decide::sync_external_account(name voter, symbol internal_symbol, symbol ex
         tlos_stake += get_tlos_in_rex(voter);
         check(internal_symbol == VOTE_SYM, "internal symbol must be VOTE for external TLOS");
     } else {
-        check(false, "syncing external accounts is under development");
+        check(false, "syncing other external accounts is under development");
         return;
     }
 
@@ -361,8 +361,8 @@ void decide::sync_external_account(name voter, symbol internal_symbol, symbol ex
     voters_table voters(get_self(), voter.value);
     auto vtr_itr = voters.find(internal_symbol.code().raw());
 
-    //subtract from VOTE stake
-    if (vtr_itr != voters.end()) { //voter exists
+    //if voter exists
+    if (vtr_itr != voters.end()) {
 
         //open treasuries table, search for treasury
         treasuries_table treasuries(get_self(), get_self().value);
