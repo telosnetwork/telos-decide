@@ -332,6 +332,15 @@ ACTION decide::unstake(name voter, asset quantity) {
 
 }
 
+ACTION decide::refresh(name voter) {
+
+    //sync external stake with internal stake
+    sync_external_account(voter, VOTE_SYM, TLOS_SYM);
+
+}
+
+//======================== helper functions ========================
+
 map<name, asset> decide::calc_vote_weights(symbol treasury_symbol, name voting_method, 
     vector<name> selections,  asset raw_vote_weight) {
     

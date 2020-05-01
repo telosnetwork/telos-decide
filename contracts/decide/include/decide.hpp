@@ -213,6 +213,9 @@ namespace decidespace {
         //unstakes tokens from staked balance to liquid balance
         ACTION unstake(name voter, asset quantity);
 
+        //refreshes external balance
+        ACTION refresh(name voter);
+
         //======================== worker actions ========================
 
         //rebalance an unbalanced vote
