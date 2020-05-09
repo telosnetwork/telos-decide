@@ -186,49 +186,54 @@ ACTION decide::rebalance(name voter, name ballot_name, optional<name> worker) {
         raw_vote_weight = vtr.liquid;
     }
 
-    check(raw_vote_weight != v.raw_votes, "vote is already balanced");
+    //check(raw_vote_weight != v.raw_votes, "vote is already balanced");
 
-    //rollback old vote
-    for (auto i = v.weighted_votes.begin(); i != v.weighted_votes.end(); i++) {
-        new_bal_options[i->first] -= i->second;
+    //if vote is not balanced
+    if (raw_vote_weight != v.raw_votes) {
 
-        //rebuild selections
-        selections.push_back(i->first);
+        //rollback old vote
+        for (auto i = v.weighted_votes.begin(); i != v.weighted_votes.end(); i++) {
+            new_bal_options[i->first] -= i->second;
+
+            //rebuild selections
+            selections.push_back(i->first);
+        }
+
+        //validate
+        check(selections.size() > 0, "cannot rebalance nonexistent votes");
+
+        //calculate new votes
+        auto new_votes = calc_vote_weights(bal.treasury_symbol, bal.voting_method, selections, raw_vote_weight);
+        int64_t weight_delta = abs(v.raw_votes.amount - raw_vote_weight.amount);
+
+        //apply new votes to ballot
+        for (auto i = new_votes.begin(); i != new_votes.end(); i++) {
+            new_bal_options[i->first] += i->second;
+        }
+
+        //update ballot
+        ballots.modify(bal, same_payer, [&](auto& col) {
+            col.options = new_bal_options;
+            col.total_raw_weight += (raw_vote_weight - v.raw_votes);
+        });
+
+        //set worker info if applicable
+        if (worker) {
+            //authenticate
+            require_auth(*worker);
+            worker_name = *worker;
+        }
+
+        //update vote
+        votes.modify(v, same_payer, [&](auto& col) {
+            col.raw_votes = raw_vote_weight;
+            col.weighted_votes = new_votes;
+            col.worker = worker_name;
+            col.rebalances += 1;
+            col.rebalance_volume = asset(weight_delta, bal.treasury_symbol);
+        });
+
     }
-
-    //validate
-    check(selections.size() > 0, "cannot rebalance nonexistent votes");
-
-    //calculate new votes
-    auto new_votes = calc_vote_weights(bal.treasury_symbol, bal.voting_method, selections, raw_vote_weight);
-    int64_t weight_delta = abs(v.raw_votes.amount - raw_vote_weight.amount);
-
-    //apply new votes to ballot
-    for (auto i = new_votes.begin(); i != new_votes.end(); i++) {
-        new_bal_options[i->first] += i->second;
-    }
-
-    //update ballot
-    ballots.modify(bal, same_payer, [&](auto& col) {
-        col.options = new_bal_options;
-        col.total_raw_weight += (raw_vote_weight - v.raw_votes);
-    });
-
-    //set worker info if applicable
-    if (worker) {
-        //authenticate
-        require_auth(*worker);
-        worker_name = *worker;
-    }
-
-    //update vote
-    votes.modify(v, same_payer, [&](auto& col) {
-        col.raw_votes = raw_vote_weight;
-        col.weighted_votes = new_votes;
-        col.worker = worker_name;
-        col.rebalances += 1;
-        col.rebalance_volume = asset(weight_delta, bal.treasury_symbol);
-    });
 
 }
 

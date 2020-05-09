@@ -1115,9 +1115,9 @@ BOOST_AUTO_TEST_SUITE(decide_tests)
         BOOST_REQUIRE_EQUAL(option_map[option1], tlos_to_vote(initial_stake));
         BOOST_REQUIRE_EQUAL(option_map[option2], tlos_to_vote(initial_stake));
 
-        BOOST_REQUIRE_EXCEPTION(rebalance(worker, voter1, ballot_name, { worker }),
-            eosio_assert_message_exception, eosio_assert_message_is( "vote is already balanced" ) 
-        );
+        // BOOST_REQUIRE_EXCEPTION(rebalance(worker, voter1, ballot_name, { worker }),
+        //     eosio_assert_message_exception, eosio_assert_message_is( "vote is already balanced" ) 
+        // );
 
         //change stake in both trail and eosio
         delegate_bw(voter1, voter1, stake_delta, stake_delta, false);
@@ -1175,9 +1175,9 @@ BOOST_AUTO_TEST_SUITE(decide_tests)
 
         //get labor, should still be null, because rebalances are logged at the same time as cleaning
         BOOST_REQUIRE(get_labor(treasury_symbol, worker).is_null());
-        BOOST_REQUIRE_EXCEPTION(rebalance(worker, voter1, ballot_name, { worker }),
-            eosio_assert_message_exception, eosio_assert_message_is( "vote is already balanced" )
-        );
+        // BOOST_REQUIRE_EXCEPTION(rebalance(worker, voter1, ballot_name, { worker }),
+        //     eosio_assert_message_exception, eosio_assert_message_is( "vote is already balanced" )
+        // );
 
         //end voting, kill del ballot, clean old votes, validate
         produce_block(fc::seconds(86420));
