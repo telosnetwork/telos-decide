@@ -1,6 +1,6 @@
-# Telos Decide Governance Engine
+# Telos® Decide™ Governance Engine
 
-Telos Decide is an on-chain governance engine exclusively for the Telos Blockchain Network that offers an extensive suite of voting services and DAC/DAO tools for both users and developers.
+Telos® Decide™ is an on-chain governance engine exclusively for the Telos Blockchain Network that offers an extensive suite of voting services and DAC/DAO tools for both users and developers.
 
 ## Features and Services
 
@@ -86,3 +86,7 @@ Telos Decide is an open-source governance engine where contributions and improve
 To make a contribution, simply fork this repo and submit a PR for your changes. In order to avoid duplication of work, it's best to engage with the community first to determine what would be an acceptable addition to the platform.
 
 Discussion happens mostly on Telegram, so feel free to join the [Telos Dapp Development](https://t.me/dappstelos) chat and pitch your idea!
+
+## Intellectual Property
+
+The names "Telos" and "Decide" are a registered trademark and a trademark, respectively, in uses related to blockchain technology. Permission is granted to the Telos blockchain to use these trademarks for purposes related the the implementation of Decide on Telos. All other rights to these trademarks are reserved. 
