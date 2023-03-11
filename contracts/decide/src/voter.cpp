@@ -159,7 +159,8 @@ ACTION decide::castvote(name voter, name ballot_name, vector<name> options) {
     check(now >= bal.begin_time && now <= bal.end_time, "vote must occur between ballot begin and end times");
     check(options.size() >= bal.min_options, "cannot vote for fewer than min options");
     check(options.size() <= bal.max_options, "cannot vote for more than max options");
-    check(raw_vote_weight.amount > 0, "must vote with a positive amount");
+    // this error can be confusing because it references a very specific ballot setting
+    check(raw_vote_weight.amount > 0, "must vote with a positive amount, check ballot voting type");
 
     //skip vote tracking if light ballot
     if (bal.settings.at(name("lightballot"))) {
